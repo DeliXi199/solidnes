@@ -1,0 +1,23 @@
+training:
+  target: ground_state
+  seed: 0
+  deterministic: true
+  batch_size: 8
+  use_x64: true
+  iterations: 20
+  optimizer: adam
+  laplacian_mode: for
+  partition_number: 3
+  pretrain_iterations: 0
+  checkpoint_every_minutes: 999
+  log_every: 1
+
+stability_checks:
+  finite_energy: true
+  finite_variance: true
+  acceptance_range: [0.05, 0.95]
+  expected_energy_trend: nonincreasing_on_average
+
+notes:
+  status: validation_ready
+  purpose: short GPU validation run for carbon diamond before NES-VMC plumbing

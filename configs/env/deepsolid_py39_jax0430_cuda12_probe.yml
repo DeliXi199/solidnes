@@ -1,0 +1,24 @@
+name: solidnes-deepsolid-jax0430-cuda12-probe
+channels:
+  - conda-forge
+dependencies:
+  - python=3.9
+  - pip
+  - numpy<2
+  - scipy
+  - pandas
+  - h5py
+  - pytables
+  - pip:
+      - absl-py
+      - attrs
+      - dataclasses
+      - networkx
+      - ordered-set
+      - typing
+      - chex==0.1.86
+      - "jax[cuda12]==0.4.30"
+      - ml_collections
+      - optax==0.2.2
+      - opt_einsum==3.3.0
+      - pyscf

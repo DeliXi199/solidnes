@@ -1,0 +1,33 @@
+training:
+  target: ground_state
+  seed: 20260522
+  deterministic: true
+  batch_size: 384
+  use_x64: true
+  iterations: 1000
+  optimizer: adam
+  learning_rate: 0.0003
+  learning_rate_decay: 1.0
+  learning_rate_delay: 10000.0
+  laplacian_mode: for
+  partition_number: 3
+  clip_local_energy: 5.0
+  ministeps: 1
+  pretrain_method: net
+  pretrain_iterations: 1000
+  pretrain_learning_rate: 0.0003
+  pretrain_steps: 1
+  checkpoint_every_minutes: 5
+  log_every: 1
+
+stability_checks:
+  finite_energy: true
+  finite_variance: true
+  acceptance_range: [0.05, 0.95]
+  expected_effect: first cc-pVDZ paper-net Adam sanity run should be finite and establish energy trend
+  expected_hf_reference_hartree: -74.9757591792
+
+notes:
+  status: paper_alignment_ready
+  purpose: short cc-pVDZ paper-like network sanity run before longer C-diamond training
+  scaling_caveat: keeps Adam instead of KFAC and runs only 1000 VMC iterations

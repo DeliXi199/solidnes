@@ -1,0 +1,27 @@
+training:
+  target: excited_state
+  method: nes_vmc
+  num_states: 2
+  seed: 0
+  max_steps: TBD
+  optimizer: TBD
+  preconditioner: TBD
+  checkpoint_every: TBD
+  log_every: TBD
+
+nes_vmc:
+  overlap_penalty: TBD
+  objective_variant: TBD
+  shared_parameters: TBD
+  state_initialization: TBD
+
+stability_checks:
+  finite_energy: true
+  finite_variance: true
+  overlap_matrix: true
+  state_collapse: true
+
+notes:
+  status: scaffold_only
+  purpose: placeholder training config for first two-state NES-VMC probe
+

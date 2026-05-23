@@ -1,0 +1,32 @@
+training:
+  target: ground_state
+  seed: 0
+  deterministic: true
+  batch_size: 16
+  use_x64: true
+  iterations: 100
+  optimizer: adam
+  learning_rate: 0.003
+  learning_rate_decay: 1.0
+  learning_rate_delay: 10000.0
+  laplacian_mode: for
+  partition_number: 3
+  clip_local_energy: 5.0
+  ministeps: 1
+  pretrain_method: net
+  pretrain_iterations: 100
+  pretrain_learning_rate: 0.0003
+  pretrain_steps: 1
+  checkpoint_every_minutes: 999
+  log_every: 1
+
+stability_checks:
+  finite_energy: true
+  finite_variance: true
+  acceptance_range: [0.05, 0.95]
+  expected_energy_trend: downward_after_warmup
+  expected_hf_gap: smaller_than_validation_stable
+
+notes:
+  status: validation_ready
+  purpose: carbon validation with HF-target pretraining before Adam optimization

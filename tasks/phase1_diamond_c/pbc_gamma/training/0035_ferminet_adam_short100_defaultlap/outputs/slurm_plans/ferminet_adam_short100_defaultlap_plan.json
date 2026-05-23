@@ -1,0 +1,156 @@
+{
+  "config": {
+    "allowed_gpu_counts": [],
+    "allowed_partitions": [],
+    "blocked_partitions": [
+      "gpu80gllm",
+      "gpu40gllm",
+      "h20llm",
+      "gpu4090",
+      "gpu4090_8",
+      "gpu4090_128",
+      "h800",
+      "test"
+    ],
+    "idle_extra_partitions": [
+      "intelgpu80g",
+      "amdgpu40g",
+      "amdgpu80g"
+    ],
+    "min_cpus": 8,
+    "min_gpus": 1,
+    "precision_profile": "tf32",
+    "queue_min_cpus": 64,
+    "queue_min_gpus": 4,
+    "queue_mode": "auto",
+    "target_gpus": 1
+  },
+  "kind": "gpu",
+  "ready": true,
+  "reason": "best_idle_gpu_node",
+  "sbatch": {
+    "request": {
+      "cpus": 8,
+      "gpus": 1,
+      "gres": "gpu:1",
+      "partition": "intelgpu80g"
+    },
+    "sbatch_args": [
+      "--nodes",
+      "1",
+      "--partition",
+      "intelgpu80g",
+      "--gres",
+      "gpu:1",
+      "--cpus-per-task",
+      "8",
+      "--nodelist",
+      "gpu001",
+      "--job-name",
+      "solidnes-ferminet-defaultlap100",
+      "--account",
+      "hmt03",
+      "--time",
+      "01:00:00",
+      "--export",
+      "ALL,SOLIDNES_TOTAL_GPUS=1,SOLIDNES_TOTAL_CPU_CORES=8,SOLIDNES_CPUS_PER_GPU_BASE=8,SOLIDNES_CPU_REMAINDER=0,SOLIDNES_CPUS_PER_GPU_LIST=8,SOLIDNES_CPU_BATCHES=gpu0:0-7,SOLIDNES_CPU_PARALLELISM=8",
+      "--output",
+      "logs/slurm/%x_%j.log",
+      "--error",
+      "logs/slurm/%x_%j.err"
+    ],
+    "sbatch_command": [
+      "sbatch",
+      "--nodes",
+      "1",
+      "--partition",
+      "intelgpu80g",
+      "--gres",
+      "gpu:1",
+      "--cpus-per-task",
+      "8",
+      "--nodelist",
+      "gpu001",
+      "--job-name",
+      "solidnes-ferminet-defaultlap100",
+      "--account",
+      "hmt03",
+      "--time",
+      "01:00:00",
+      "--export",
+      "ALL,SOLIDNES_TOTAL_GPUS=1,SOLIDNES_TOTAL_CPU_CORES=8,SOLIDNES_CPUS_PER_GPU_BASE=8,SOLIDNES_CPU_REMAINDER=0,SOLIDNES_CPUS_PER_GPU_LIST=8,SOLIDNES_CPU_BATCHES=gpu0:0-7,SOLIDNES_CPU_PARALLELISM=8",
+      "--output",
+      "logs/slurm/%x_%j.log",
+      "--error",
+      "logs/slurm/%x_%j.err",
+      "scripts/slurm/run_ferminet_gpu_smoke.slurm"
+    ],
+    "sbatch_command_quoted": "sbatch --nodes 1 --partition intelgpu80g --gres gpu:1 --cpus-per-task 8 --nodelist gpu001 --job-name solidnes-ferminet-defaultlap100 --account hmt03 --time 01:00:00 --export ALL,SOLIDNES_TOTAL_GPUS=1,SOLIDNES_TOTAL_CPU_CORES=8,SOLIDNES_CPUS_PER_GPU_BASE=8,SOLIDNES_CPU_REMAINDER=0,SOLIDNES_CPUS_PER_GPU_LIST=8,SOLIDNES_CPU_BATCHES=gpu0:0-7,SOLIDNES_CPU_PARALLELISM=8 --output logs/slurm/%x_%j.log --error logs/slurm/%x_%j.err scripts/slurm/run_ferminet_gpu_smoke.slurm"
+  },
+  "selection": {
+    "candidates": [
+      {
+        "allocated_cpus": 0,
+        "allocated_gpus": 0,
+        "free_gpus": 2,
+        "free_memory_mb": 249735,
+        "gpu_model_key": "a100_80gb",
+        "gpu_type": "",
+        "gres": "gpu:2",
+        "idle_cpus": 96,
+        "is_available": true,
+        "is_idle": true,
+        "name": "gpu001",
+        "partitions": [
+          "intelgpu80g"
+        ],
+        "state": "IDLE",
+        "total_cpus": 96,
+        "total_gpus": 2,
+        "total_memory_mb": 500000
+      },
+      {
+        "allocated_cpus": 32,
+        "allocated_gpus": 2,
+        "free_gpus": 2,
+        "free_memory_mb": 471647,
+        "gpu_model_key": "a100_40gb",
+        "gpu_type": "",
+        "gres": "gpu:4",
+        "idle_cpus": 32,
+        "is_available": true,
+        "is_idle": false,
+        "name": "gpu005",
+        "partitions": [
+          "amdgpu40g",
+          "gpu40gllm"
+        ],
+        "state": "MIXED",
+        "total_cpus": 64,
+        "total_gpus": 4,
+        "total_memory_mb": 512000
+      }
+    ],
+    "selected_node": {
+      "allocated_cpus": 0,
+      "allocated_gpus": 0,
+      "free_gpus": 2,
+      "free_memory_mb": 249735,
+      "gpu_model_key": "a100_80gb",
+      "gpu_type": "",
+      "gres": "gpu:2",
+      "idle_cpus": 96,
+      "is_available": true,
+      "is_idle": true,
+      "name": "gpu001",
+      "partitions": [
+        "intelgpu80g"
+      ],
+      "state": "IDLE",
+      "total_cpus": 96,
+      "total_gpus": 2,
+      "total_memory_mb": 500000
+    },
+    "selected_partition": "intelgpu80g"
+  }
+}

@@ -1,0 +1,18 @@
+model:
+  ansatz: deepsolid_detnet
+  backend: deepsolid
+  size: medium
+  distance_type: tri
+  envelope_type: isotropic
+  full_det: false
+  hidden_dims:
+    - [128, 32]
+    - [128, 32]
+    - [128, 32]
+  determinants: 8
+  after_determinants: 1
+
+notes:
+  status: validation_ready
+  purpose: medium DeepSolid detnet for carbon validation after small-model gap
+  source_pattern: scaled toward DeepSolid/base_config.py network.detnet defaults

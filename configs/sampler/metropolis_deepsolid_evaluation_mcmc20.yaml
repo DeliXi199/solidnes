@@ -1,0 +1,13 @@
+sampler:
+  name: metropolis
+  burn_in: 0
+  steps_per_iteration: 20
+  proposal_width: 0.1
+  adapt_frequency: 5
+  one_electron: false
+  importance_sampling: false
+
+notes:
+  status: validation_ready
+  purpose: more decorrelated fixed-checkpoint evaluation samples
+  checkpoint_caveat: burn_in is intentionally zero because walkers are restored from a trained checkpoint

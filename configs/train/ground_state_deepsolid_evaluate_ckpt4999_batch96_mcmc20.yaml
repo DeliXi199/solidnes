@@ -1,0 +1,34 @@
+training:
+  target: ground_state
+  seed: 0
+  deterministic: true
+  batch_size: 96
+  use_x64: true
+  iterations: 10000
+  optimizer: none
+  learning_rate: 0.0
+  learning_rate_decay: 1.0
+  learning_rate_delay: 10000.0
+  laplacian_mode: for
+  partition_number: 3
+  clip_local_energy: 5.0
+  ministeps: 1
+  pretrain_method: net
+  pretrain_iterations: 0
+  pretrain_learning_rate: 0.0003
+  pretrain_steps: 1
+  checkpoint_every_minutes: 999
+  log_every: 1
+
+stability_checks:
+  finite_energy: true
+  finite_variance: true
+  acceptance_range: [0.05, 0.95]
+  expected_effect: independent_fixed_checkpoint_energy_estimate
+  estimated_runtime: about_20_minutes_on_4xa100
+
+notes:
+  status: validation_ready
+  purpose: fixed-parameter evaluation from the full 5000-step checkpoint
+  checkpoint_semantics: DeepSolid restores qmcjax_ckpt_004999 then evaluates steps 5000 through 9999
+  rationale: separate sampling uncertainty from parameter-update noise

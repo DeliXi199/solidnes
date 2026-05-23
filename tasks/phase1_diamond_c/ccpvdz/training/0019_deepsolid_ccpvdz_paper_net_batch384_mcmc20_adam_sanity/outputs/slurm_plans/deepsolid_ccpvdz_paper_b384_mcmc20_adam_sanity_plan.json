@@ -1,0 +1,126 @@
+{
+  "config": {
+    "allowed_partitions": [],
+    "blocked_partitions": [
+      "gpu4090",
+      "gpu4090_8",
+      "h20llm"
+    ],
+    "idle_extra_partitions": [
+      "intelgpu80g",
+      "amdgpu40g",
+      "amdgpu80g"
+    ],
+    "precision_profile": "fp64",
+    "queue_mode": "auto"
+  },
+  "kind": "gpu",
+  "ready": true,
+  "reason": "best_idle_gpu_node",
+  "sbatch": {
+    "request": {
+      "cpus": 128,
+      "gpus": 8,
+      "gres": "gpu:rtx4090:8",
+      "partition": "gpu4090_128"
+    },
+    "sbatch_args": [
+      "--nodes",
+      "1",
+      "--partition",
+      "gpu4090_128",
+      "--gres",
+      "gpu:rtx4090:8",
+      "--cpus-per-task",
+      "128",
+      "--exclusive",
+      "--nodelist",
+      "gpu40903",
+      "--job-name",
+      "solidnes-ccpvdz-paper-b384",
+      "--account",
+      "hmt03",
+      "--time",
+      "03:00:00",
+      "--export",
+      "ALL,SOLIDNES_TOTAL_GPUS=8,SOLIDNES_TOTAL_CPU_CORES=128,SOLIDNES_CPUS_PER_GPU_BASE=16,SOLIDNES_CPU_REMAINDER=0,SOLIDNES_CPUS_PER_GPU_LIST=16:16:16:16:16:16:16:16,SOLIDNES_CPU_BATCHES=gpu0:0-15;gpu1:16-31;gpu2:32-47;gpu3:48-63;gpu4:64-79;gpu5:80-95;gpu6:96-111;gpu7:112-127,SOLIDNES_CPU_PARALLELISM=128",
+      "--output",
+      "logs/slurm/%x_%j.log",
+      "--error",
+      "logs/slurm/%x_%j.err"
+    ],
+    "sbatch_command": [
+      "sbatch",
+      "--nodes",
+      "1",
+      "--partition",
+      "gpu4090_128",
+      "--gres",
+      "gpu:rtx4090:8",
+      "--cpus-per-task",
+      "128",
+      "--exclusive",
+      "--nodelist",
+      "gpu40903",
+      "--job-name",
+      "solidnes-ccpvdz-paper-b384",
+      "--account",
+      "hmt03",
+      "--time",
+      "03:00:00",
+      "--export",
+      "ALL,SOLIDNES_TOTAL_GPUS=8,SOLIDNES_TOTAL_CPU_CORES=128,SOLIDNES_CPUS_PER_GPU_BASE=16,SOLIDNES_CPU_REMAINDER=0,SOLIDNES_CPUS_PER_GPU_LIST=16:16:16:16:16:16:16:16,SOLIDNES_CPU_BATCHES=gpu0:0-15;gpu1:16-31;gpu2:32-47;gpu3:48-63;gpu4:64-79;gpu5:80-95;gpu6:96-111;gpu7:112-127,SOLIDNES_CPU_PARALLELISM=128",
+      "--output",
+      "logs/slurm/%x_%j.log",
+      "--error",
+      "logs/slurm/%x_%j.err",
+      "scripts/slurm/run_deepsolid_gpu_smoke.slurm"
+    ],
+    "sbatch_command_quoted": "sbatch --nodes 1 --partition gpu4090_128 --gres gpu:rtx4090:8 --cpus-per-task 128 --exclusive --nodelist gpu40903 --job-name solidnes-ccpvdz-paper-b384 --account hmt03 --time 03:00:00 --export 'ALL,SOLIDNES_TOTAL_GPUS=8,SOLIDNES_TOTAL_CPU_CORES=128,SOLIDNES_CPUS_PER_GPU_BASE=16,SOLIDNES_CPU_REMAINDER=0,SOLIDNES_CPUS_PER_GPU_LIST=16:16:16:16:16:16:16:16,SOLIDNES_CPU_BATCHES=gpu0:0-15;gpu1:16-31;gpu2:32-47;gpu3:48-63;gpu4:64-79;gpu5:80-95;gpu6:96-111;gpu7:112-127,SOLIDNES_CPU_PARALLELISM=128' --output logs/slurm/%x_%j.log --error logs/slurm/%x_%j.err scripts/slurm/run_deepsolid_gpu_smoke.slurm"
+  },
+  "selection": {
+    "candidates": [
+      {
+        "allocated_cpus": 0,
+        "allocated_gpus": 0,
+        "free_gpus": 8,
+        "free_memory_mb": 1020452,
+        "gpu_model_key": "rtx4090",
+        "gpu_type": "rtx4090",
+        "gres": "gpu:rtx4090:8",
+        "idle_cpus": 128,
+        "is_available": true,
+        "is_idle": true,
+        "name": "gpu40903",
+        "partitions": [
+          "gpu4090_128"
+        ],
+        "state": "IDLE",
+        "total_cpus": 128,
+        "total_gpus": 8,
+        "total_memory_mb": 1000000
+      }
+    ],
+    "selected_node": {
+      "allocated_cpus": 0,
+      "allocated_gpus": 0,
+      "free_gpus": 8,
+      "free_memory_mb": 1020452,
+      "gpu_model_key": "rtx4090",
+      "gpu_type": "rtx4090",
+      "gres": "gpu:rtx4090:8",
+      "idle_cpus": 128,
+      "is_available": true,
+      "is_idle": true,
+      "name": "gpu40903",
+      "partitions": [
+        "gpu4090_128"
+      ],
+      "state": "IDLE",
+      "total_cpus": 128,
+      "total_gpus": 8,
+      "total_memory_mb": 1000000
+    },
+    "selected_partition": "gpu4090_128"
+  }
+}

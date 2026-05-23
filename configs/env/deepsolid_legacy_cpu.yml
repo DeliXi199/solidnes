@@ -1,0 +1,26 @@
+name: solidnes-deepsolid-legacy
+channels:
+  - conda-forge
+dependencies:
+  - python=3.9
+  - pip
+  - numpy
+  - scipy=1.9.3
+  - pandas
+  - h5py=3.2.1
+  - pytables
+  - pip:
+      - absl-py
+      - attrs
+      - dataclasses
+      - networkx
+      - ordered-set
+      - typing
+      - chex==0.1.5
+      - jax==0.2.26
+      - jaxlib==0.1.75
+      - ml_collections
+      - optax==0.0.9
+      - opt_einsum==3.3.0
+      - pyscf
+

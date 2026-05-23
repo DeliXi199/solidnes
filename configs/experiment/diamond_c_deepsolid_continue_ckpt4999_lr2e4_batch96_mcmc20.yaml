@@ -1,0 +1,40 @@
+project: solidnes
+experiment_name: diamond_c_deepsolid_continue_ckpt4999_lr2e4_batch96_mcmc20
+stage: phase1_validation
+phase: carbon_diamond_ground_state_continuation
+
+backend:
+  name: deepsolid
+  repository: https://github.com/bytedance/DeepSolid
+  inspected_commit: 812a2b8
+  mode: external_backend
+
+system_config: ../system/diamond_c_primitive_gamma.yaml
+model_config: ../model/deepsolid_detnet_medium.yaml
+sampler_config: ../sampler/metropolis_deepsolid_continue_mcmc20.yaml
+train_config: ../train/ground_state_deepsolid_continue_ckpt4999_lr2e4_batch96_mcmc20.yaml
+
+deepsolid_config_template:
+  module: solidnes/backends/deepsolid_configs/diamond_smoke.py
+  input_string: C,C,3.57,1,sto-3g,1e-8
+
+output:
+  log_dir: tasks/phase1_diamond_c/sto3g/continuation/0014_deepsolid_continue_ckpt4999_lr2e4_batch96_mcmc20/logs/backend
+  checkpoint_dir: tasks/phase1_diamond_c/sto3g/continuation/0014_deepsolid_continue_ckpt4999_lr2e4_batch96_mcmc20/results/checkpoints
+  validation_dir: tasks/phase1_diamond_c/sto3g/continuation/0014_deepsolid_continue_ckpt4999_lr2e4_batch96_mcmc20/results/validation
+  restore_checkpoint_dir: tasks/phase1_diamond_c/sto3g/training/0012_deepsolid_validation_iter5000_batch96_mcmc12_full/results/checkpoints
+
+diagnostics:
+  import_deepsolid: true
+  build_pyscf_cell: true
+  electron_count: true
+  hf_reference: true
+  training_stats_summary: true
+  gpu_training: true
+  lower_lr_continuation: true
+
+notes:
+  status: validation_ready
+  purpose: test whether the current medium network is optimization-limited before moving to a larger model
+  physics_caveat: still carbon diamond primitive cell with sto-3g basis; this tests optimization behavior, not final physical accuracy
+  restore_checkpoint: qmcjax_ckpt_004999 from diamond_c_deepsolid_validation_iter5000_batch96_mcmc12_full

@@ -1,0 +1,128 @@
+{
+  "config": {
+    "allowed_partitions": [
+      "intelgpu80g"
+    ],
+    "blocked_partitions": [
+      "gpu4090",
+      "gpu4090_8",
+      "h20llm"
+    ],
+    "idle_extra_partitions": [
+      "intelgpu80g",
+      "amdgpu40g",
+      "amdgpu80g"
+    ],
+    "precision_profile": "fp64",
+    "queue_mode": "auto"
+  },
+  "kind": "gpu",
+  "ready": true,
+  "reason": "best_idle_gpu_node",
+  "sbatch": {
+    "request": {
+      "cpus": 96,
+      "gpus": 2,
+      "gres": "gpu:2",
+      "partition": "intelgpu80g"
+    },
+    "sbatch_args": [
+      "--nodes",
+      "1",
+      "--partition",
+      "intelgpu80g",
+      "--gres",
+      "gpu:2",
+      "--cpus-per-task",
+      "96",
+      "--exclusive",
+      "--nodelist",
+      "gpu001",
+      "--job-name",
+      "solidnes-gpu-continuation-probe",
+      "--account",
+      "hmt03",
+      "--time",
+      "00:30:00",
+      "--export",
+      "ALL,SOLIDNES_TOTAL_GPUS=2,SOLIDNES_TOTAL_CPU_CORES=96",
+      "--output",
+      "logs/slurm/%x_%j.log",
+      "--error",
+      "logs/slurm/%x_%j.err"
+    ],
+    "sbatch_command": [
+      "sbatch",
+      "--nodes",
+      "1",
+      "--partition",
+      "intelgpu80g",
+      "--gres",
+      "gpu:2",
+      "--cpus-per-task",
+      "96",
+      "--exclusive",
+      "--nodelist",
+      "gpu001",
+      "--job-name",
+      "solidnes-gpu-continuation-probe",
+      "--account",
+      "hmt03",
+      "--time",
+      "00:30:00",
+      "--export",
+      "ALL,SOLIDNES_TOTAL_GPUS=2,SOLIDNES_TOTAL_CPU_CORES=96",
+      "--output",
+      "logs/slurm/%x_%j.log",
+      "--error",
+      "logs/slurm/%x_%j.err",
+      "scripts/slurm/run_deepsolid_gpu_smoke.slurm"
+    ],
+    "sbatch_command_quoted": "sbatch --nodes 1 --partition intelgpu80g --gres gpu:2 --cpus-per-task 96 --exclusive --nodelist gpu001 --job-name solidnes-gpu-continuation-probe --account hmt03 --time 00:30:00 --export ALL,SOLIDNES_TOTAL_GPUS=2,SOLIDNES_TOTAL_CPU_CORES=96 --output logs/slurm/%x_%j.log --error logs/slurm/%x_%j.err scripts/slurm/run_deepsolid_gpu_smoke.slurm"
+  },
+  "selection": {
+    "candidates": [
+      {
+        "allocated_cpus": 0,
+        "allocated_gpus": 0,
+        "free_gpus": 2,
+        "free_memory_mb": 248917,
+        "gpu_model_key": "a100_80gb",
+        "gpu_type": "",
+        "gres": "gpu:2",
+        "idle_cpus": 96,
+        "is_available": true,
+        "is_idle": true,
+        "name": "gpu001",
+        "partitions": [
+          "intelgpu80g"
+        ],
+        "state": "IDLE",
+        "total_cpus": 96,
+        "total_gpus": 2,
+        "total_memory_mb": 500000
+      }
+    ],
+    "selected_node": {
+      "allocated_cpus": 0,
+      "allocated_gpus": 0,
+      "free_gpus": 2,
+      "free_memory_mb": 248917,
+      "gpu_model_key": "a100_80gb",
+      "gpu_type": "",
+      "gres": "gpu:2",
+      "idle_cpus": 96,
+      "is_available": true,
+      "is_idle": true,
+      "name": "gpu001",
+      "partitions": [
+        "intelgpu80g"
+      ],
+      "state": "IDLE",
+      "total_cpus": 96,
+      "total_gpus": 2,
+      "total_memory_mb": 500000
+    },
+    "selected_partition": "intelgpu80g"
+  }
+}

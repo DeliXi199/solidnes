@@ -1,0 +1,83 @@
+{
+  "created_at": "2026-05-22T06:21:32.229212+00:00",
+  "experiment_name": "diamond_c_deepsolid_ccpvdz_paper_net_continue_ckpt9999_lr1e4_batch384_mcmc20_iter30000",
+  "basis": "ccpvdz",
+  "stats_path": "/data/home/yihaoxu/research/projects/solidnes/results/phase1_diamond_c/ccpvdz/continuation/deepsolid_ccpvdz_paper_net_continue_ckpt9999_lr1e4_batch384_mcmc20_iter30000/checkpoints/train_stats.csv",
+  "reference_path": "/data/home/yihaoxu/research/projects/solidnes/results/phase1_diamond_c/ccpvdz/continuation/deepsolid_ccpvdz_paper_net_continue_ckpt9999_lr1e4_batch384_mcmc20_iter30000/validation/pyscf_pbc_hf_reference.json",
+  "rows": 20000,
+  "first_step": 10000,
+  "last_step": 29999,
+  "first_energy_hartree": -74.39524683536096,
+  "last_energy_hartree": -74.70654721889488,
+  "min_energy_hartree": -81.33138790336196,
+  "energy_delta_hartree": -0.31130038353391853,
+  "energy_trend": "down",
+  "first_variance": 21.30847024610739,
+  "last_variance": 15.226108190050809,
+  "variance_delta": -6.082362056056581,
+  "variance_trend": "down",
+  "pmove_mean": 0.5391915950520834,
+  "pmove_min": 0.4884114583333333,
+  "pmove_max": 0.5904947916666666,
+  "imaginary_abs_max": 0.8454772527727662,
+  "finite_checks_passed": true,
+  "tail_fraction": 0.5,
+  "tail_rows": 10000,
+  "tail_start_step": 20000,
+  "tail_energy_mean_hartree": -74.90862100883497,
+  "tail_energy_stderr_hartree": 0.0021106714111269265,
+  "tail_variance_mean": 16.58762406358395,
+  "tail_pmove_mean": 0.5392928125,
+  "block_count_requested": 5,
+  "block_count_used": 5,
+  "block_energy_means_hartree": [
+    -74.84014019717789,
+    -74.88410300534856,
+    -74.91854879300737,
+    -74.94206129552332,
+    -74.95825175311775
+  ],
+  "block_energy_stderr_hartree": 0.021178737581130192,
+  "hf_reference": {
+    "created_at": "2026-05-22T04:23:43.116870+00:00",
+    "experiment_name": "diamond_c_deepsolid_ccpvdz_paper_net_continue_ckpt9999_lr1e4_batch384_mcmc20_iter30000",
+    "backend": "deepsolid",
+    "reference": "PySCF PBC KHF via DeepSolid.hf.SCF",
+    "basis": "ccpvdz",
+    "pseudo": null,
+    "nelectron": 12,
+    "nelec": [
+      6,
+      6
+    ],
+    "dimension": 3,
+    "scale": 1,
+    "twist": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "kpts": [
+      [
+        0.0,
+        0.0,
+        0.0
+      ]
+    ],
+    "converged": true,
+    "e_tot_hartree": -74.97575917915333,
+    "e_tot_per_simulation_cell_hartree": -74.97575917915333,
+    "e_tot_per_electron_hartree": -6.24797993159611,
+    "mo_occ_shape": [
+      1,
+      28
+    ],
+    "notes": {
+      "accuracy_scope": "same configured ccpvdz Hamiltonian",
+      "comparison_rule": "a trained variational energy should be finite and trend below/near this HF reference for the same setup"
+    }
+  },
+  "last_minus_hf_hartree": 0.2692119602584455,
+  "min_minus_hf_hartree": -6.3556287242086285,
+  "tail_mean_minus_hf_hartree": 0.06713817031835845
+}

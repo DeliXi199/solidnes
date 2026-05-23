@@ -1,0 +1,86 @@
+{
+  "config": {
+    "allowed_partitions": [
+      "intelgpu80g"
+    ],
+    "blocked_partitions": [
+      "gpu4090",
+      "gpu4090_8",
+      "h20llm"
+    ],
+    "idle_extra_partitions": [
+      "intelgpu80g",
+      "amdgpu40g",
+      "amdgpu80g"
+    ],
+    "precision_profile": "fp64",
+    "queue_mode": "auto"
+  },
+  "kind": "gpu",
+  "ready": true,
+  "reason": "no_free_gpu_queue_flexible_partitions",
+  "sbatch": {
+    "request": {
+      "cpus": 16,
+      "gpus": 2,
+      "gres": "gpu:2",
+      "partition": "intelgpu80g"
+    },
+    "sbatch_args": [
+      "--nodes",
+      "1",
+      "--partition",
+      "intelgpu80g",
+      "--gres",
+      "gpu:2",
+      "--cpus-per-task",
+      "16",
+      "--mem",
+      "64000",
+      "--job-name",
+      "solidnes-gpu-iter5000-b96-m12-full",
+      "--account",
+      "hmt03",
+      "--time",
+      "01:00:00",
+      "--export",
+      "ALL,SOLIDNES_TOTAL_GPUS=2,SOLIDNES_TOTAL_CPU_CORES=16,SOLIDNES_CPUS_PER_GPU_BASE=8,SOLIDNES_CPU_REMAINDER=0,SOLIDNES_CPUS_PER_GPU_LIST=8:8,SOLIDNES_CPU_BATCHES=gpu0:0-7;gpu1:8-15,SOLIDNES_CPU_PARALLELISM=16",
+      "--output",
+      "logs/slurm/%x_%j.log",
+      "--error",
+      "logs/slurm/%x_%j.err"
+    ],
+    "sbatch_command": [
+      "sbatch",
+      "--nodes",
+      "1",
+      "--partition",
+      "intelgpu80g",
+      "--gres",
+      "gpu:2",
+      "--cpus-per-task",
+      "16",
+      "--mem",
+      "64000",
+      "--job-name",
+      "solidnes-gpu-iter5000-b96-m12-full",
+      "--account",
+      "hmt03",
+      "--time",
+      "01:00:00",
+      "--export",
+      "ALL,SOLIDNES_TOTAL_GPUS=2,SOLIDNES_TOTAL_CPU_CORES=16,SOLIDNES_CPUS_PER_GPU_BASE=8,SOLIDNES_CPU_REMAINDER=0,SOLIDNES_CPUS_PER_GPU_LIST=8:8,SOLIDNES_CPU_BATCHES=gpu0:0-7;gpu1:8-15,SOLIDNES_CPU_PARALLELISM=16",
+      "--output",
+      "logs/slurm/%x_%j.log",
+      "--error",
+      "logs/slurm/%x_%j.err",
+      "scripts/slurm/run_deepsolid_gpu_smoke.slurm"
+    ],
+    "sbatch_command_quoted": "sbatch --nodes 1 --partition intelgpu80g --gres gpu:2 --cpus-per-task 16 --mem 64000 --job-name solidnes-gpu-iter5000-b96-m12-full --account hmt03 --time 01:00:00 --export 'ALL,SOLIDNES_TOTAL_GPUS=2,SOLIDNES_TOTAL_CPU_CORES=16,SOLIDNES_CPUS_PER_GPU_BASE=8,SOLIDNES_CPU_REMAINDER=0,SOLIDNES_CPUS_PER_GPU_LIST=8:8,SOLIDNES_CPU_BATCHES=gpu0:0-7;gpu1:8-15,SOLIDNES_CPU_PARALLELISM=16' --output logs/slurm/%x_%j.log --error logs/slurm/%x_%j.err scripts/slurm/run_deepsolid_gpu_smoke.slurm"
+  },
+  "selection": {
+    "candidates": [],
+    "selected_node": null,
+    "selected_partition": "intelgpu80g"
+  }
+}

@@ -1,0 +1,47 @@
+training:
+  target: ground_state
+  seed: 20260522
+  deterministic: true
+  batch_size: 4096
+  use_x64: true
+  iterations: 1000
+  optimizer: kfac
+  learning_rate: 0.03
+  learning_rate_decay: 1.0
+  learning_rate_delay: 10000.0
+  laplacian_mode: for
+  partition_number: 3
+  clip_local_energy: 5.0
+  ministeps: 1
+  kfac:
+    invert_every: 1
+    cov_update_every: 1
+    damping: 0.001
+    cov_ema_decay: 0.95
+    momentum: 0.0
+    momentum_type: regular
+    min_damping: 0.0001
+    norm_constraint: 0.001
+    mean_center: true
+    l2_reg: 0.0
+    register_only_generic: false
+  pretrain_method: net
+  pretrain_iterations: 1000
+  pretrain_learning_rate: 0.0003
+  pretrain_steps: 1
+  checkpoint_every_minutes: 5
+  log_every: 1
+
+stability_checks:
+  finite_energy: true
+  finite_variance: true
+  acceptance_range: [0.05, 0.95]
+  expected_effect: paper-like KFAC probe should test whether the legacy DeepSolid KFAC path works on the current JAX stack
+  expected_hf_reference_hartree: -74.9757591792
+  paper_vmc_reference_hartree: -75.4009
+
+notes:
+  status: paper_alignment_probe
+  purpose: C-diamond cc-pVDZ paper-parameter probe with only 1000 VMC iterations
+  paper_alignment: cc-pVDZ, paper-size DetNet, 8 determinants, KFAC, batch 4096, pretrain 1000, MCMC 20
+  caveat: training length is intentionally shortened from paper-level production runs

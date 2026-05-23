@@ -1,0 +1,41 @@
+project: solidnes
+experiment_name: diamond_c_deepsolid_ccpvdz_paper_net_continue_ckpt999_lr2e4_batch384_mcmc20_iter10000
+stage: phase1_validation
+phase: carbon_diamond_ccpvdz_paper_network_continuation
+
+backend:
+  name: deepsolid
+  repository: https://github.com/bytedance/DeepSolid
+  inspected_commit: 812a2b8
+  mode: external_backend
+
+system_config: ../system/diamond_c_primitive_gamma.yaml
+model_config: ../model/deepsolid_detnet_paper_c_diamond.yaml
+sampler_config: ../sampler/metropolis_deepsolid_ccpvdz_continue_mcmc20.yaml
+train_config: ../train/ground_state_deepsolid_ccpvdz_paper_net_continue_ckpt999_lr2e4_batch384_mcmc20_iter10000.yaml
+
+deepsolid_config_template:
+  module: DeepSolid/config/diamond.py
+  input_string: C,C,3.57,1,ccpvdz
+
+output:
+  log_dir: tasks/phase1_diamond_c/ccpvdz/continuation/0020_deepsolid_ccpvdz_paper_net_continue_ckpt999_lr2e4_batch384_mcmc20_iter10000/logs/backend
+  checkpoint_dir: tasks/phase1_diamond_c/ccpvdz/continuation/0020_deepsolid_ccpvdz_paper_net_continue_ckpt999_lr2e4_batch384_mcmc20_iter10000/results/checkpoints
+  validation_dir: tasks/phase1_diamond_c/ccpvdz/continuation/0020_deepsolid_ccpvdz_paper_net_continue_ckpt999_lr2e4_batch384_mcmc20_iter10000/results/validation
+  restore_checkpoint_dir: tasks/phase1_diamond_c/ccpvdz/training/0019_deepsolid_ccpvdz_paper_net_batch384_mcmc20_adam_sanity/results/checkpoints
+
+diagnostics:
+  import_deepsolid: true
+  build_pyscf_cell: true
+  electron_count: true
+  hf_reference: true
+  checkpoint_restore: true
+  training_stats_summary: true
+  gpu_training: true
+  compare_to_ccpvdz_hf_reference: true
+
+notes:
+  status: paper_alignment_ready
+  purpose: continue the cc-pVDZ paper-like network from qmcjax_ckpt_000999 to 10000 total VMC steps
+  physics_caveat: Adam continuation, not paper-level KFAC benchmark
+  restore_checkpoint: qmcjax_ckpt_000999 from diamond_c_deepsolid_ccpvdz_paper_net_batch384_mcmc20_adam_sanity

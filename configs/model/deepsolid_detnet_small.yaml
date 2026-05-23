@@ -1,0 +1,17 @@
+model:
+  ansatz: deepsolid_detnet
+  backend: deepsolid
+  size: small
+  distance_type: tri
+  envelope_type: isotropic
+  full_det: false
+  hidden_dims:
+    - [64, 16]
+    - [64, 16]
+  determinants: 4
+  after_determinants: 1
+
+notes:
+  status: config_build_ready
+  purpose: small DeepSolid-style model config for backend smoke tests
+  source_pattern: DeepSolid/base_config.py network.detnet

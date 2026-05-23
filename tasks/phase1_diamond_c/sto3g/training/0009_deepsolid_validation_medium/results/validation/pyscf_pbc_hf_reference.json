@@ -1,0 +1,39 @@
+{
+  "created_at": "2026-05-21T12:56:23.814172+00:00",
+  "experiment_name": "diamond_c_deepsolid_validation_medium",
+  "backend": "deepsolid",
+  "reference": "PySCF PBC KHF via DeepSolid.hf.SCF",
+  "basis": "sto-3g",
+  "pseudo": null,
+  "nelectron": 12,
+  "nelec": [
+    6,
+    6
+  ],
+  "dimension": 3,
+  "scale": 1,
+  "twist": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "kpts": [
+    [
+      0.0,
+      0.0,
+      0.0
+    ]
+  ],
+  "converged": true,
+  "e_tot_hartree": -74.0041967316007,
+  "e_tot_per_simulation_cell_hartree": -74.0041967316007,
+  "e_tot_per_electron_hartree": -6.167016394300059,
+  "mo_occ_shape": [
+    1,
+    10
+  ],
+  "notes": {
+    "accuracy_scope": "same small sto-3g smoke Hamiltonian; not a production carbon benchmark",
+    "comparison_rule": "a trained variational energy should be finite and trend below/near this HF reference for the same setup"
+  }
+}

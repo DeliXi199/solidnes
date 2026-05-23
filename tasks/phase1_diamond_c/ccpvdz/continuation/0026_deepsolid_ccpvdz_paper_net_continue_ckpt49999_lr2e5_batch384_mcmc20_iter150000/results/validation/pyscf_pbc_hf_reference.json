@@ -1,0 +1,39 @@
+{
+  "created_at": "2026-05-22T08:29:43.417041+00:00",
+  "experiment_name": "diamond_c_deepsolid_ccpvdz_paper_net_continue_ckpt49999_lr2e5_batch384_mcmc20_iter150000",
+  "backend": "deepsolid",
+  "reference": "PySCF PBC KHF via DeepSolid.hf.SCF",
+  "basis": "ccpvdz",
+  "pseudo": null,
+  "nelectron": 12,
+  "nelec": [
+    6,
+    6
+  ],
+  "dimension": 3,
+  "scale": 1,
+  "twist": [
+    0.0,
+    0.0,
+    0.0
+  ],
+  "kpts": [
+    [
+      0.0,
+      0.0,
+      0.0
+    ]
+  ],
+  "converged": true,
+  "e_tot_hartree": -74.97575917915336,
+  "e_tot_per_simulation_cell_hartree": -74.97575917915336,
+  "e_tot_per_electron_hartree": -6.247979931596113,
+  "mo_occ_shape": [
+    1,
+    28
+  ],
+  "notes": {
+    "accuracy_scope": "same configured ccpvdz Hamiltonian",
+    "comparison_rule": "a trained variational energy should be finite and trend below/near this HF reference for the same setup"
+  }
+}

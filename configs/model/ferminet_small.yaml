@@ -1,0 +1,14 @@
+model:
+  ansatz: ferminet
+  backend: TBD
+  size: small
+  determinants: TBD
+  hidden_dims: TBD
+  use_periodic_features: true
+  initialization:
+    dft_orbitals: TBD
+
+notes:
+  status: scaffold_only
+  purpose: placeholder for a small FermiNet-style backend config
+

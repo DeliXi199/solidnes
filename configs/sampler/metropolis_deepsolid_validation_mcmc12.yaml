@@ -1,0 +1,12 @@
+sampler:
+  name: metropolis
+  burn_in: 12
+  steps_per_iteration: 12
+  proposal_width: 0.1
+  adapt_frequency: 5
+  one_electron: false
+  importance_sampling: false
+
+notes:
+  status: validation_ready
+  purpose: iteration-focused carbon-diamond validation sampler with mildly increased decorrelation

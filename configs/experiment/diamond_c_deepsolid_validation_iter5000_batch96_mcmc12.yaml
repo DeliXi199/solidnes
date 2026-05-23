@@ -1,0 +1,40 @@
+project: solidnes
+experiment_name: diamond_c_deepsolid_validation_iter5000_batch96_mcmc12
+stage: phase1_validation
+phase: carbon_diamond_ground_state_validation
+
+backend:
+  name: deepsolid
+  repository: https://github.com/bytedance/DeepSolid
+  inspected_commit: 812a2b8
+  mode: external_backend
+
+system_config: ../system/diamond_c_primitive_gamma.yaml
+model_config: ../model/deepsolid_detnet_medium.yaml
+sampler_config: ../sampler/metropolis_deepsolid_validation_mcmc12.yaml
+train_config: ../train/ground_state_deepsolid_validation_iter5000_batch96_mcmc12.yaml
+
+deepsolid_config_template:
+  module: solidnes/backends/deepsolid_configs/diamond_smoke.py
+  input_string: C,C,3.57,1,sto-3g,1e-8
+
+output:
+  log_dir: tasks/phase1_diamond_c/sto3g/training/0011_deepsolid_validation_iter5000_batch96_mcmc12/logs/backend
+  checkpoint_dir: tasks/phase1_diamond_c/sto3g/training/0011_deepsolid_validation_iter5000_batch96_mcmc12/results/checkpoints
+  validation_dir: tasks/phase1_diamond_c/sto3g/training/0011_deepsolid_validation_iter5000_batch96_mcmc12/results/validation
+
+diagnostics:
+  import_deepsolid: true
+  build_pyscf_cell: true
+  electron_count: true
+  hf_reference: true
+  hf_target_pretrain: true
+  training_stats_summary: true
+  gpu_training: true
+  compare_tail_plateau_to_batch64_mcmc10: true
+
+notes:
+  status: validation_ready
+  purpose: longer-iteration carbon sto-3g validation after batch64/MCMC10 improvement
+  physics_caveat: still sto-3g; this is a convergence/stability experiment, not a production benchmark
+  design_choice: iterations are increased aggressively; batch and MCMC parameters are increased only mildly

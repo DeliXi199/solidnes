@@ -1,0 +1,11 @@
+sampler:
+  name: metropolis
+  burn_in: 100
+  steps_per_iteration: 20
+  proposal_width: 0.02
+  adapt_frequency: 100
+  blocks: 1
+
+notes:
+  status: config_build_ready
+  purpose: FermiNet PBC diamond sampler aligned with DeepSolid MCMC20 comparison runs

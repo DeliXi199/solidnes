@@ -1,0 +1,40 @@
+project: solidnes
+experiment_name: diamond_c_deepsolid_ccpvdz_paper_kfac_batch4096_mcmc20_iter1000
+stage: phase1_validation
+phase: carbon_diamond_ccpvdz_paper_kfac_probe
+
+backend:
+  name: deepsolid
+  repository: https://github.com/bytedance/DeepSolid
+  inspected_commit: 812a2b8
+  mode: external_backend
+
+system_config: ../system/diamond_c_primitive_gamma.yaml
+model_config: ../model/deepsolid_detnet_paper_c_diamond.yaml
+sampler_config: ../sampler/metropolis_deepsolid_ccpvdz_training_mcmc20.yaml
+train_config: ../train/ground_state_deepsolid_ccpvdz_paper_kfac_batch4096_mcmc20_iter1000.yaml
+
+deepsolid_config_template:
+  module: DeepSolid/config/diamond.py
+  input_string: C,C,3.57,1,ccpvdz
+
+output:
+  log_dir: tasks/phase1_diamond_c/ccpvdz/training/0028_deepsolid_ccpvdz_paper_kfac_batch4096_mcmc20_iter1000/logs/backend
+  checkpoint_dir: tasks/phase1_diamond_c/ccpvdz/training/0028_deepsolid_ccpvdz_paper_kfac_batch4096_mcmc20_iter1000/results/checkpoints
+  validation_dir: tasks/phase1_diamond_c/ccpvdz/training/0028_deepsolid_ccpvdz_paper_kfac_batch4096_mcmc20_iter1000/results/validation
+
+diagnostics:
+  import_deepsolid: true
+  build_pyscf_cell: true
+  electron_count: true
+  hf_reference: true
+  hf_target_pretrain: true
+  training_stats_summary: true
+  gpu_training: true
+  compare_to_ccpvdz_hf_reference: true
+  compare_to_paper_reference: true
+
+notes:
+  status: paper_alignment_probe
+  purpose: first true KFAC cc-pVDZ C-diamond run under paper-like settings, shortened to 1000 VMC iterations
+  physics_caveat: this is a compatibility and convergence probe, not a statistically converged benchmark

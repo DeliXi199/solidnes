@@ -1,0 +1,41 @@
+project: solidnes
+experiment_name: diamond_c_ferminet_pbc_gamma_kfac_batch4096_iter2000_defaultlap
+stage: phase1_backend
+phase: ferminet_pbc_ground_state_kfac_forward_laplacian_steady_state_ablation
+
+backend:
+  name: ferminet
+  repository: https://github.com/google-deepmind/ferminet
+  inspected_commit: c4312c315dda1c5728994ba89629744f71c6eb66
+  mode: external_backend_with_local_patch
+
+system_config: ../system/diamond_c_primitive_gamma.yaml
+model_config: ../model/ferminet_pbc_small.yaml
+sampler_config: ../sampler/metropolis_ferminet_pbc_short.yaml
+train_config: ../train/ground_state_ferminet_pbc_kfac_batch4096_iter2000_defaultlap.yaml
+
+ferminet_config_template:
+  module: solidnes/backends/ferminet_configs/diamond_pbc_gamma.py
+
+runtime:
+  target_jax_version: 0.10.1
+  cuda_extra: cuda12
+  precision_profile: speed
+  x64_enabled: false
+  require_gpu: true
+  xla_python_client_preallocate: true
+  xla_python_client_mem_fraction: 0.90
+
+output:
+  log_dir: tasks/phase1_diamond_c/pbc_gamma/training/0040_ferminet_kfac_batch4096_iter2000_defaultlap/logs/backend
+  checkpoint_dir: tasks/phase1_diamond_c/pbc_gamma/training/0040_ferminet_kfac_batch4096_iter2000_defaultlap/results/checkpoints
+
+diagnostics:
+  import_ferminet: true
+  build_pbc_config: true
+  train_stats: true
+  compare_to_kfac_batch4096_iter2000_folx: true
+
+notes:
+  status: baseline_ready
+  purpose: longer KFAC default-Laplacian run to reduce initialization overhead in the FOLX ablation

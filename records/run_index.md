@@ -1,0 +1,67 @@
+# SolidNES Run Index
+
+Last updated: 2026-05-23, Asia/Shanghai
+
+This file is the canonical ledger for numbered task bundles after the global artifact migration.
+
+## Next Available Run Number
+
+```text
+0047
+```
+
+## Numbered Runs
+
+| Run | Status | First Artifact | Task Root | Result Root | Plans | Log Files |
+| --- | --- | --- | --- | --- | ---: | ---: |
+| 0001 | migrated | 2026-05-21 16:27:24 | `solidnes/tasks/phase1_diamond_c/sto3g/smoke/0001_deepsolid_runtime_smoke/` | `tasks/phase1_diamond_c/sto3g/smoke/0001_deepsolid_runtime_smoke/results/` | 4 | 8 |
+| 0002 | migrated | 2026-05-21 16:46:14 | `solidnes/tasks/phase1_diamond_c/sto3g/smoke/0002_deepsolid_gpu_device_smoke/` |  | 0 | 2 |
+| 0003 | migrated | 2026-05-21 18:06:12 | `solidnes/tasks/phase1_diamond_c/sto3g/smoke/0003_deepsolid_one_step_adam_smoke/` | `tasks/phase1_diamond_c/sto3g/smoke/0003_deepsolid_one_step_adam_smoke/results/` | 1 | 2 |
+| 0004 | migrated | 2026-05-21 18:10:28 | `solidnes/tasks/phase1_diamond_c/sto3g/smoke/0004_deepsolid_one_step_adam_checkpoint_shim_smoke/` | `tasks/phase1_diamond_c/sto3g/smoke/0004_deepsolid_one_step_adam_checkpoint_shim_smoke/results/` | 1 | 2 |
+| 0006 | migrated | 2026-05-21 20:23:45 | `solidnes/tasks/phase1_diamond_c/sto3g/training/0006_deepsolid_validation_short/` | `tasks/phase1_diamond_c/sto3g/training/0006_deepsolid_validation_short/results/` | 1 | 2 |
+| 0007 | migrated | 2026-05-21 20:28:57 | `solidnes/tasks/phase1_diamond_c/sto3g/training/0007_deepsolid_validation_stable/` | `tasks/phase1_diamond_c/sto3g/training/0007_deepsolid_validation_stable/results/` | 1 | 2 |
+| 0008 | migrated | 2026-05-21 20:40:32 | `solidnes/tasks/phase1_diamond_c/sto3g/training/0008_deepsolid_validation_pretrain/` | `tasks/phase1_diamond_c/sto3g/training/0008_deepsolid_validation_pretrain/results/` | 2 | 4 |
+| 0009 | migrated | 2026-05-21 20:56:23 | `solidnes/tasks/phase1_diamond_c/sto3g/training/0009_deepsolid_validation_medium/` | `tasks/phase1_diamond_c/sto3g/training/0009_deepsolid_validation_medium/results/` | 2 | 4 |
+| 0010 | migrated | 2026-05-21 21:30:14 | `solidnes/tasks/phase1_diamond_c/sto3g/training/0010_deepsolid_validation_batch64_mcmc10_20min/` | `tasks/phase1_diamond_c/sto3g/training/0010_deepsolid_validation_batch64_mcmc10_20min/results/` | 1 | 2 |
+| 0011 | migrated | 2026-05-21 21:48:23 | `solidnes/tasks/phase1_diamond_c/sto3g/training/0011_deepsolid_validation_iter5000_batch96_mcmc12/` | `tasks/phase1_diamond_c/sto3g/training/0011_deepsolid_validation_iter5000_batch96_mcmc12/results/` | 1 | 2 |
+| 0012 | migrated | 2026-05-21 22:12:09 | `solidnes/tasks/phase1_diamond_c/sto3g/training/0012_deepsolid_validation_iter5000_batch96_mcmc12_full/` | `tasks/phase1_diamond_c/sto3g/training/0012_deepsolid_validation_iter5000_batch96_mcmc12_full/results/` | 1 | 2 |
+| 0013 | migrated | 2026-05-21 22:49:23 | `solidnes/tasks/phase1_diamond_c/sto3g/evaluation/0013_deepsolid_evaluate_ckpt4999_batch96_mcmc20/` | `tasks/phase1_diamond_c/sto3g/evaluation/0013_deepsolid_evaluate_ckpt4999_batch96_mcmc20/results/` | 1 | 2 |
+| 0014 | migrated | 2026-05-21 23:43:15 | `solidnes/tasks/phase1_diamond_c/sto3g/continuation/0014_deepsolid_continue_ckpt4999_lr2e4_batch96_mcmc20/` | `tasks/phase1_diamond_c/sto3g/continuation/0014_deepsolid_continue_ckpt4999_lr2e4_batch96_mcmc20/results/` | 2 | 2 |
+| 0015 | migrated | 2026-05-22 00:09:11 | `solidnes/tasks/phase1_diamond_c/sto3g/continuation/0015_deepsolid_continue_ckpt9999_lr1e4_batch96_mcmc20_iter30000/` | `tasks/phase1_diamond_c/sto3g/continuation/0015_deepsolid_continue_ckpt9999_lr1e4_batch96_mcmc20_iter30000/results/` | 0 | 2 |
+| 0016 | migrated | 2026-05-22 00:46:38 | `solidnes/tasks/phase1_diamond_c/sto3g/evaluation/0016_deepsolid_evaluate_ckpt29999_batch96_mcmc30_iter40000/` | `tasks/phase1_diamond_c/sto3g/evaluation/0016_deepsolid_evaluate_ckpt29999_batch96_mcmc30_iter40000/results/` | 0 | 2 |
+| 0017 | migrated | 2026-05-22 01:16:06 | `solidnes/tasks/phase1_diamond_c/sto3g/evaluation/0017_deepsolid_evaluate_ckpt29999_seed20260522_batch96_mcmc30_iter40000/` | `tasks/phase1_diamond_c/sto3g/evaluation/0017_deepsolid_evaluate_ckpt29999_seed20260522_batch96_mcmc30_iter40000/results/` | 0 | 2 |
+| 0018 | migrated | 2026-05-22 10:32:57 | `solidnes/tasks/phase1_diamond_c/ccpvdz/references/0018_deepsolid_ccpvdz_hf_reference/` | `tasks/phase1_diamond_c/ccpvdz/references/0018_deepsolid_ccpvdz_hf_reference/results/` | 0 | 0 |
+| 0019 | migrated | 2026-05-22 10:38:59 | `solidnes/tasks/phase1_diamond_c/ccpvdz/training/0019_deepsolid_ccpvdz_paper_net_batch384_mcmc20_adam_sanity/` | `tasks/phase1_diamond_c/ccpvdz/training/0019_deepsolid_ccpvdz_paper_net_batch384_mcmc20_adam_sanity/results/` | 1 | 2 |
+| 0020 | migrated | 2026-05-22 11:10:50 | `solidnes/tasks/phase1_diamond_c/ccpvdz/continuation/0020_deepsolid_ccpvdz_paper_net_continue_ckpt999_lr2e4_batch384_mcmc20_iter10000/` | `tasks/phase1_diamond_c/ccpvdz/continuation/0020_deepsolid_ccpvdz_paper_net_continue_ckpt999_lr2e4_batch384_mcmc20_iter10000/results/` | 1 | 2 |
+| 0021 | migrated | 2026-05-22 12:23:43 | `solidnes/tasks/phase1_diamond_c/ccpvdz/continuation/0021_deepsolid_ccpvdz_paper_net_continue_ckpt9999_lr1e4_batch384_mcmc20_iter30000/` | `tasks/phase1_diamond_c/ccpvdz/continuation/0021_deepsolid_ccpvdz_paper_net_continue_ckpt9999_lr1e4_batch384_mcmc20_iter30000/results/` | 1 | 2 |
+| 0022 | migrated | 2026-05-22 13:44:52 | `solidnes/tasks/phase1_diamond_c/ccpvdz/smoke/0022_deepsolid_ground_smoke/` | `tasks/phase1_diamond_c/ccpvdz/smoke/0022_deepsolid_ground_smoke/results/` | 1 | 0 |
+| 0023 | migrated | 2026-05-22 14:29:00 | `solidnes/tasks/phase1_diamond_c/ccpvdz/continuation/0023_deepsolid_ccpvdz_paper_net_continue_ckpt29999_lr5e5_batch384_mcmc20_iter50000/` | `tasks/phase1_diamond_c/ccpvdz/continuation/0023_deepsolid_ccpvdz_paper_net_continue_ckpt29999_lr5e5_batch384_mcmc20_iter50000/results/` | 6 | 2 |
+| 0024 | migrated | 2026-05-22 14:54:34 | `solidnes/tasks/phase1_diamond_c/ccpvdz/probe/0024_gpu_policy_autosize_dryrun/` |  | 1 | 0 |
+| 0025 | migrated | 2026-05-22 16:27:49 | `solidnes/tasks/phase1_diamond_c/ccpvdz/continuation/0025_deepsolid_ccpvdz_paper_net_continue_ckpt49999_lr2e5_batch384_mcmc20_iter100000/` | `tasks/phase1_diamond_c/ccpvdz/continuation/0025_deepsolid_ccpvdz_paper_net_continue_ckpt49999_lr2e5_batch384_mcmc20_iter100000/results/` | 0 | 0 |
+| 0026 | migrated | 2026-05-22 16:29:43 | `solidnes/tasks/phase1_diamond_c/ccpvdz/continuation/0026_deepsolid_ccpvdz_paper_net_continue_ckpt49999_lr2e5_batch384_mcmc20_iter150000/` | `tasks/phase1_diamond_c/ccpvdz/continuation/0026_deepsolid_ccpvdz_paper_net_continue_ckpt49999_lr2e5_batch384_mcmc20_iter150000/results/` | 1 | 2 |
+| 0027 | migrated | 2026-05-22 22:40:48 | `solidnes/tasks/phase1_diamond_c/ccpvdz/analysis/0027_ccpvdz_analysis/` | `tasks/phase1_diamond_c/ccpvdz/analysis/0027_ccpvdz_analysis/results/` | 0 | 0 |
+| 0028 | migrated | 2026-05-22 23:00:47 | `solidnes/tasks/phase1_diamond_c/ccpvdz/training/0028_deepsolid_ccpvdz_paper_kfac_batch4096_mcmc20_iter1000/` | `tasks/phase1_diamond_c/ccpvdz/training/0028_deepsolid_ccpvdz_paper_kfac_batch4096_mcmc20_iter1000/results/` | 5 | 14 |
+| 0029 | migrated | 2026-05-23 00:28:32 | `solidnes/tasks/phase1_diamond_c/ccpvdz/continuation/0029_deepsolid_ccpvdz_paper_kfac_continue_ckpt999_batch4096_mcmc20_iter11000/` | `tasks/phase1_diamond_c/ccpvdz/continuation/0029_deepsolid_ccpvdz_paper_kfac_continue_ckpt999_batch4096_mcmc20_iter11000/results/` | 4 | 4 |
+| 0030 | migrated | 2026-05-23 11:04:37 | `solidnes/tasks/phase1_diamond_c/pbc_gamma/training/0030_ferminet_kfac_baseline/` | `tasks/phase1_diamond_c/pbc_gamma/training/0030_ferminet_kfac_baseline/results/` | 0 | 0 |
+| 0031 | migrated | 2026-05-23 11:10:24 | `solidnes/tasks/phase1_diamond_c/pbc_gamma/probe/0031_ferminet_cpu_config_check/` |  | 1 | 0 |
+| 0032 | migrated | 2026-05-23 12:27:33 | `solidnes/tasks/phase1_diamond_c/pbc_gamma/smoke/0032_ferminet_smoke/` | `tasks/phase1_diamond_c/pbc_gamma/smoke/0032_ferminet_smoke/results/` | 1 | 2 |
+| 0033 | migrated | 2026-05-23 12:34:19 | `solidnes/tasks/phase1_diamond_c/pbc_gamma/training/0033_ferminet_adam_short100/` | `tasks/phase1_diamond_c/pbc_gamma/training/0033_ferminet_adam_short100/results/` | 1 | 2 |
+| 0034 | migrated | 2026-05-23 12:49:11 | `solidnes/tasks/phase1_diamond_c/pbc_gamma/training/0034_ferminet_adam_short100_folx_tilefix/` | `tasks/phase1_diamond_c/pbc_gamma/training/0034_ferminet_adam_short100_folx_tilefix/results/` | 1 | 2 |
+| 0035 | migrated | 2026-05-23 13:02:16 | `solidnes/tasks/phase1_diamond_c/pbc_gamma/training/0035_ferminet_adam_short100_defaultlap/` | `tasks/phase1_diamond_c/pbc_gamma/training/0035_ferminet_adam_short100_defaultlap/results/` | 1 | 2 |
+| 0036 | migrated | 2026-05-23 13:09:51 | `solidnes/tasks/phase1_diamond_c/pbc_gamma/training/0036_ferminet_adam_short100_batch4096_defaultlap/` | `tasks/phase1_diamond_c/pbc_gamma/training/0036_ferminet_adam_short100_batch4096_defaultlap/results/` | 1 | 2 |
+| 0037 | migrated | 2026-05-23 13:09:51 | `solidnes/tasks/phase1_diamond_c/pbc_gamma/training/0037_ferminet_adam_short100_batch4096_folx/` | `tasks/phase1_diamond_c/pbc_gamma/training/0037_ferminet_adam_short100_batch4096_folx/results/` | 1 | 2 |
+| 0038 | migrated | 2026-05-23 13:17:31 | `solidnes/tasks/phase1_diamond_c/pbc_gamma/training/0038_ferminet_kfac_batch4096_iter400_defaultlap/` | `tasks/phase1_diamond_c/pbc_gamma/training/0038_ferminet_kfac_batch4096_iter400_defaultlap/results/` | 1 | 2 |
+| 0039 | migrated | 2026-05-23 13:26:06 | `solidnes/tasks/phase1_diamond_c/pbc_gamma/training/0039_ferminet_kfac_batch4096_iter400_folx/` | `tasks/phase1_diamond_c/pbc_gamma/training/0039_ferminet_kfac_batch4096_iter400_folx/results/` | 1 | 2 |
+| 0040 | migrated | 2026-05-23 13:36:22 | `solidnes/tasks/phase1_diamond_c/pbc_gamma/training/0040_ferminet_kfac_batch4096_iter2000_defaultlap/` | `tasks/phase1_diamond_c/pbc_gamma/training/0040_ferminet_kfac_batch4096_iter2000_defaultlap/results/` | 1 | 2 |
+| 0041 | migrated | 2026-05-23 13:36:22 | `solidnes/tasks/phase1_diamond_c/pbc_gamma/training/0041_ferminet_kfac_batch4096_iter2000_folx/` | `tasks/phase1_diamond_c/pbc_gamma/training/0041_ferminet_kfac_batch4096_iter2000_folx/results/` | 1 | 2 |
+| 0042 | migrated | 2026-05-23 14:21:25 | `solidnes/tasks/phase1_diamond_c/pbc_gamma/training/0042_ferminet_kfac_folx_batch4096_iter1000_paper/` | `tasks/phase1_diamond_c/pbc_gamma/training/0042_ferminet_kfac_folx_batch4096_iter1000_paper/results/` | 1 | 2 |
+| 0043 | migrated | 2026-05-23 14:37:25 | `solidnes/tasks/phase1_diamond_c/pbc_gamma/training/0043_ferminet_kfac_folx_batch4096_iter10000_paper/` | `tasks/phase1_diamond_c/pbc_gamma/training/0043_ferminet_kfac_folx_batch4096_iter10000_paper/results/` | 1 | 2 |
+| 0044 | migrated | 2026-05-23 15:41:28 | `solidnes/tasks/phase1_diamond_c/pbc_gamma/training/0044_ferminet_kfac_folx_batch4096_x64_burnin1000_iter20000_paper_pilot/` | `tasks/phase1_diamond_c/pbc_gamma/training/0044_ferminet_kfac_folx_batch4096_x64_burnin1000_iter20000_paper_pilot/results/` | 1 | 2 |
+| 0045 | migrated | 2026-05-23 15:58:17 | `solidnes/tasks/ferminet_pretraining/0045_ferminet_kfac_folx_batch4096_x64_burnin1000_iter20000_pbc_hf_pretrain_paper_pilot/` | `tasks/ferminet_pretraining/0045_ferminet_kfac_folx_batch4096_x64_burnin1000_iter20000_pbc_hf_pretrain_paper_pilot/results/` | 0 | 0 |
+| 0046 | migrated | 2026-05-23 19:33:07 | `solidnes/tasks/phase1_diamond_c/pbc_gamma/evaluation/0046_ferminet_x64_eval_ckpt18349_batch4096_mcmc20_iter2000/` | `tasks/phase1_diamond_c/pbc_gamma/evaluation/0046_ferminet_x64_eval_ckpt18349_batch4096_mcmc20_iter2000/results/` | 1 | 2 |
+
+## Cleanup Notes
+
+The pre-existing partial task tree backup was verified, then removed on
+2026-05-23 after its useful task summaries were consolidated into
+`solidnes/tasks/TASK_LEDGER.md`.

@@ -1,0 +1,118 @@
+{
+  "config": {
+    "allowed_partitions": [
+      "h200",
+      "h800",
+      "h20",
+      "gpu4090_128"
+    ],
+    "blocked_partitions": [
+      "gpu4090",
+      "gpu4090_8",
+      "h20llm"
+    ],
+    "precision_profile": "fp64",
+    "queue_mode": "auto"
+  },
+  "kind": "gpu",
+  "ready": true,
+  "reason": "best_available_gpu_node",
+  "sbatch": {
+    "request": {
+      "cpus": 116,
+      "gpus": 1,
+      "gres": "gpu:rtx4090:1",
+      "partition": "gpu4090_128"
+    },
+    "sbatch_args": [
+      "--nodes",
+      "1",
+      "--partition",
+      "gpu4090_128",
+      "--gres",
+      "gpu:rtx4090:1",
+      "--cpus-per-task",
+      "116",
+      "--job-name",
+      "solidnes-gpu-validation-short",
+      "--account",
+      "hmt03",
+      "--time",
+      "00:30:00",
+      "--export",
+      "ALL,SOLIDNES_TOTAL_GPUS=1",
+      "--output",
+      "logs/slurm/%x_%j.log",
+      "--error",
+      "logs/slurm/%x_%j.err"
+    ],
+    "sbatch_command": [
+      "sbatch",
+      "--nodes",
+      "1",
+      "--partition",
+      "gpu4090_128",
+      "--gres",
+      "gpu:rtx4090:1",
+      "--cpus-per-task",
+      "116",
+      "--job-name",
+      "solidnes-gpu-validation-short",
+      "--account",
+      "hmt03",
+      "--time",
+      "00:30:00",
+      "--export",
+      "ALL,SOLIDNES_TOTAL_GPUS=1",
+      "--output",
+      "logs/slurm/%x_%j.log",
+      "--error",
+      "logs/slurm/%x_%j.err",
+      "scripts/slurm/run_deepsolid_gpu_smoke.slurm"
+    ],
+    "sbatch_command_quoted": "sbatch --nodes 1 --partition gpu4090_128 --gres gpu:rtx4090:1 --cpus-per-task 116 --job-name solidnes-gpu-validation-short --account hmt03 --time 00:30:00 --export ALL,SOLIDNES_TOTAL_GPUS=1 --output logs/slurm/%x_%j.log --error logs/slurm/%x_%j.err scripts/slurm/run_deepsolid_gpu_smoke.slurm"
+  },
+  "selection": {
+    "candidates": [
+      {
+        "allocated_cpus": 12,
+        "allocated_gpus": 2,
+        "free_gpus": 6,
+        "free_memory_mb": 1013363,
+        "gpu_model_key": "rtx4090",
+        "gpu_type": "rtx4090",
+        "gres": "gpu:rtx4090:8",
+        "idle_cpus": 116,
+        "is_available": true,
+        "name": "gpu40904",
+        "partitions": [
+          "gpu4090_128"
+        ],
+        "state": "MIXED",
+        "total_cpus": 128,
+        "total_gpus": 8,
+        "total_memory_mb": 1000000
+      }
+    ],
+    "selected_node": {
+      "allocated_cpus": 12,
+      "allocated_gpus": 2,
+      "free_gpus": 6,
+      "free_memory_mb": 1013363,
+      "gpu_model_key": "rtx4090",
+      "gpu_type": "rtx4090",
+      "gres": "gpu:rtx4090:8",
+      "idle_cpus": 116,
+      "is_available": true,
+      "name": "gpu40904",
+      "partitions": [
+        "gpu4090_128"
+      ],
+      "state": "MIXED",
+      "total_cpus": 128,
+      "total_gpus": 8,
+      "total_memory_mb": 1000000
+    },
+    "selected_partition": "gpu4090_128"
+  }
+}

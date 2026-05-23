@@ -1,0 +1,18 @@
+training:
+  target: ground_state
+  seed: 0
+  max_steps: TBD
+  optimizer: TBD
+  preconditioner: TBD
+  checkpoint_every: TBD
+  log_every: TBD
+
+stability_checks:
+  finite_energy: true
+  finite_variance: true
+  acceptance_range: TBD
+
+notes:
+  status: scaffold_only
+  purpose: placeholder training config for periodic ground-state smoke test
+

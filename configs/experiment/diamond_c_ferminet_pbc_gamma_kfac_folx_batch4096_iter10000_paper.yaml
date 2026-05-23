@@ -1,0 +1,48 @@
+project: solidnes
+experiment_name: diamond_c_ferminet_pbc_gamma_kfac_folx_batch4096_iter10000_paper
+stage: phase1_backend
+phase: ferminet_pbc_ground_state_deepsolid_comparison
+
+backend:
+  name: ferminet
+  repository: https://github.com/google-deepmind/ferminet
+  inspected_commit: c4312c315dda1c5728994ba89629744f71c6eb66
+  mode: external_backend_with_local_patch
+
+system_config: ../system/diamond_c_primitive_gamma.yaml
+model_config: ../model/ferminet_pbc_paper.yaml
+sampler_config: ../sampler/metropolis_ferminet_pbc_mcmc20.yaml
+train_config: ../train/ground_state_ferminet_pbc_kfac_folx_batch4096_iter10000.yaml
+
+ferminet_config_template:
+  module: solidnes/backends/ferminet_configs/diamond_pbc_gamma.py
+
+runtime:
+  target_jax_version: 0.10.1
+  cuda_extra: cuda12
+  precision_profile: speed
+  x64_enabled: false
+  require_gpu: true
+  xla_python_client_preallocate: true
+  xla_python_client_mem_fraction: 0.90
+
+output:
+  log_dir: tasks/phase1_diamond_c/pbc_gamma/training/0043_ferminet_kfac_folx_batch4096_iter10000_paper/logs/backend
+  checkpoint_dir: tasks/phase1_diamond_c/pbc_gamma/training/0043_ferminet_kfac_folx_batch4096_iter10000_paper/results/checkpoints
+
+diagnostics:
+  import_ferminet: true
+  build_pbc_config: true
+  train_stats: true
+  compare_to_deepsolid_ccpvdz_longrun: true
+
+notes:
+  status: baseline_ready
+  purpose: formal paper-like FermiNet KFAC+FOLX run for comparison with DeepSolid C-diamond long-run reference
+  prior_probe:
+    experiment: diamond_c_ferminet_pbc_gamma_kfac_folx_batch4096_iter1000_paper
+    job: 127847
+    seconds_per_step: 0.428
+  local_patch:
+    file: external/ferminet/ferminet/networks.py
+    change: construct_symmetric_features uses broadcast_to instead of tile for spin-channel means

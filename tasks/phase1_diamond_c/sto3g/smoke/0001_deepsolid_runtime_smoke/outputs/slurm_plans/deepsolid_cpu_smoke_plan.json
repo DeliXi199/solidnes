@@ -1,0 +1,163 @@
+{
+  "config": {
+    "expected_minutes": 30,
+    "partition_order": [
+      "regular256",
+      "regular128",
+      "regular6430",
+      "regular",
+      "test"
+    ]
+  },
+  "kind": "cpu",
+  "ready": true,
+  "reason": "first_idle_in_policy_order",
+  "sbatch": {
+    "request": {
+      "cpus": 64,
+      "gpus": 0,
+      "partition": "regular256"
+    },
+    "sbatch_args": [
+      "--nodes",
+      "1",
+      "--exclusive",
+      "--partition",
+      "regular256",
+      "--job-name",
+      "solidnes-cpu-smoke",
+      "--account",
+      "hmt03",
+      "--ntasks-per-node",
+      "64",
+      "--export",
+      "ALL,SOLIDNES_TOTAL_CPU_CORES=64",
+      "--time",
+      "00:30:00",
+      "--output",
+      "logs/slurm/%x_%j.log",
+      "--error",
+      "logs/slurm/%x_%j.err"
+    ],
+    "sbatch_command": [
+      "sbatch",
+      "--nodes",
+      "1",
+      "--exclusive",
+      "--partition",
+      "regular256",
+      "--job-name",
+      "solidnes-cpu-smoke",
+      "--account",
+      "hmt03",
+      "--ntasks-per-node",
+      "64",
+      "--export",
+      "ALL,SOLIDNES_TOTAL_CPU_CORES=64",
+      "--time",
+      "00:30:00",
+      "--output",
+      "logs/slurm/%x_%j.log",
+      "--error",
+      "logs/slurm/%x_%j.err",
+      "scripts/slurm/run_deepsolid_cpu_smoke.slurm"
+    ],
+    "sbatch_command_quoted": "sbatch --nodes 1 --exclusive --partition regular256 --job-name solidnes-cpu-smoke --account hmt03 --ntasks-per-node 64 --export ALL,SOLIDNES_TOTAL_CPU_CORES=64 --time 00:30:00 --output logs/slurm/%x_%j.log --error logs/slurm/%x_%j.err scripts/slurm/run_deepsolid_cpu_smoke.slurm"
+  },
+  "selection": {
+    "candidates": [
+      {
+        "best_idle_node": {
+          "allocated_cpus": 0,
+          "free_memory_mb": 253720,
+          "gres": "(null)",
+          "idle_cpus": 64,
+          "is_idle": true,
+          "name": "node048",
+          "partitions": [
+            "regular256",
+            "long"
+          ],
+          "state": "IDLE",
+          "total_cpus": 64,
+          "total_memory_mb": 256000
+        },
+        "partition": "regular256"
+      },
+      {
+        "best_idle_node": {
+          "allocated_cpus": 0,
+          "free_memory_mb": 125687,
+          "gres": "(null)",
+          "idle_cpus": 64,
+          "is_idle": true,
+          "name": "node055",
+          "partitions": [
+            "regular128"
+          ],
+          "state": "IDLE",
+          "total_cpus": 64,
+          "total_memory_mb": 128000
+        },
+        "partition": "regular128"
+      },
+      {
+        "best_idle_node": {
+          "allocated_cpus": 0,
+          "free_memory_mb": 254289,
+          "gres": "(null)",
+          "idle_cpus": 64,
+          "is_idle": true,
+          "name": "node031",
+          "partitions": [
+            "regular6430"
+          ],
+          "state": "IDLE",
+          "total_cpus": 64,
+          "total_memory_mb": 256000
+        },
+        "partition": "regular6430"
+      },
+      {
+        "best_idle_node": {
+          "allocated_cpus": 0,
+          "free_memory_mb": 252884,
+          "gres": "(null)",
+          "idle_cpus": 56,
+          "is_idle": true,
+          "name": "node012",
+          "partitions": [
+            "regular",
+            "long_old"
+          ],
+          "state": "IDLE",
+          "total_cpus": 56,
+          "total_memory_mb": 256000
+        },
+        "partition": "regular"
+      },
+      {
+        "best_idle_node": null,
+        "partition": "test"
+      }
+    ],
+    "core_budget": 64,
+    "partition_arg": "regular256",
+    "selected_node": {
+      "allocated_cpus": 0,
+      "free_memory_mb": 253720,
+      "gres": "(null)",
+      "idle_cpus": 64,
+      "is_idle": true,
+      "name": "node048",
+      "partitions": [
+        "regular256",
+        "long"
+      ],
+      "state": "IDLE",
+      "total_cpus": 64,
+      "total_memory_mb": 256000
+    },
+    "selected_partition": "regular256"
+  }
+}

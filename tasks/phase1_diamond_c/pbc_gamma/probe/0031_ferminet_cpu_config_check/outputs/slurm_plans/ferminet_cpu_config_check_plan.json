@@ -1,0 +1,157 @@
+{
+  "config": {
+    "expected_minutes": 5,
+    "partition_order": [
+      "test",
+      "regular",
+      "regular128",
+      "regular256"
+    ]
+  },
+  "kind": "cpu",
+  "ready": true,
+  "reason": "forced",
+  "sbatch": {
+    "request": {
+      "cpus": 64,
+      "gpus": 0,
+      "partition": "test"
+    },
+    "sbatch_args": [
+      "--nodes",
+      "1",
+      "--exclusive",
+      "--partition",
+      "test",
+      "--job-name",
+      "solidnes-ferminet-check",
+      "--account",
+      "hmt03",
+      "--ntasks-per-node",
+      "64",
+      "--export",
+      "ALL,SOLIDNES_TOTAL_CPU_CORES=64",
+      "--time",
+      "00:05:00",
+      "--output",
+      "logs/slurm/%x_%j.log",
+      "--error",
+      "logs/slurm/%x_%j.err"
+    ],
+    "sbatch_command": [
+      "sbatch",
+      "--nodes",
+      "1",
+      "--exclusive",
+      "--partition",
+      "test",
+      "--job-name",
+      "solidnes-ferminet-check",
+      "--account",
+      "hmt03",
+      "--ntasks-per-node",
+      "64",
+      "--export",
+      "ALL,SOLIDNES_TOTAL_CPU_CORES=64",
+      "--time",
+      "00:05:00",
+      "--output",
+      "logs/slurm/%x_%j.log",
+      "--error",
+      "logs/slurm/%x_%j.err",
+      "scripts/slurm/run_ferminet_cpu_config_check.slurm"
+    ],
+    "sbatch_command_quoted": "sbatch --nodes 1 --exclusive --partition test --job-name solidnes-ferminet-check --account hmt03 --ntasks-per-node 64 --export ALL,SOLIDNES_TOTAL_CPU_CORES=64 --time 00:05:00 --output logs/slurm/%x_%j.log --error logs/slurm/%x_%j.err scripts/slurm/run_ferminet_cpu_config_check.slurm"
+  },
+  "selection": {
+    "candidates": [
+      {
+        "best_idle_node": {
+          "allocated_cpus": 0,
+          "free_memory_mb": 238685,
+          "gres": "gpu:rtx4090:2",
+          "idle_cpus": 64,
+          "is_idle": true,
+          "name": "test001",
+          "partitions": [
+            "test"
+          ],
+          "state": "IDLE",
+          "total_cpus": 64,
+          "total_memory_mb": 256000
+        },
+        "partition": "test"
+      },
+      {
+        "best_idle_node": {
+          "allocated_cpus": 0,
+          "free_memory_mb": 254634,
+          "gres": "(null)",
+          "idle_cpus": 56,
+          "is_idle": true,
+          "name": "node012",
+          "partitions": [
+            "regular",
+            "long_old"
+          ],
+          "state": "IDLE",
+          "total_cpus": 56,
+          "total_memory_mb": 256000
+        },
+        "partition": "regular"
+      },
+      {
+        "best_idle_node": {
+          "allocated_cpus": 0,
+          "free_memory_mb": 125450,
+          "gres": "(null)",
+          "idle_cpus": 64,
+          "is_idle": true,
+          "name": "node055",
+          "partitions": [
+            "regular128"
+          ],
+          "state": "IDLE",
+          "total_cpus": 64,
+          "total_memory_mb": 128000
+        },
+        "partition": "regular128"
+      },
+      {
+        "best_idle_node": {
+          "allocated_cpus": 0,
+          "free_memory_mb": 253631,
+          "gres": "(null)",
+          "idle_cpus": 64,
+          "is_idle": true,
+          "name": "node037",
+          "partitions": [
+            "regular256",
+            "long"
+          ],
+          "state": "IDLE",
+          "total_cpus": 64,
+          "total_memory_mb": 256000
+        },
+        "partition": "regular256"
+      }
+    ],
+    "core_budget": 64,
+    "partition_arg": "test",
+    "selected_node": {
+      "allocated_cpus": 0,
+      "free_memory_mb": 238685,
+      "gres": "gpu:rtx4090:2",
+      "idle_cpus": 64,
+      "is_idle": true,
+      "name": "test001",
+      "partitions": [
+        "test"
+      ],
+      "state": "IDLE",
+      "total_cpus": 64,
+      "total_memory_mb": 256000
+    },
+    "selected_partition": "test"
+  }
+}

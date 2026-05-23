@@ -1,0 +1,26 @@
+training:
+  target: ground_state
+  deterministic: true
+  batch_size: 64
+  iterations: 100
+  optimizer: adam
+  learning_rate: 0.0002
+  laplacian: folx
+  max_vmap_batch_size: 0
+  clip_local_energy: 5.0
+  clip_median: false
+  center_at_clip: true
+  pretrain_method: null
+  pretrain_iterations: 0
+  checkpoint_every_minutes: 15
+  log_every: 1
+
+stability_checks:
+  finite_energy: true
+  finite_variance: true
+  acceptance_range: [0.05, 0.95]
+
+notes:
+  status: baseline_ready
+  purpose: short FermiNet PBC diamond GPU baseline before KFAC
+

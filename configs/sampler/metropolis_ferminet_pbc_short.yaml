@@ -1,0 +1,12 @@
+sampler:
+  name: metropolis
+  burn_in: 50
+  steps_per_iteration: 10
+  proposal_width: 0.02
+  adapt_frequency: 50
+  blocks: 1
+
+notes:
+  status: config_build_ready
+  purpose: short FermiNet PBC diamond baseline sampler
+

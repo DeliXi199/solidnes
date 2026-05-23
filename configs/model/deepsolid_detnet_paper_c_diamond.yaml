@@ -1,0 +1,19 @@
+model:
+  ansatz: deepsolid_detnet
+  backend: deepsolid
+  size: paper_c_diamond
+  distance_type: tri
+  envelope_type: isotropic
+  full_det: false
+  hidden_dims:
+    - [256, 32]
+    - [256, 32]
+    - [256, 32]
+    - [256, 32]
+  determinants: 8
+  after_determinants: 1
+
+notes:
+  status: paper_alignment_ready
+  purpose: DeepSolid C-diamond paper-alignment detnet, wider and deeper than the sto-3g validation model
+  source_pattern: DeepSolid Nat Commun 2022 small C-diamond benchmark setting

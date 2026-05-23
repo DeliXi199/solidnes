@@ -1,0 +1,34 @@
+project: solidnes
+experiment_name: diamond_c_deepsolid_one_step_adam_smoke
+stage: phase1_backend
+phase: deepsolid_ground_state_one_step_adam_smoke
+
+backend:
+  name: deepsolid
+  repository: https://github.com/bytedance/DeepSolid
+  inspected_commit: 812a2b8
+  mode: external_backend
+
+system_config: ../system/diamond_c_primitive_gamma.yaml
+model_config: ../model/deepsolid_detnet_small.yaml
+sampler_config: ../sampler/metropolis_deepsolid_smoke.yaml
+train_config: ../train/ground_state_deepsolid_one_step_adam.yaml
+
+deepsolid_config_template:
+  module: solidnes/backends/deepsolid_configs/diamond_smoke.py
+  input_string: C,C,3.57,1,sto-3g,1e-8
+
+output:
+  log_dir: tasks/phase1_diamond_c/sto3g/smoke/0004_deepsolid_one_step_adam_checkpoint_shim_smoke/logs/backend
+  checkpoint_dir: tasks/phase1_diamond_c/sto3g/smoke/0004_deepsolid_one_step_adam_checkpoint_shim_smoke/results/checkpoints
+
+diagnostics:
+  import_deepsolid: true
+  build_pyscf_cell: true
+  electron_count: true
+  config_summary: true
+  one_iteration_process: true
+
+notes:
+  status: config_build_ready
+  purpose: minimal Adam training-step smoke; not a production physics setup

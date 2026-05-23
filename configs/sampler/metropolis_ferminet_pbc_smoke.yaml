@@ -1,0 +1,12 @@
+sampler:
+  name: metropolis
+  burn_in: 10
+  steps_per_iteration: 5
+  proposal_width: 0.02
+  adapt_frequency: 50
+  blocks: 1
+
+notes:
+  status: config_build_ready
+  purpose: low-cost sampler for FermiNet PBC diamond smoke and compile checks
+

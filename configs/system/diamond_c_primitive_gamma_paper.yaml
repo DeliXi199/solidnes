@@ -1,0 +1,20 @@
+system:
+  name: diamond_carbon
+  structure: diamond
+  cell: primitive
+  supercell: [1, 1, 1]
+  electrons: all_electron
+  expected_electrons: 12
+  spin:
+    up: 6
+    down: 6
+  boundary_condition: periodic
+  twist: [0.0, 0.0, 0.0]
+  twist_label: gamma
+  lattice_constant_angstrom: 3.5738
+  basis: ccpvdz
+
+notes:
+  status: paper_geometry
+  source: DeepSolid supplementary benchmark table, primitive vector components 1.7869 Angstrom
+  purpose: FermiNet paper-reproduction pilot geometry for C diamond 1x1x1 Gamma

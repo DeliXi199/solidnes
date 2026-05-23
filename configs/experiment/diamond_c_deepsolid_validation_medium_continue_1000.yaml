@@ -1,0 +1,35 @@
+project: solidnes
+experiment_name: diamond_c_deepsolid_validation_medium_continue_1000
+stage: phase1_validation
+phase: carbon_diamond_ground_state_validation_continuation
+
+backend:
+  name: deepsolid
+  repository: https://github.com/bytedance/DeepSolid
+  inspected_commit: 812a2b8
+  mode: external_backend
+
+system_config: ../system/diamond_c_primitive_gamma.yaml
+model_config: ../model/deepsolid_detnet_medium.yaml
+sampler_config: ../sampler/metropolis_deepsolid_validation.yaml
+train_config: ../train/ground_state_deepsolid_validation_medium_continue_1000.yaml
+
+deepsolid_config_template:
+  module: solidnes/backends/deepsolid_configs/diamond_smoke.py
+  input_string: C,C,3.57,1,sto-3g,1e-8
+
+output:
+  log_dir: tasks/phase1_diamond_c/sto3g/training/0009_deepsolid_validation_medium/logs/backend
+  checkpoint_dir: tasks/phase1_diamond_c/sto3g/training/0009_deepsolid_validation_medium/results/checkpoints
+  validation_dir: tasks/phase1_diamond_c/sto3g/training/0009_deepsolid_validation_medium/results/validation
+
+diagnostics:
+  restore_checkpoint: true
+  lower_learning_rate: true
+  training_stats_summary: true
+  gpu_training: true
+
+notes:
+  status: validation_ready
+  purpose: continue medium detnet validation from qmcjax_ckpt_000499 to qmcjax_ckpt_000999
+  physics_caveat: still sto-3g; use tail/block mean, not single-step minima

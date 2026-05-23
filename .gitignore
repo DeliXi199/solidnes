@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS/editor noise
+.DS_Store
+
+# Local agent/tool state
+.agents/
+.codex/
+
+# Retired top-level generated artifact roots
+/results/
+/outputs/
+/logs/
+
+# Large task artifacts
+tasks/**/results/checkpoints/
+tasks/**/logs/
+*.ckpt
+*.pt
+*.pkl
+*.npz
+*.npy
+
+# Logs
+*.log
+slurm-*.out
+
+external/
+
+# Local environment
+.env
+.env.*

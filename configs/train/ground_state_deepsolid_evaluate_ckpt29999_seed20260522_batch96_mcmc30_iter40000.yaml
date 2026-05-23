@@ -1,0 +1,34 @@
+training:
+  target: ground_state
+  seed: 20260522
+  deterministic: true
+  batch_size: 96
+  use_x64: true
+  iterations: 40000
+  optimizer: none
+  learning_rate: 0.0
+  learning_rate_decay: 1.0
+  learning_rate_delay: 10000.0
+  laplacian_mode: for
+  partition_number: 3
+  clip_local_energy: 5.0
+  ministeps: 1
+  pretrain_method: net
+  pretrain_iterations: 0
+  pretrain_learning_rate: 0.0003
+  pretrain_steps: 1
+  checkpoint_every_minutes: 999
+  log_every: 1
+
+stability_checks:
+  finite_energy: true
+  finite_variance: true
+  acceptance_range: [0.05, 0.95]
+  expected_effect: repeat_fixed_checkpoint_energy_estimate_with_independent_seed
+  estimated_runtime: under_1_hour_on_6x4090
+
+notes:
+  status: validation_ready
+  purpose: independent seed repeat for fixed-parameter evaluation of qmcjax_ckpt_029999
+  checkpoint_semantics: DeepSolid restores qmcjax_ckpt_029999 then evaluates steps 30000 through 39999
+  rationale: verify that the near-HF fixed estimate is reproducible under a different sampler RNG seed

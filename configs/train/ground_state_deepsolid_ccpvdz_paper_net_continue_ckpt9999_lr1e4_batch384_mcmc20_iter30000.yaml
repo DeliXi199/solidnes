@@ -1,0 +1,34 @@
+training:
+  target: ground_state
+  seed: 20260522
+  deterministic: true
+  batch_size: 384
+  use_x64: true
+  iterations: 30000
+  optimizer: adam
+  learning_rate: 0.0001
+  learning_rate_decay: 1.0
+  learning_rate_delay: 10000.0
+  laplacian_mode: for
+  partition_number: 3
+  clip_local_energy: 5.0
+  ministeps: 1
+  pretrain_method: net
+  pretrain_iterations: 0
+  pretrain_learning_rate: 0.0003
+  pretrain_steps: 1
+  checkpoint_every_minutes: 10
+  log_every: 1
+
+stability_checks:
+  finite_energy: true
+  finite_variance: true
+  acceptance_range: [0.05, 0.95]
+  expected_effect: continue cc-pVDZ paper-net Adam training from step 9999 to step 29999
+  expected_hf_reference_hartree: -74.9757591792
+
+notes:
+  status: paper_alignment_ready
+  purpose: extend cc-pVDZ paper-net Adam continuation to 30000 total VMC steps
+  checkpoint_semantics: DeepSolid restores qmcjax_ckpt_009999 then trains steps 10000 through 29999
+  learning_rate_rationale: reduce from 2e-4 to 1e-4 after the 10000-step run reached HF plus about 0.34 Ha at the final step

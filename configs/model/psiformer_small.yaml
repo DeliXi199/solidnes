@@ -1,0 +1,16 @@
+model:
+  ansatz: psiformer
+  backend: TBD
+  size: small
+  layers: TBD
+  heads: TBD
+  embedding_dim: TBD
+  determinants: TBD
+  use_periodic_features: true
+  initialization:
+    dft_orbitals: TBD
+
+notes:
+  status: scaffold_only
+  purpose: placeholder for a small Psiformer-style backend config
+

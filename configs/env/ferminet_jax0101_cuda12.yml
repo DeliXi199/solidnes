@@ -1,0 +1,26 @@
+name: solidnes-ferminet-jax0101-cuda12
+channels:
+  - conda-forge
+dependencies:
+  - python=3.12
+  - pip
+  - setuptools
+  - wheel
+  - git
+  - pip:
+      - "jax[cuda12]==0.10.1"
+      - "numpy"
+      - "scipy"
+      - "pandas"
+      - "h5py"
+      - "absl-py"
+      - "attrs"
+      - "chex"
+      - "ml-collections"
+      - "optax"
+      - "pyscf"
+      - "pyblock"
+      - "typing_extensions"
+      - "folx @ git+https://github.com/microsoft/folx"
+      - "kfac_jax @ git+https://github.com/deepmind/kfac-jax"
+

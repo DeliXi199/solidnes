@@ -1,0 +1,34 @@
+training:
+  target: ground_state
+  seed: 0
+  deterministic: true
+  batch_size: 96
+  use_x64: true
+  iterations: 30000
+  optimizer: adam
+  learning_rate: 0.0001
+  learning_rate_decay: 1.0
+  learning_rate_delay: 10000.0
+  laplacian_mode: for
+  partition_number: 3
+  clip_local_energy: 5.0
+  ministeps: 1
+  pretrain_method: net
+  pretrain_iterations: 0
+  pretrain_learning_rate: 0.0003
+  pretrain_steps: 1
+  checkpoint_every_minutes: 5
+  log_every: 1
+
+stability_checks:
+  finite_energy: true
+  finite_variance: true
+  acceptance_range: [0.05, 0.95]
+  expected_effect: additional_20000_step_refinement_from_ckpt9999
+  estimated_runtime: under_2_hours_on_6x4090
+
+notes:
+  status: validation_ready
+  purpose: add 20000 continuation iterations after the successful lr2e-4 run
+  checkpoint_semantics: DeepSolid restores qmcjax_ckpt_009999 then trains steps 10000 through 29999
+  learning_rate_rationale: use 1e-4 for a gentler long refinement after the previous run reached near-HF final-step energy

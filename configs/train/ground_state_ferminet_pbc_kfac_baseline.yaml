@@ -1,0 +1,38 @@
+training:
+  target: ground_state
+  deterministic: true
+  batch_size: 1024
+  iterations: 10000
+  optimizer: kfac
+  learning_rate: 0.03
+  learning_rate_decay: 1.0
+  learning_rate_delay: 10000.0
+  laplacian: folx
+  max_vmap_batch_size: 0
+  clip_local_energy: 5.0
+  clip_median: false
+  center_at_clip: true
+  pretrain_method: null
+  pretrain_iterations: 0
+  checkpoint_every_minutes: 30
+  log_every: 1
+  kfac:
+    invert_every: 1
+    cov_update_every: 1
+    damping: 0.001
+    cov_ema_decay: 0.95
+    norm_constraint: 0.001
+
+stability_checks:
+  finite_energy: true
+  finite_variance: true
+  acceptance_range: [0.05, 0.95]
+
+notes:
+  status: baseline_ready
+  purpose: first real FermiNet PBC diamond energy reproduction run
+  acceleration_defaults:
+    - kfac optimizer for faster convergence per wall-clock target
+    - folx Forward Laplacian for local kinetic energy
+    - no HF pretraining because upstream FermiNet PBC pretraining is not implemented
+

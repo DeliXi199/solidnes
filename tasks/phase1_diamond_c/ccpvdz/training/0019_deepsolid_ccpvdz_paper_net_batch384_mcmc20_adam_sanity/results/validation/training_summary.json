@@ -1,0 +1,83 @@
+{
+  "created_at": "2026-05-22T02:57:10.727890+00:00",
+  "experiment_name": "diamond_c_deepsolid_ccpvdz_paper_net_batch384_mcmc20_adam_sanity",
+  "basis": "ccpvdz",
+  "stats_path": "/data/home/yihaoxu/research/projects/solidnes/results/phase1_diamond_c/ccpvdz/training/deepsolid_ccpvdz_paper_net_batch384_mcmc20_adam_sanity/checkpoints/train_stats.csv",
+  "reference_path": "/data/home/yihaoxu/research/projects/solidnes/results/phase1_diamond_c/ccpvdz/training/deepsolid_ccpvdz_paper_net_batch384_mcmc20_adam_sanity/validation/pyscf_pbc_hf_reference.json",
+  "rows": 1000,
+  "first_step": 0,
+  "last_step": 999,
+  "first_energy_hartree": -70.88804046540102,
+  "last_energy_hartree": -72.87886825347921,
+  "min_energy_hartree": -74.72382692432197,
+  "energy_delta_hartree": -1.9908277880781924,
+  "energy_trend": "down",
+  "first_variance": 187.65599510742834,
+  "last_variance": 38.616260573174486,
+  "variance_delta": -149.03973453425385,
+  "variance_trend": "down",
+  "pmove_mean": 0.518435546875,
+  "pmove_min": 0.2618489583333334,
+  "pmove_max": 0.5860677083333333,
+  "imaginary_abs_max": 0.6257728172041477,
+  "finite_checks_passed": true,
+  "tail_fraction": 0.5,
+  "tail_rows": 500,
+  "tail_start_step": 500,
+  "tail_energy_mean_hartree": -72.64887958399358,
+  "tail_energy_stderr_hartree": 0.027008683128537745,
+  "tail_variance_mean": 71.1787114241294,
+  "tail_pmove_mean": 0.5291119791666666,
+  "block_count_requested": 5,
+  "block_count_used": 5,
+  "block_energy_means_hartree": [
+    -72.46750101490389,
+    -72.6722905588054,
+    -72.19473107284938,
+    -72.81874510295108,
+    -73.09113017045813
+  ],
+  "block_energy_stderr_hartree": 0.15233794750489746,
+  "hf_reference": {
+    "created_at": "2026-05-22T02:38:59.016575+00:00",
+    "experiment_name": "diamond_c_deepsolid_ccpvdz_paper_net_batch384_mcmc20_adam_sanity",
+    "backend": "deepsolid",
+    "reference": "PySCF PBC KHF via DeepSolid.hf.SCF",
+    "basis": "ccpvdz",
+    "pseudo": null,
+    "nelectron": 12,
+    "nelec": [
+      6,
+      6
+    ],
+    "dimension": 3,
+    "scale": 1,
+    "twist": [
+      0.0,
+      0.0,
+      0.0
+    ],
+    "kpts": [
+      [
+        0.0,
+        0.0,
+        0.0
+      ]
+    ],
+    "converged": true,
+    "e_tot_hartree": -74.97575917915333,
+    "e_tot_per_simulation_cell_hartree": -74.97575917915333,
+    "e_tot_per_electron_hartree": -6.24797993159611,
+    "mo_occ_shape": [
+      1,
+      28
+    ],
+    "notes": {
+      "accuracy_scope": "same configured ccpvdz Hamiltonian",
+      "comparison_rule": "a trained variational energy should be finite and trend below/near this HF reference for the same setup"
+    }
+  },
+  "last_minus_hf_hartree": 2.096890925674117,
+  "min_minus_hf_hartree": 0.2519322548313596,
+  "tail_mean_minus_hf_hartree": 2.3268795951597525
+}

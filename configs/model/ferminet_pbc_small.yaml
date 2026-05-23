@@ -1,0 +1,24 @@
+model:
+  ansatz: ferminet
+  backend: ferminet
+  network_type: ferminet
+  size: small
+  determinants: 8
+  hidden_dims:
+    - [128, 32]
+    - [128, 32]
+    - [128, 32]
+  full_det: true
+  complex: false
+  use_last_layer: false
+  separate_spin_channels: false
+  use_periodic_features: true
+
+notes:
+  status: config_build_ready
+  purpose: small all-electron FermiNet PBC diamond baseline
+  acceleration_defaults:
+    - folx_forward_laplacian is selected in the train config
+    - latest JAX CUDA environment is selected in the experiment runtime block
+    - FP64 is disabled by the runtime profile for speed
+

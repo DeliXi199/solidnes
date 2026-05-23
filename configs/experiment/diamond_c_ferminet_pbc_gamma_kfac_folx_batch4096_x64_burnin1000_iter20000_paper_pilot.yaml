@@ -1,0 +1,50 @@
+project: solidnes
+experiment_name: diamond_c_ferminet_pbc_gamma_kfac_folx_batch4096_x64_burnin1000_iter20000_paper_pilot
+stage: phase1_backend
+phase: ferminet_pbc_ground_state_paper_reproduction_pilot
+
+backend:
+  name: ferminet
+  repository: https://github.com/google-deepmind/ferminet
+  inspected_commit: c4312c315dda1c5728994ba89629744f71c6eb66
+  mode: external_backend_with_local_patch
+
+system_config: ../system/diamond_c_primitive_gamma_paper.yaml
+model_config: ../model/ferminet_pbc_paper.yaml
+sampler_config: ../sampler/metropolis_ferminet_pbc_mcmc20_burnin1000.yaml
+train_config: ../train/ground_state_ferminet_pbc_kfac_folx_batch4096_iter20000_no_pretrain.yaml
+
+ferminet_config_template:
+  module: solidnes/backends/ferminet_configs/diamond_pbc_gamma_paper.py
+
+runtime:
+  target_jax_version: 0.10.1
+  cuda_extra: cuda12
+  precision_profile: fp64
+  x64_enabled: true
+  require_gpu: true
+  xla_python_client_preallocate: true
+  xla_python_client_mem_fraction: 0.90
+
+output:
+  log_dir: tasks/phase1_diamond_c/pbc_gamma/training/0044_ferminet_kfac_folx_batch4096_x64_burnin1000_iter20000_paper_pilot/logs/backend
+  checkpoint_dir: tasks/phase1_diamond_c/pbc_gamma/training/0044_ferminet_kfac_folx_batch4096_x64_burnin1000_iter20000_paper_pilot/results/checkpoints
+
+diagnostics:
+  import_ferminet: true
+  build_pbc_config: true
+  train_stats: true
+  compare_to_deepsolid_supplementary_diamond: true
+
+notes:
+  status: ready_to_submit
+  purpose: paper-geometry x64 pilot to test whether FermiNet continues toward the DeepSolid supplementary diamond value
+  paper_reference:
+    energy_hartree: -75.4009
+    hf_hartree: -74.9784
+    cell: 1x1x1 Gamma
+    electrons: 12
+  pretraining_caveat: true PBC-HF cc-pVDZ pretraining is not yet implemented in the FermiNet route
+  local_patch:
+    file: external/ferminet/ferminet/networks.py
+    change: construct_symmetric_features uses broadcast_to instead of tile for spin-channel means

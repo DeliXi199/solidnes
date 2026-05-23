@@ -1,0 +1,12 @@
+sampler:
+  name: metropolis
+  burn_in: 0
+  steps_per_iteration: 20
+  proposal_width: 0.02
+  adapt_frequency: 100
+  blocks: 1
+
+notes:
+  status: config_build_ready
+  purpose: fixed-checkpoint FermiNet PBC evaluation using restored walkers
+  checkpoint_caveat: burn-in is zero because walkers are restored from a trained checkpoint

@@ -1,0 +1,21 @@
+model:
+  ansatz: ferminet
+  backend: ferminet
+  network_type: ferminet
+  size: paper_like
+  determinants: 8
+  hidden_dims:
+    - [256, 32]
+    - [256, 32]
+    - [256, 32]
+    - [256, 32]
+  full_det: true
+  complex: false
+  use_last_layer: false
+  separate_spin_channels: false
+  use_periodic_features: true
+
+notes:
+  status: config_build_ready
+  purpose: paper-like all-electron FermiNet PBC diamond comparison model
+  rationale: closer to the DeepSolid paper-net capacity than the small benchmark model

@@ -1,0 +1,93 @@
+{
+  "config": {
+    "backend": "ferminet",
+    "batch_size": 4096,
+    "determinants": 8,
+    "forward_laplacian_enabled": true,
+    "hidden_dims": "((128, 32), (128, 32), (128, 32))",
+    "iterations": 2000,
+    "laplacian": "folx",
+    "mcmc_burn_in": 50,
+    "mcmc_steps_per_iteration": 10,
+    "network_type": "ferminet",
+    "optimizer": "kfac",
+    "precision_profile": "speed",
+    "target_jax_version": "0.10.1",
+    "x64_enabled": false
+  },
+  "created_at": "2026-05-23T05:52:37.572919+00:00",
+  "diagnostics": {
+    "folx_tile_not_in_registry": 0,
+    "traceback": 0
+  },
+  "err_path": "/data/home/yihaoxu/research/projects/solidnes/logs/slurm/solidnes-ferminet-kfac2000-folx_127845.err",
+  "experiment_name": "diamond_c_ferminet_pbc_gamma_kfac_batch4096_iter2000_folx",
+  "job_id": "127845",
+  "log_path": "/data/home/yihaoxu/research/projects/solidnes/logs/slurm/solidnes-ferminet-kfac2000-folx_127845.log",
+  "plan_json_path": "/data/home/yihaoxu/research/projects/solidnes/outputs/slurm_plans/ferminet_kfac_batch4096_iter2000_folx_plan.json",
+  "runtime": {
+    "elapsed_seconds": 394.0,
+    "end": "2026-05-23T13:43:04",
+    "seconds_per_optimization_step": 0.197,
+    "seconds_per_stats_row": 0.197,
+    "start": "2026-05-23T13:36:30"
+  },
+  "slurm": {
+    "blocked_partitions": [
+      "gpu80gllm",
+      "gpu40gllm",
+      "h20llm",
+      "gpu4090",
+      "gpu4090_8",
+      "gpu4090_128",
+      "h800",
+      "test"
+    ],
+    "cpus": 8,
+    "gpu_model": "a100_80gb",
+    "gres": "gpu:1",
+    "partition": "intelgpu80g",
+    "ready": true,
+    "reason": "best_idle_gpu_node",
+    "selected_node": "gpu001"
+  },
+  "stats": {
+    "block_count_requested": 5,
+    "block_count_used": 5,
+    "block_energy_means_hartree": [
+      -74.83663818,
+      -75.000154195,
+      -75.05750678999999,
+      -75.11834888,
+      -75.14925827
+    ],
+    "block_energy_stderr_hartree": 0.05524305227772496,
+    "energy_delta_hartree": -54.38654,
+    "finite_checks_passed": true,
+    "first10_energy_mean_hartree": -20.9273887,
+    "first50_energy_mean_hartree": -22.1407606,
+    "first_energy_hartree": -20.79052,
+    "first_ewmean_hartree": -20.79052,
+    "first_step": 0,
+    "last10_energy_mean_hartree": -75.1271209,
+    "last50_energy_mean_hartree": -75.11143168000001,
+    "last_energy_hartree": -75.17706,
+    "last_ewmean_hartree": -75.124,
+    "last_ewvar": 0.0023634087,
+    "last_step": 1999,
+    "min_energy_hartree": -78.16918,
+    "min_energy_step": 1706,
+    "pmove_max": 0.91115725,
+    "pmove_mean": 0.5877274530250001,
+    "pmove_min": 0.526416,
+    "rows": 2000,
+    "tail_energy_mean_hartree": -75.032381263,
+    "tail_energy_stderr_hartree": 0.00793632439192462,
+    "tail_ewmean_mean_hartree": -75.02898897,
+    "tail_fraction": 0.5,
+    "tail_pmove_mean": 0.53672943067,
+    "tail_rows": 1000,
+    "tail_start_step": 1000
+  },
+  "stats_path": "/data/home/yihaoxu/research/projects/solidnes/results/phase1_diamond_c/pbc_gamma/ferminet_kfac_batch4096_iter2000_folx/checkpoints/train_stats.csv"
+}

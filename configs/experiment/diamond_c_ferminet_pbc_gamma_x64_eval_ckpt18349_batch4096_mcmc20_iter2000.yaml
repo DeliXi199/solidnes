@@ -1,0 +1,48 @@
+project: solidnes
+experiment_name: diamond_c_ferminet_pbc_gamma_x64_eval_ckpt18349_batch4096_mcmc20_iter2000
+stage: phase1_backend
+phase: ferminet_pbc_ground_state_fixed_checkpoint_evaluation
+
+backend:
+  name: ferminet
+  repository: https://github.com/google-deepmind/ferminet
+  inspected_commit: c4312c315dda1c5728994ba89629744f71c6eb66
+  mode: external_backend_with_local_patch
+
+system_config: ../system/diamond_c_primitive_gamma_paper.yaml
+model_config: ../model/ferminet_pbc_paper.yaml
+sampler_config: ../sampler/metropolis_ferminet_pbc_evaluation_mcmc20.yaml
+train_config: ../train/ground_state_ferminet_pbc_eval_none_batch4096_iter2000.yaml
+
+ferminet_config_template:
+  module: solidnes/backends/ferminet_configs/diamond_pbc_gamma_paper.py
+
+runtime:
+  target_jax_version: 0.10.1
+  cuda_extra: cuda12
+  precision_profile: fp64
+  x64_enabled: true
+  require_gpu: true
+  xla_python_client_preallocate: true
+  xla_python_client_mem_fraction: 0.90
+
+output:
+  log_dir: tasks/phase1_diamond_c/pbc_gamma/evaluation/0046_ferminet_x64_eval_ckpt18349_batch4096_mcmc20_iter2000/logs/backend
+  checkpoint_dir: tasks/phase1_diamond_c/pbc_gamma/evaluation/0046_ferminet_x64_eval_ckpt18349_batch4096_mcmc20_iter2000/results/checkpoints
+  restore_checkpoint_dir: tasks/phase1_diamond_c/pbc_gamma/training/0044_ferminet_kfac_folx_batch4096_x64_burnin1000_iter20000_paper_pilot/results/checkpoints
+
+diagnostics:
+  import_ferminet: true
+  build_pbc_config: true
+  train_stats: true
+  fixed_checkpoint_evaluation: true
+
+notes:
+  status: ready_to_submit
+  purpose: quick 2000-step fixed-parameter evaluation pilot requested after the x64 20k run
+  restore_checkpoint: qmcjax_ckpt_018349 from x64 paper-geometry 20000-step training
+  checkpoint_caveat: FermiNet saved the latest checkpoint at step 18349; no qmcjax_ckpt_019999 was written at job end
+  paper_reference:
+    energy_hartree: -75.4009
+    cell: 1x1x1 Gamma
+    electrons: 12

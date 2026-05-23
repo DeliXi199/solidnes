@@ -1,0 +1,28 @@
+training:
+  target: ground_state
+  deterministic: true
+  batch_size: 4096
+  iterations: 2000
+  optimizer: none
+  learning_rate: 0.0
+  learning_rate_decay: 1.0
+  learning_rate_delay: 10000.0
+  laplacian: folx
+  max_vmap_batch_size: 0
+  clip_local_energy: 5.0
+  clip_median: false
+  center_at_clip: true
+  pretrain_method: null
+  pretrain_iterations: 0
+  checkpoint_every_minutes: 999
+  log_every: 1
+
+stability_checks:
+  finite_energy: true
+  finite_variance: true
+  acceptance_range: [0.05, 0.95]
+
+notes:
+  status: baseline_ready
+  purpose: 2000-step fixed-parameter FermiNet evaluation pilot from the x64 paper-geometry checkpoint
+  optimizer_semantics: optimizer none evaluates local energy and moves walkers without updating wavefunction parameters

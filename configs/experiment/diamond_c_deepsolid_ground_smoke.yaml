@@ -1,0 +1,35 @@
+project: solidnes
+experiment_name: diamond_c_deepsolid_ground_smoke
+stage: phase1_backend
+phase: deepsolid_ground_state_environment_smoke
+
+backend:
+  name: deepsolid
+  repository: https://github.com/bytedance/DeepSolid
+  inspected_commit: 812a2b8
+  mode: external_backend
+
+system_config: ../system/diamond_c_primitive_gamma.yaml
+model_config: ../model/deepsolid_detnet_small.yaml
+sampler_config: ../sampler/metropolis_deepsolid_smoke.yaml
+train_config: ../train/ground_state_deepsolid_smoke.yaml
+
+deepsolid_config_template:
+  module: DeepSolid/config/diamond.py
+  input_string: C,C,3.57,1,ccpvdz
+
+output:
+  log_dir: tasks/phase1_diamond_c/ccpvdz/smoke/0022_deepsolid_ground_smoke/logs/backend
+  checkpoint_dir: tasks/phase1_diamond_c/ccpvdz/smoke/0022_deepsolid_ground_smoke/results/checkpoints
+
+diagnostics:
+  import_deepsolid: true
+  build_pyscf_cell: true
+  electron_count: true
+  energy: true
+  variance: true
+  acceptance: true
+
+notes:
+  status: config_build_ready
+  purpose: first real-solid backend smoke candidate
