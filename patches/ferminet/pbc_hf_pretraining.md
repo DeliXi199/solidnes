@@ -2,6 +2,12 @@
 
 Status: local SolidNES extension to upstream FermiNet.
 
+Patch file:
+
+```text
+patches/ferminet/pbc_hf_pretraining.patch
+```
+
 Upstream FermiNet commit:
 
 ```text
@@ -94,4 +100,3 @@ Additional local probes passed:
 - Minimal CPU one-step PBC pretraining probe passed with a `sto-3g` target:
   `pbc_pretrain_one_step=ok`, walker shape `(1, 2, 36)`,
   `E_HF = -74.0041967307 Ha`.
-

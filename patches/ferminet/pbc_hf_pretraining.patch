@@ -1,0 +1,544 @@
+diff --git a/ferminet/base_config.py b/ferminet/base_config.py
+index e491143..e5aac89 100644
+--- a/ferminet/base_config.py
++++ b/ferminet/base_config.py
+@@ -309,9 +309,18 @@ def default() -> ml_collections.ConfigDict:
+           'deterministic': False,  # Use a deterministic seed.
+       },
+       'pretrain': {
+-          'method': 'hf',  # Currently only 'hf' is supported.
++          'method': 'hf',  # Supported: 'hf'; local SolidNES PBC route: 'pbc_hf'.
+           'iterations': 1000,  # Only used if method is 'hf'.
+           'basis': 'ccpvdz',  # Larger than STO-6G, but good for excited states
++          # Use a PySCF PBC KHF/KUHF target instead of the molecular PySCF
++          # target. This is only used by the local SolidNES PBC route.
++          'pbc': False,
++          'twist': (0.0, 0.0, 0.0),
++          'cell_precision': 1e-8,
++          'cell_exp_to_discard': 0.1,
++          'restricted': True,
++          'learning_rate': 3.e-4,
++          'mcmc_steps': 1,
+           # Fraction of SCF to use in pretraining MCMC. This enables pretraining
+           # similar to the original FermiNet paper.
+           'scf_fraction': 1.0,
+diff --git a/ferminet/pretrain.py b/ferminet/pretrain.py
+index 7a35dff..87e8be5 100644
+--- a/ferminet/pretrain.py
++++ b/ferminet/pretrain.py
+@@ -14,7 +14,7 @@
+ 
+ """Utilities for pretraining and importing PySCF models."""
+ 
+-from typing import Callable, Mapping, Sequence, Tuple, Union
++from typing import Any, Callable, Mapping, Sequence, Tuple, Union
+ 
+ from absl import logging
+ import chex
+@@ -75,6 +75,232 @@ def get_hf(molecule: Sequence[system.Atom] | None = None,
+   return scf_approx
+ 
+ 
++def get_pbc_hf(
++    molecule: Sequence[system.Atom],
++    nspins: Tuple[int, int],
++    lattice: np.ndarray,
++    basis: str = 'ccpvdz',
++    pseudo: str | Mapping[str, str] | None = None,
++    twist: Sequence[float] | None = None,
++    precision: float = 1e-8,
++    exp_to_discard: float = 0.1,
++    restricted: bool = True,
++    pyscf_cell: Any | None = None,
++) -> 'PbcScf':
++  """Returns a periodic PySCF Hartree-Fock solution for PBC pretraining.
++
++  The molecular pretraining path uses a JAX-native GTO evaluator inside the
++  compiled pretraining step. PySCF PBC orbital evaluation is not JAX-native, so
++  the PBC route follows DeepSolid: evaluate the HF target matrices on the host
++  once per pretraining iteration and pass those fixed targets into the pmapped
++  update step.
++  """
++  scf_approx = PbcScf(
++      molecule=molecule,
++      nspins=nspins,
++      lattice=lattice,
++      basis=basis,
++      pseudo=pseudo,
++      twist=twist,
++      precision=precision,
++      exp_to_discard=exp_to_discard,
++      restricted=restricted,
++      pyscf_cell=pyscf_cell,
++  )
++  scf_approx.run()
++  return scf_approx
++
++
++class PbcScf:
++  """Small PySCF PBC HF wrapper used as an orbital pretraining target."""
++
++  def __init__(
++      self,
++      molecule: Sequence[system.Atom],
++      nspins: Tuple[int, int],
++      lattice: np.ndarray,
++      basis: str = 'ccpvdz',
++      pseudo: str | Mapping[str, str] | None = None,
++      twist: Sequence[float] | None = None,
++      precision: float = 1e-8,
++      exp_to_discard: float = 0.1,
++      restricted: bool = True,
++      pyscf_cell: Any | None = None,
++  ):
++    from pyscf.pbc import gto as pbc_gto  # pylint: disable=import-outside-toplevel
++    from pyscf.pbc import scf as pbc_scf  # pylint: disable=import-outside-toplevel
++
++    self.nspins = tuple(int(x) for x in nspins)
++    self.restricted = restricted
++    self.ndim = 3
++    if pyscf_cell is None:
++      cell = pbc_gto.Cell()
++      cell.atom = [[atom.symbol, atom.coords] for atom in molecule]
++      # FermiNet PBC configs use lattice vectors as columns; PySCF stores them
++      # as rows.
++      cell.a = np.asarray(lattice, dtype=np.float64).T
++      cell.unit = 'B'
++      cell.basis = basis
++      if pseudo:
++        cell.pseudo = pseudo
++      cell.spin = self.nspins[0] - self.nspins[1]
++      cell.verbose = 0
++      cell.precision = float(precision)
++      cell.exp_to_discard = float(exp_to_discard)
++      cell.build()
++    else:
++      cell = pyscf_cell.copy()
++      cell.verbose = 0
++      if not cell._built:  # pylint: disable=protected-access
++        cell.build()
++    if cell.nelectron != sum(self.nspins):
++      raise RuntimeError(
++          'PySCF PBC cell is not consistent with QMC electron count: '
++          f'cell.nelectron={cell.nelectron}, nspins={self.nspins}'
++      )
++
++    self.cell = cell
++    twist = np.zeros(3) if twist is None else np.asarray(twist, dtype=np.float64)
++    if twist.shape != (3,):
++      raise ValueError(f'Expected a 3-vector twist, got shape {twist.shape}')
++    self.twist = np.mod(twist, 1.0)
++    self.kpts = np.asarray([self.twist @ self.cell.reciprocal_vectors()])
++
++    if restricted:
++      khf_cls = getattr(pbc_scf, 'KHF', pbc_scf.KRHF)
++      self.mean_field = khf_cls(self.cell, exxdiv='ewald', kpts=self.kpts)
++    else:
++      self.mean_field = pbc_scf.KUHF(
++          self.cell, exxdiv='ewald', kpts=self.kpts)
++    self.mean_field = self.mean_field.density_fit()
++    self.coeff_key = ('mo_coeff_alpha', 'mo_coeff_beta')
++    self.param_split = {}
++    self.parameters = {}
++    self.k_split = {}
++
++  def run(self):
++    """Run PySCF PBC HF and cache occupied MO coefficients."""
++    dm0 = self.mean_field.get_init_guess()
++    self.mean_field.kernel(dm0)
++    if not self.mean_field.converged:
++      logging.warning('PySCF PBC HF did not report convergence.')
++    self._init_orbital_coefficients()
++
++  def _init_orbital_coefficients(self):
++    """Collect occupied MO coefficients for each spin and k point."""
++    mo_coeff = self.mean_field.mo_coeff
++    mo_occ = self.mean_field.mo_occ
++    try:
++      unrestricted_coeff = len(mo_coeff[0][0].shape) == 2
++    except (IndexError, TypeError):
++      unrestricted_coeff = False
++
++    for spin, key in enumerate(self.coeff_key):
++      coeffs = []
++      k_counts = []
++      for k in range(len(self.kpts)):
++        if unrestricted_coeff:
++          occ = np.asarray(mo_occ[spin][k]) > 0.9
++          coeff = np.asarray(mo_coeff[spin][k])[:, occ]
++        else:
++          min_occ = (0.9, 1.1)[spin]
++          occ = np.asarray(mo_occ[k]) > min_occ
++          coeff = np.asarray(mo_coeff[k])[:, occ]
++        coeffs.append(coeff)
++        k_counts.append(coeff.shape[1])
++      total_orbitals = sum(k_counts)
++      if total_orbitals != self.nspins[spin]:
++        raise RuntimeError(
++            'PBC HF occupied-orbital count does not match spin count: '
++            f'spin={spin}, occupied={total_orbitals}, expected={self.nspins[spin]}'
++        )
++      self.param_split[key] = np.cumsum(k_counts)[:-1]
++      self.parameters[key] = np.concatenate(coeffs, axis=-1)
++      self.k_split[key] = np.asarray(k_counts)
++
++  def eval_orbitals_pbc(self, coord: np.ndarray) -> np.ndarray:
++    """Evaluate periodic atomic orbitals for all k points."""
++    batch, nelec, ndim = coord.shape
++    if ndim != self.ndim:
++      raise ValueError(f'Only ndim={self.ndim} is supported, got {ndim}')
++    wrapped, wrap = _np_enforce_pbc(self.cell.a, coord.reshape([-1, ndim]))
++    wrapped = wrapped.reshape([-1, ndim])
++    wrap = wrap.reshape([-1, ndim])
++    ao = self.cell.eval_gto('PBCGTOval_sph', wrapped, kpts=self.kpts)
++    if isinstance(ao, np.ndarray) and ao.ndim == 2:
++      ao_by_k = [ao]
++    elif isinstance(ao, np.ndarray):
++      ao_by_k = [ao[k] for k in range(ao.shape[0])]
++    else:
++      ao_by_k = list(ao)
++    translations = wrap @ self.cell.a
++    phase = np.exp(1j * np.einsum('kd,nd->kn', self.kpts, translations))
++    ao_by_k = [ao_k * phase[k][:, None] for k, ao_k in enumerate(ao_by_k)]
++    return np.stack(ao_by_k, axis=0).reshape(
++        [len(self.kpts), batch, nelec, -1])
++
++  def eval_mos_pbc(self, aos: np.ndarray, spin: int) -> np.ndarray:
++    """Project periodic atomic orbitals into occupied molecular orbitals."""
++    coeff_key = self.coeff_key[spin]
++    coeffs_by_k = np.split(
++        self.parameters[coeff_key], self.param_split[coeff_key], axis=-1)
++    mos = [
++        aos[k].dot(coeffs_by_k[k])
++        for k in range(len(self.kpts))
++        if coeffs_by_k[k].shape[-1] > 0
++    ]
++    return np.concatenate(mos, axis=-1)
++
++  def eval_orbitals(
++      self,
++      pos: Union[np.ndarray, jnp.ndarray],
++      nspins: Tuple[int, int],
++  ) -> Tuple[jnp.ndarray, jnp.ndarray]:
++    """Evaluate occupied PBC HF orbital matrices at electron positions."""
++    pos = np.asarray(pos, dtype=np.float64)
++    leading_dims = pos.shape[:-1]
++    nelec = sum(nspins)
++    coord = pos.reshape([-1, nelec, self.ndim])
++    aos = self.eval_orbitals_pbc(coord)
++    result = []
++    for spin in (0, 1):
++      ne = int(nspins[spin])
++      if ne == 0:
++        result.append(jnp.zeros(leading_dims + (0, 0)))
++        continue
++      start = 0 if spin == 0 else int(nspins[0])
++      stop = start + ne
++      mo = self.eval_mos_pbc(aos[:, :, start:stop], spin)
++      result.append(jnp.asarray(mo.reshape(leading_dims + (ne, ne))))
++    return tuple(result)
++
++  def eval_slater(
++      self,
++      pos: Union[jnp.ndarray, np.ndarray],
++      nspins: Tuple[int, int],
++  ) -> Tuple[jnp.ndarray, jnp.ndarray]:
++    """Evaluate the PBC HF Slater determinant."""
++    matrices = self.eval_orbitals(pos, nspins)
++    sign = 1.0
++    log_abs = 0.0
++    for matrix in matrices:
++      if matrix.shape[-1] == 0:
++        continue
++      matrix_sign, matrix_log_abs = jnp.linalg.slogdet(matrix)
++      sign = sign * matrix_sign
++      log_abs = log_abs + matrix_log_abs
++    return sign, log_abs
++
++
++def _np_enforce_pbc(latvec: np.ndarray, epos: np.ndarray):
++  """Wrap Cartesian coordinates into the PySCF cell and return cell shifts."""
++  dim = latvec.shape[-1]
++  epos = epos.reshape([-1, dim])
++  fractional = np.einsum('ij,jk->ik', epos, np.linalg.inv(latvec))
++  wrap, wrapped_fractional = np.divmod(fractional, 1)
++  return np.matmul(wrapped_fractional, latvec).ravel(), wrap
++
++
+ def eval_orbitals(scf_approx: scf.Scf, pos: Union[np.ndarray, jnp.ndarray],
+                   nspins: Tuple[int, int]) -> Tuple[np.ndarray, np.ndarray]:
+   """Evaluates SCF orbitals from PySCF at a set of positions.
+@@ -258,6 +484,80 @@ def make_pretrain_step(
+   return pretrain_step
+ 
+ 
++def make_pbc_pretrain_step(
++    batch_orbitals: networks.OrbitalFnLike,
++    batch_network: networks.LogFermiNetLike,
++    optimizer_update: optax.TransformUpdateFn,
++    electrons: Tuple[int, int],
++    batch_size: int = 0,
++    full_det: bool = False,
++    ndim: int = 3,
++    mcmc_steps: int = 1,
++):
++  """Creates one PBC HF orbital-pretraining step.
++
++  Unlike molecular HF pretraining, PySCF PBC orbitals are evaluated on the host
++  and provided as a fixed target. The compiled step only differentiates the
++  network orbital MSE and refreshes walkers with the neural wavefunction.
++  """
++
++  del electrons  # Shape is carried by the target matrices.
++  mcmc_step = mcmc.make_mcmc_step(
++      batch_network, batch_per_device=batch_size, steps=mcmc_steps, ndim=ndim)
++
++  def loss_fn(
++      params: networks.ParamTree,
++      data: networks.FermiNetData,
++      target: Tuple[jnp.ndarray, jnp.ndarray],
++  ):
++    orbitals = batch_orbitals(
++        params, data.positions, data.spins, data.atoms, data.charges)
++    cnorm = lambda x, y: (x - y) * jnp.conj(x - y)
++    if full_det:
++      dims = target[0].shape[:-2]
++      na = target[0].shape[-2]
++      nb = target[1].shape[-2]
++      dtype = jnp.promote_types(target[0].dtype, target[1].dtype)
++      target_full = jnp.concatenate(
++          (
++              jnp.concatenate(
++                  (
++                      target[0].astype(dtype),
++                      jnp.zeros(dims + (na, nb), dtype=dtype),
++                  ),
++                  axis=-1,
++              ),
++              jnp.concatenate(
++                  (
++                      jnp.zeros(dims + (nb, na), dtype=dtype),
++                      target[1].astype(dtype),
++                  ),
++                  axis=-1,
++              ),
++          ),
++          axis=-2,
++      )
++      result = jnp.mean(cnorm(target_full[:, None, ...], orbitals[0])).real
++    else:
++      result = jnp.array([
++          jnp.mean(cnorm(t[:, None, ...], o)).real
++          for t, o in zip(target, orbitals)
++          if t.shape[-1] > 0
++      ]).sum()
++    return constants.pmean(result)
++
++  def pretrain_step(data, target, params, state, key):
++    val_and_grad = jax.value_and_grad(loss_fn, argnums=0)
++    loss_val, search_direction = val_and_grad(params, data, target)
++    search_direction = constants.pmean(search_direction)
++    updates, state = optimizer_update(search_direction, state, params)
++    params = optax.apply_updates(params, updates)
++    data, pmove = mcmc_step(params, data, key, width=0.02)
++    return data, params, state, loss_val, pmove
++
++  return pretrain_step
++
++
+ def pretrain_hartree_fock(
+     *,
+     params: networks.ParamTree,
+@@ -345,3 +645,57 @@ def pretrain_hartree_fock(
+     if logger:
+       logger(t, loss[0])
+   return params, data.positions
++
++
++def pretrain_hartree_fock_pbc(
++    *,
++    params: networks.ParamTree,
++    positions: jnp.ndarray,
++    spins: jnp.ndarray,
++    atoms: jnp.ndarray,
++    charges: jnp.ndarray,
++    batch_network: networks.FermiNetLike,
++    batch_orbitals: networks.OrbitalFnLike,
++    network_options: networks.BaseNetworkOptions,
++    sharded_key: chex.PRNGKey,
++    electrons: Tuple[int, int],
++    scf_approx: PbcScf,
++    iterations: int = 1000,
++    batch_size: int = 0,
++    logger: Callable[[int, float], None] | None = None,
++    learning_rate: float = 3.e-4,
++    mcmc_steps: int = 1,
++):
++  """Pretrains FermiNet PBC orbitals against a PySCF PBC HF target."""
++
++  optimizer = optax.adam(learning_rate)
++  opt_state_pt = constants.pmap(optimizer.init)(params)
++
++  pretrain_step = make_pbc_pretrain_step(
++      batch_orbitals,
++      batch_network,
++      optimizer.update,
++      electrons=electrons,
++      batch_size=batch_size,
++      full_det=network_options.full_det,
++      ndim=network_options.ndim,
++      mcmc_steps=mcmc_steps,
++  )
++  pretrain_step = constants.pmap(pretrain_step)
++
++  batch_spins = jnp.tile(spins[None], [positions.shape[1], 1])
++  pmap_spins = kfac_jax.utils.replicate_all_local_devices(batch_spins)
++  data = networks.FermiNetData(
++      positions=positions, spins=pmap_spins, atoms=atoms, charges=charges
++  )
++
++  for t in range(iterations):
++    target = scf_approx.eval_orbitals(np.asarray(data.positions), electrons)
++    target = tuple(jnp.asarray(tar) for tar in target)
++    sharded_key, subkeys = kfac_jax.utils.p_split(sharded_key)
++    data, params, opt_state_pt, loss, pmove = pretrain_step(
++        data, target, params, opt_state_pt, subkeys)
++    logging.info('PBC pretrain iter %05d: %g %g', t, loss[0], pmove[0])
++    if logger:
++      logger(t, loss[0])
++  return params, data.positions
+diff --git a/ferminet/train.py b/ferminet/train.py
+index 41333af..c5bfa0c 100644
+--- a/ferminet/train.py
++++ b/ferminet/train.py
+@@ -458,21 +458,46 @@ def train(cfg: ml_collections.ConfigDict, writer_manager=None):
+ 
+   # Create parameters, network, and vmaped/pmaped derivations
+ 
+-  if cfg.pretrain.method == 'hf' and cfg.pretrain.iterations > 0:
+-    hartree_fock = pretrain.get_hf(
+-        pyscf_mol=cfg.system.get('pyscf_mol'),
+-        molecule=cfg.system.molecule,
+-        nspins=nspins,
+-        restricted=False,
+-        basis=cfg.pretrain.basis,
+-        ecp=ecp,
+-        core_electrons=core_electrons,
+-        states=cfg.system.states,
+-        excitation_type=cfg.pretrain.get('excitation_type', 'ordered'))
+-    # broadcast the result of PySCF from host 0 to all other hosts
+-    hartree_fock.mean_field.mo_coeff = multihost_utils.broadcast_one_to_all(
+-        hartree_fock.mean_field.mo_coeff
+-    )
++  pretrain_method = cfg.pretrain.get('method')
++  pbc_hf_pretrain = (
++      cfg.pretrain.get('pbc', False) or pretrain_method == 'pbc_hf')
++  if pretrain_method in ('hf', 'pbc_hf') and cfg.pretrain.iterations > 0:
++    if pbc_hf_pretrain:
++      lattice = cfg.pretrain.get(
++          'lattice', cfg.system.make_local_energy_kwargs.get('lattice'))
++      if lattice is None:
++        raise ValueError('PBC HF pretraining requires a lattice.')
++      if cfg.pretrain.get('scf_fraction', 0.0):
++        logging.warning(
++            'Ignoring pretrain.scf_fraction for PBC HF pretraining; PySCF PBC '
++            'orbital evaluation is host-side, so walkers are sampled from the '
++            'neural network during pretraining.')
++      hartree_fock = pretrain.get_pbc_hf(
++          molecule=cfg.system.molecule,
++          nspins=nspins,
++          lattice=np.asarray(lattice),
++          basis=cfg.pretrain.basis,
++          pseudo=cfg.pretrain.get('pseudo'),
++          twist=cfg.pretrain.get('twist', (0.0, 0.0, 0.0)),
++          precision=cfg.pretrain.get('cell_precision', 1e-8),
++          exp_to_discard=cfg.pretrain.get('cell_exp_to_discard', 0.1),
++          restricted=cfg.pretrain.get('restricted', True),
++          pyscf_cell=cfg.pretrain.get('pyscf_cell'))
++    else:
++      hartree_fock = pretrain.get_hf(
++          pyscf_mol=cfg.system.get('pyscf_mol'),
++          molecule=cfg.system.molecule,
++          nspins=nspins,
++          restricted=False,
++          basis=cfg.pretrain.basis,
++          ecp=ecp,
++          core_electrons=core_electrons,
++          states=cfg.system.states,
++          excitation_type=cfg.pretrain.get('excitation_type', 'ordered'))
++      # broadcast the result of PySCF from host 0 to all other hosts
++      hartree_fock.mean_field.mo_coeff = multihost_utils.broadcast_one_to_all(
++          hartree_fock.mean_field.mo_coeff
++      )
+ 
+   if cfg.network.make_feature_layer_fn:
+     feature_layer_module, feature_layer_fn = (
+@@ -703,7 +728,7 @@ def train(cfg: ml_collections.ConfigDict, writer_manager=None):
+ 
+   if (
+       t_init == 0
+-      and cfg.pretrain.method == 'hf'
++      and pretrain_method in ('hf', 'pbc_hf')
+       and cfg.pretrain.iterations > 0
+   ):
+     pretrain_spins = spins[0, 0]
+@@ -711,23 +736,42 @@ def train(cfg: ml_collections.ConfigDict, writer_manager=None):
+         network.orbitals, in_axes=(None, 0, 0, 0, 0), out_axes=0
+     )
+     sharded_key, subkeys = kfac_jax.utils.p_split(sharded_key)
+-    params, data.positions = pretrain.pretrain_hartree_fock(
+-        params=params,
+-        positions=data.positions,
+-        spins=pretrain_spins,
+-        atoms=data.atoms,
+-        charges=data.charges,
+-        batch_network=batch_network,
+-        batch_orbitals=batch_orbitals,
+-        network_options=network.options,
+-        sharded_key=subkeys,
+-        electrons=cfg.system.electrons,
+-        scf_approx=hartree_fock,
+-        iterations=cfg.pretrain.iterations,
+-        batch_size=device_batch_size,
+-        scf_fraction=cfg.pretrain.get('scf_fraction', 0.0),
+-        states=cfg.system.states,
+-    )
++    if pbc_hf_pretrain:
++      params, data.positions = pretrain.pretrain_hartree_fock_pbc(
++          params=params,
++          positions=data.positions,
++          spins=pretrain_spins,
++          atoms=data.atoms,
++          charges=data.charges,
++          batch_network=batch_network,
++          batch_orbitals=batch_orbitals,
++          network_options=network.options,
++          sharded_key=subkeys,
++          electrons=cfg.system.electrons,
++          scf_approx=hartree_fock,
++          iterations=cfg.pretrain.iterations,
++          batch_size=device_batch_size,
++          learning_rate=cfg.pretrain.get('learning_rate', 3.e-4),
++          mcmc_steps=cfg.pretrain.get('mcmc_steps', 1),
++      )
++    else:
++      params, data.positions = pretrain.pretrain_hartree_fock(
++          params=params,
++          positions=data.positions,
++          spins=pretrain_spins,
++          atoms=data.atoms,
++          charges=data.charges,
++          batch_network=batch_network,
++          batch_orbitals=batch_orbitals,
++          network_options=network.options,
++          sharded_key=subkeys,
++          electrons=cfg.system.electrons,
++          scf_approx=hartree_fock,
++          iterations=cfg.pretrain.iterations,
++          batch_size=device_batch_size,
++          scf_fraction=cfg.pretrain.get('scf_fraction', 0.0),
++          states=cfg.system.states,
++      )
+ 
+   # Main training
+ 
