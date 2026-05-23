@@ -12,6 +12,7 @@ venv/
 
 # OS/editor noise
 .DS_Store
+.vscode/
 
 # Local agent/tool state
 .agents/
