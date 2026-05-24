@@ -10,6 +10,14 @@ PYTHONPATH=src python scripts/validation/check_excited_state_penalty_objective.p
 PYTHONPATH=src python scripts/validation/check_ferminet_pbc_excited_scaffold.py
 ```
 
+FermiNet/JAX build-only excited-state adapter check:
+
+```bash
+conda run -n solidnes-ferminet-jax0101-cuda12 \
+  env PYTHONPATH=external/ferminet:src \
+  python scripts/validation/check_ferminet_pbc_excited_adapter_build.py
+```
+
 Carbon diamond HF reference:
 
 ```bash

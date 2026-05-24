@@ -59,6 +59,13 @@ A minimal FermiNet PBC excited-state scaffold is implemented at
 `src/solidnes/excited_states/ferminet_pbc_scaffold.py`, with a no-compute
 synthetic validation script at
 `scripts/validation/check_ferminet_pbc_excited_scaffold.py`.
+The first real FermiNet/JAX build-only adapter check is implemented at
+`scripts/validation/check_ferminet_pbc_excited_adapter_build.py` and passed in
+the `solidnes-ferminet-jax0101-cuda12` environment. It keeps
+`cfg.system.states == 0`, initializes two external state parameter trees, wraps
+`network.apply` into the scaffold wavefunction-matrix interface, and constructs
+the PBC local-energy wrapper without evaluating the expensive Laplacian path by
+default.
 Future small task bundles for this phase should go under
 tasks/excited_state_nesvmc/ when they produce build, smoke, experiment,
 evaluation, analysis, SLURM, log, or result artifacts. Pure reference-source
@@ -71,10 +78,11 @@ audits and design notes do not consume a run number.
 Start the first controlled periodic excited-state/NES-VMC implementation step.
 
 Suggested starting point:
-1. Move from synthetic callables to a build-only FermiNet/JAX adapter check.
-2. Build a FermiNet PBC config with externally managed two-state parameter
-   trees, avoiding FermiNet's molecular `cfg.system.states` path.
-3. Wrap `network.apply` and PBC local energy into the scaffold interface.
+1. Promote the FermiNet/JAX adapter wrapper pattern from the validation script
+   into reusable SolidNES source.
+2. Connect the real FermiNet wavefunction matrix, state energies, and overlap
+   diagnostics to the penalty objective.
+3. Define the first carbon-diamond Gamma two-state build/smoke criterion.
 4. Create the first numbered task bundle only if a build-only/smoke step
    produces durable project artifacts under `tasks/`.
 5. Keep the first probe on carbon diamond primitive Gamma, same basis/geometry.
@@ -125,14 +133,15 @@ This small step is complete when all of the following are true:
 3. The penalty-based excited-state VMC objective is implemented or scaffolded
    in reusable SolidNES/FermiNet code. Partial: backend-independent utilities
    and a minimal FermiNet PBC scaffold exist under
-   `src/solidnes/excited_states/`; real FermiNet/JAX adapter integration is
-   pending.
+   `src/solidnes/excited_states/`; a real FermiNet/JAX build-only adapter
+   check now passes, but reusable training integration is pending.
 4. The code exposes state energies plus overlap/orthogonality diagnostics.
    Partial: scaffold-level state-energy and overlap diagnostics exist; real
-   FermiNet PBC evaluation is pending.
+   FermiNet PBC build integration is proven; real local-energy evaluation and
+   training integration are pending.
 5. A build-only or smoke-level check proves the new code path can be imported
-   and configured. Partial: no-compute synthetic utility and scaffold checks
-   passed; FermiNet/JAX build-only check is pending.
+   and configured. Done for build-only: synthetic utility/scaffold checks and
+   the FermiNet/JAX adapter build check passed.
 6. A numbered task bundle is created only for the first build/smoke/run/analysis
    step that produces project artifacts.
 7. The next concrete material/probe run is defined with explicit completion

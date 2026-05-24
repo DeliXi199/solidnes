@@ -31,8 +31,14 @@ Short version:
 - Completed in this step: implemented a minimal FermiNet PBC excited-state
   scaffold and verified it with
   `scripts/validation/check_ferminet_pbc_excited_scaffold.py`.
-- Next action: move from synthetic callables to a build-only FermiNet/JAX
-  adapter check, while avoiding FermiNet's molecular `cfg.system.states` path.
+- Completed in this step: added and ran a build-only FermiNet/JAX adapter
+  check at
+  `scripts/validation/check_ferminet_pbc_excited_adapter_build.py`. It keeps
+  `cfg.system.states == 0`, initializes two external state parameter trees,
+  wraps `network.apply` into the scaffold interface, and constructs the PBC
+  local-energy wrapper.
+- Next action: promote the adapter pattern into reusable source and connect the
+  real FermiNet matrix/state-energy path to the penalty objective.
 
 ## Completed Structural Cleanup
 
@@ -93,8 +99,10 @@ Current implementation scaffold:
 - `src/solidnes/excited_states/ferminet_pbc_scaffold.py`
 - `scripts/validation/check_excited_state_penalty_objective.py`
 - `scripts/validation/check_ferminet_pbc_excited_scaffold.py`
+- `scripts/validation/check_ferminet_pbc_excited_adapter_build.py`
 - `records/progress/2026-05-24_excited_state_penalty_utilities.md`
 - `records/progress/2026-05-24_ferminet_pbc_excited_scaffold.md`
+- `records/progress/2026-05-24_ferminet_pbc_excited_adapter_build_check.md`
 
 ## Current Rules
 
