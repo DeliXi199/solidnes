@@ -1,13 +1,13 @@
 # SolidNES Run Index
 
-Last updated: 2026-05-23, Asia/Shanghai
+Last updated: 2026-05-24, Asia/Shanghai
 
 This file is the canonical ledger for numbered task bundles after the global artifact migration.
 
 ## Next Available Run Number
 
 ```text
-0047
+0063
 ```
 
 ## Numbered Runs
@@ -59,6 +59,22 @@ This file is the canonical ledger for numbered task bundles after the global art
 | 0044 | migrated | 2026-05-23 15:41:28 | `solidnes/tasks/phase1_diamond_c/pbc_gamma/training/0044_ferminet_kfac_folx_batch4096_x64_burnin1000_iter20000_paper_pilot/` | `tasks/phase1_diamond_c/pbc_gamma/training/0044_ferminet_kfac_folx_batch4096_x64_burnin1000_iter20000_paper_pilot/results/` | 1 | 2 |
 | 0045 | migrated | 2026-05-23 15:58:17 | `solidnes/tasks/ferminet_pretraining/0045_ferminet_kfac_folx_batch4096_x64_burnin1000_iter20000_pbc_hf_pretrain_paper_pilot/` | `tasks/ferminet_pretraining/0045_ferminet_kfac_folx_batch4096_x64_burnin1000_iter20000_pbc_hf_pretrain_paper_pilot/results/` | 0 | 0 |
 | 0046 | migrated | 2026-05-23 19:33:07 | `solidnes/tasks/phase1_diamond_c/pbc_gamma/evaluation/0046_ferminet_x64_eval_ckpt18349_batch4096_mcmc20_iter2000/` | `tasks/phase1_diamond_c/pbc_gamma/evaluation/0046_ferminet_x64_eval_ckpt18349_batch4096_mcmc20_iter2000/results/` | 1 | 2 |
+| 0047 | completed | 2026-05-24 00:43:57 | `solidnes/tasks/phase1_diamond_c/pbc_gamma/probe/0047_ferminet_pbc_hf_pretrain_gpu_benchmark_batch512_iter100/` | `tasks/phase1_diamond_c/pbc_gamma/probe/0047_ferminet_pbc_hf_pretrain_gpu_benchmark_batch512_iter100/results/` | 1 | 2 |
+| 0048 | completed | 2026-05-24 01:20:22 | `solidnes/tasks/phase1_diamond_c/pbc_gamma/probe/0048_ferminet_jax_pbc_gto_pretrain_gpu_benchmark_sto3g_batch512_iter100/` | `tasks/phase1_diamond_c/pbc_gamma/probe/0048_ferminet_jax_pbc_gto_pretrain_gpu_benchmark_sto3g_batch512_iter100/results/` | 1 | 2 |
+| 0049 | completed | 2026-05-24 01:29:45 | `solidnes/tasks/phase1_diamond_c/pbc_gamma/probe/0049_ferminet_pyscf_pbc_pretrain_gpu_benchmark_sto3g_batch512_iter100/` | `tasks/phase1_diamond_c/pbc_gamma/probe/0049_ferminet_pyscf_pbc_pretrain_gpu_benchmark_sto3g_batch512_iter100/results/` | 1 | 2 |
+| 0050 | completed | 2026-05-24 09:41:07 | `solidnes/tasks/phase1_diamond_c/pbc_gamma/probe/0050_ferminet_jax_pbc_gto_pretrain_gpu_benchmark_ccpvdz_batch512_iter100/` | `tasks/phase1_diamond_c/pbc_gamma/probe/0050_ferminet_jax_pbc_gto_pretrain_gpu_benchmark_ccpvdz_batch512_iter100/results/` | 1 | 2 |
+| 0051 | timed_out_partial | 2026-05-24 10:12:15 | `solidnes/tasks/phase1_diamond_c/pbc_gamma/training/0051_ferminet_jax_pbc_gto_pretrain_ccpvdz_kfac_batch4096_iter1000/` | `tasks/phase1_diamond_c/pbc_gamma/training/0051_ferminet_jax_pbc_gto_pretrain_ccpvdz_kfac_batch4096_iter1000/results/` | 1 | 2 |
+| 0052 | cancelled | 2026-05-24 11:19:24 | `solidnes/tasks/phase1_diamond_c/pbc_gamma/training/0052_ferminet_jax_pbc_gto_pretrain_ccpvdz_kfac_batch4096_iter1000_retry_longtime/` | `tasks/phase1_diamond_c/pbc_gamma/training/0052_ferminet_jax_pbc_gto_pretrain_ccpvdz_kfac_batch4096_iter1000_retry_longtime/results/` | 1 | 2 |
+| 0053 | completed | 2026-05-24 11:32:12 | `solidnes/tasks/phase1_diamond_c/pbc_gamma/training/0053_ferminet_jax_pbc_gto_pretrain_ccpvdz_kfac_batch4096_iter1000_2gpu_fullnode_a/` | `tasks/phase1_diamond_c/pbc_gamma/training/0053_ferminet_jax_pbc_gto_pretrain_ccpvdz_kfac_batch4096_iter1000_2gpu_fullnode_a/results/` | 1 | 2 |
+| 0054 | completed | 2026-05-24 11:32:12 | `solidnes/tasks/phase1_diamond_c/pbc_gamma/training/0054_ferminet_jax_pbc_gto_pretrain_ccpvdz_kfac_batch4096_iter1000_2gpu_fullnode_b/` | `tasks/phase1_diamond_c/pbc_gamma/training/0054_ferminet_jax_pbc_gto_pretrain_ccpvdz_kfac_batch4096_iter1000_2gpu_fullnode_b/results/` | 1 | 2 |
+| 0055 | completed | 2026-05-24 12:20:29 | `solidnes/tasks/phase1_diamond_c/pbc_gamma/training/0055_ferminet_no_pretrain_kfac_batch4096_iter1000_2gpu_fullnode/` | `tasks/phase1_diamond_c/pbc_gamma/training/0055_ferminet_no_pretrain_kfac_batch4096_iter1000_2gpu_fullnode/results/` | 1 | 2 |
+| 0056 | completed | 2026-05-24 12:29:58 | `solidnes/tasks/phase1_diamond_c/pbc_gamma/training/0056_ferminet_no_pretrain_kfac_batch4096_iter1000_2gpu_fullnode_b/` | `tasks/phase1_diamond_c/pbc_gamma/training/0056_ferminet_no_pretrain_kfac_batch4096_iter1000_2gpu_fullnode_b/results/` | 1 | 2 |
+| 0057 | timed_out_expected | 2026-05-24 12:29:58 | `solidnes/tasks/phase1_diamond_c/pbc_gamma/training/0057_ferminet_no_pretrain_kfac_batch4096_iter10000_2gpu_fullnode_timebox_19m30/` | `tasks/phase1_diamond_c/pbc_gamma/training/0057_ferminet_no_pretrain_kfac_batch4096_iter10000_2gpu_fullnode_timebox_19m30/results/` | 0 | 2 |
+| 0058 | timed_out_expected | 2026-05-24 12:44:30 | `solidnes/tasks/phase1_diamond_c/pbc_gamma/training/0058_ferminet_no_pretrain_kfac_batch4096_iter10000_2gpu_fullnode_timebox_19m30_b/` | `tasks/phase1_diamond_c/pbc_gamma/training/0058_ferminet_no_pretrain_kfac_batch4096_iter10000_2gpu_fullnode_timebox_19m30_b/results/` | 1 | 2 |
+| 0059 | timed_out_expected | 2026-05-24 13:51:05 | `solidnes/tasks/phase1_diamond_c/pbc_gamma/training/0059_ferminet_jax_pbc_gto_pretrain100_ccpvdz_kfac_batch4096_iter10000_2gpu_timebox20m/` | `tasks/phase1_diamond_c/pbc_gamma/training/0059_ferminet_jax_pbc_gto_pretrain100_ccpvdz_kfac_batch4096_iter10000_2gpu_timebox20m/results/` | 1 | 2 |
+| 0060 | timed_out_expected | 2026-05-24 13:51:05 | `solidnes/tasks/phase1_diamond_c/pbc_gamma/training/0060_ferminet_jax_pbc_gto_pretrain250_ccpvdz_kfac_batch4096_iter10000_2gpu_timebox20m/` | `tasks/phase1_diamond_c/pbc_gamma/training/0060_ferminet_jax_pbc_gto_pretrain250_ccpvdz_kfac_batch4096_iter10000_2gpu_timebox20m/results/` | 1 | 2 |
+| 0061 | timed_out_expected | 2026-05-24 13:51:05 | `solidnes/tasks/phase1_diamond_c/pbc_gamma/training/0061_ferminet_jax_pbc_gto_pretrain500_ccpvdz_kfac_batch4096_iter10000_2gpu_timebox20m/` | `tasks/phase1_diamond_c/pbc_gamma/training/0061_ferminet_jax_pbc_gto_pretrain500_ccpvdz_kfac_batch4096_iter10000_2gpu_timebox20m/results/` | 1 | 2 |
+| 0062 | timed_out_expected | 2026-05-24 13:51:05 | `solidnes/tasks/phase1_diamond_c/pbc_gamma/training/0062_ferminet_jax_pbc_gto_pretrain1000_ccpvdz_kfac_batch4096_iter10000_2gpu_timebox20m/` | `tasks/phase1_diamond_c/pbc_gamma/training/0062_ferminet_jax_pbc_gto_pretrain1000_ccpvdz_kfac_batch4096_iter10000_2gpu_timebox20m/results/` | 1 | 2 |
 
 ## Cleanup Notes
 

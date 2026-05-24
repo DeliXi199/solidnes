@@ -1,0 +1,48 @@
+project: solidnes
+experiment_name: diamond_c_ferminet_pbc_gamma_jax_pbc_gto_pretrain500_ccpvdz_kfac_batch4096_iter10000_2gpu_fullnode_timebox20m
+stage: phase1_backend
+phase: ferminet_jax_pbc_gto_pretrain_sweep_timebox20m
+
+backend:
+  name: ferminet
+  repository: https://github.com/google-deepmind/ferminet
+  inspected_commit: c4312c315dda1c5728994ba89629744f71c6eb66
+  mode: external_backend_with_local_patch
+
+system_config: ../system/diamond_c_primitive_gamma_paper.yaml
+model_config: ../model/ferminet_pbc_paper.yaml
+sampler_config: ../sampler/metropolis_ferminet_pbc_mcmc20.yaml
+train_config: ../train/ground_state_ferminet_pbc_hf_pretrain_jax_gto_ccpvdz_kfac_batch4096_pretrain500_iter10000.yaml
+
+ferminet_config_template:
+  module: solidnes/backends/ferminet_configs/diamond_pbc_gamma_paper.py
+
+runtime:
+  target_jax_version: 0.10.1
+  cuda_extra: cuda12
+  precision_profile: fp64
+  x64_enabled: true
+  require_gpu: true
+  xla_python_client_preallocate: true
+  xla_python_client_mem_fraction: 0.90
+
+output:
+  log_dir: tasks/phase1_diamond_c/pbc_gamma/training/0061_ferminet_jax_pbc_gto_pretrain500_ccpvdz_kfac_batch4096_iter10000_2gpu_timebox20m/logs/backend
+  checkpoint_dir: tasks/phase1_diamond_c/pbc_gamma/training/0061_ferminet_jax_pbc_gto_pretrain500_ccpvdz_kfac_batch4096_iter10000_2gpu_timebox20m/results/checkpoints
+  validation_dir: tasks/phase1_diamond_c/pbc_gamma/training/0061_ferminet_jax_pbc_gto_pretrain500_ccpvdz_kfac_batch4096_iter10000_2gpu_timebox20m/results/validation
+
+diagnostics:
+  import_ferminet: true
+  build_pbc_config: true
+  train_stats: true
+  requested_gpus: 2
+  fullnode: true
+  expected_slurm_state: TIMEOUT
+  pretrain_sweep:
+    pretrain_iterations: 500
+    slurm_time_limit: "00:20:00"
+    train_iteration_cap: 10000
+
+notes:
+  status: ready_to_submit
+  purpose: 20-minute timeboxed pretrain sweep, 500 JAX PBC-HF cc-pVDZ pretrain steps

@@ -1,0 +1,67 @@
+{
+  "ao": {
+    "expected_shape": [
+      32,
+      10
+    ],
+    "finite_checks_passed": true,
+    "max_abs": 3.275963512683333e-07,
+    "max_abs_expected": 0.4627485481541052,
+    "max_rel": 0.0006167227430519448,
+    "mean_abs_expected": 0.06716165396288466,
+    "rms_abs": 4.7553147923257316e-08,
+    "shape": [
+      32,
+      10
+    ]
+  },
+  "basis": "sto-3g",
+  "cell": {
+    "lattice_rows_bohr": [
+      [
+        0.0,
+        3.376751611985309,
+        3.376751611985309
+      ],
+      [
+        3.376751611985309,
+        0.0,
+        3.376751611985309
+      ],
+      [
+        3.376751611985309,
+        3.376751611985309,
+        0.0
+      ]
+    ],
+    "nao": 10,
+    "nelectron": 12,
+    "volume_bohr3": 77.00649262229645
+  },
+  "created_at": "2026-05-23T17:25:22.723747+00:00",
+  "hf": {
+    "converged": true,
+    "energy_hartree": -74.00656437893551,
+    "occupied_orbitals": 6
+  },
+  "image_cutoff": 2,
+  "mo": {
+    "expected_shape": [
+      32,
+      6
+    ],
+    "finite_checks_passed": true,
+    "max_abs": 3.034015124206424e-07,
+    "max_abs_expected": 0.3464757235345614,
+    "max_rel": 1.2820429247093024e-05,
+    "mean_abs_expected": 0.0664061067407018,
+    "rms_abs": 4.41629742936075e-08,
+    "shape": [
+      32,
+      6
+    ]
+  },
+  "num_points": 32,
+  "seed": 17,
+  "system": "diamond_c_primitive_gamma"
+}

@@ -64,8 +64,10 @@ def main() -> int:
     if not args.allow_cpu and not any(device.platform == "gpu" for device in jax.devices()):
         raise SystemExit("JAX did not report a GPU device; pass --allow-cpu only for local debugging")
 
+    from absl import logging as absl_logging  # pylint: disable=import-outside-toplevel
     from ferminet import train  # pylint: disable=import-outside-toplevel
 
+    absl_logging.set_verbosity(absl_logging.INFO)
     train.train(bundle.cfg)
     return 0
 

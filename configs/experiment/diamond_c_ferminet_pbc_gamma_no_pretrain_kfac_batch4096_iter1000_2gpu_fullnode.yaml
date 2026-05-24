@@ -1,0 +1,49 @@
+project: solidnes
+experiment_name: diamond_c_ferminet_pbc_gamma_no_pretrain_kfac_batch4096_iter1000_2gpu_fullnode
+stage: phase1_backend
+phase: ferminet_no_pretrain_kfac_2gpu_fullnode_control
+
+backend:
+  name: ferminet
+  repository: https://github.com/google-deepmind/ferminet
+  inspected_commit: c4312c315dda1c5728994ba89629744f71c6eb66
+  mode: external_backend_with_local_patch
+
+system_config: ../system/diamond_c_primitive_gamma_paper.yaml
+model_config: ../model/ferminet_pbc_paper.yaml
+sampler_config: ../sampler/metropolis_ferminet_pbc_mcmc20.yaml
+train_config: ../train/ground_state_ferminet_pbc_kfac_folx_batch4096_iter1000.yaml
+
+ferminet_config_template:
+  module: solidnes/backends/ferminet_configs/diamond_pbc_gamma_paper.py
+
+runtime:
+  target_jax_version: 0.10.1
+  cuda_extra: cuda12
+  precision_profile: fp64
+  x64_enabled: true
+  require_gpu: true
+  xla_python_client_preallocate: true
+  xla_python_client_mem_fraction: 0.90
+
+output:
+  log_dir: tasks/phase1_diamond_c/pbc_gamma/training/0055_ferminet_no_pretrain_kfac_batch4096_iter1000_2gpu_fullnode/logs/backend
+  checkpoint_dir: tasks/phase1_diamond_c/pbc_gamma/training/0055_ferminet_no_pretrain_kfac_batch4096_iter1000_2gpu_fullnode/results/checkpoints
+  validation_dir: tasks/phase1_diamond_c/pbc_gamma/training/0055_ferminet_no_pretrain_kfac_batch4096_iter1000_2gpu_fullnode/results/validation
+
+diagnostics:
+  import_ferminet: true
+  build_pbc_config: true
+  train_stats: true
+  requested_gpus: 2
+  fullnode: true
+  comparison_target:
+    - 0053
+    - 0054
+
+notes:
+  status: ready_to_submit
+  purpose: no-pretrain 2-GPU full-node control for same-step and wall-clock comparison against 0053/0054
+  comparison:
+    same_steps: compare KFAC 1000 against pretrain+KFAC 1000
+    same_wall_clock: use elapsed time against 0053/0054 total elapsed; add longer no-pretrain run if this finishes earlier

@@ -35,6 +35,7 @@ tasks/**/logs/
 # Logs
 *.log
 slurm-*.out
+plotting_env_smoke.png
 
 external/
 

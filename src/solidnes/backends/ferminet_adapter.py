@@ -44,6 +44,10 @@ class FermiNetAdapterSummary:
     iterations: int
     pretrain_method: str | None
     pretrain_iterations: int
+    pretrain_target_backend: str
+    pretrain_jax_pbc_image_cutoff: int
+    pretrain_log_every: int
+    pretrain_target_chunk_size: int
     mcmc_burn_in: int
     mcmc_steps_per_iteration: int
     network_type: str
@@ -75,6 +79,10 @@ class FermiNetAdapterSummary:
             "iterations": self.iterations,
             "pretrain_method": self.pretrain_method,
             "pretrain_iterations": self.pretrain_iterations,
+            "pretrain_target_backend": self.pretrain_target_backend,
+            "pretrain_jax_pbc_image_cutoff": self.pretrain_jax_pbc_image_cutoff,
+            "pretrain_log_every": self.pretrain_log_every,
+            "pretrain_target_chunk_size": self.pretrain_target_chunk_size,
             "mcmc_burn_in": self.mcmc_burn_in,
             "mcmc_steps_per_iteration": self.mcmc_steps_per_iteration,
             "network_type": self.network_type,
@@ -135,6 +143,16 @@ class FermiNetAdapterBundle:
             iterations=int(self.cfg.optim.iterations),
             pretrain_method=self.cfg.pretrain.method,
             pretrain_iterations=int(self.cfg.pretrain.iterations),
+            pretrain_target_backend=str(
+                self.cfg.pretrain.get("target_backend", "pyscf_pbc")
+            ),
+            pretrain_jax_pbc_image_cutoff=int(
+                self.cfg.pretrain.get("jax_pbc_image_cutoff", 2)
+            ),
+            pretrain_log_every=int(self.cfg.pretrain.get("log_every", 1)),
+            pretrain_target_chunk_size=int(
+                self.cfg.pretrain.get("target_chunk_size", 0)
+            ),
             mcmc_burn_in=int(self.cfg.mcmc.burn_in),
             mcmc_steps_per_iteration=int(self.cfg.mcmc.steps),
             network_type=self.cfg.network.network_type,
@@ -231,6 +249,10 @@ def format_summary(summary: FermiNetAdapterSummary) -> str:
         f"forward_laplacian_enabled: {summary.forward_laplacian_enabled}",
         f"pretrain_method: {summary.pretrain_method}",
         f"pretrain_iterations: {summary.pretrain_iterations}",
+        f"pretrain_target_backend: {summary.pretrain_target_backend}",
+        f"pretrain_jax_pbc_image_cutoff: {summary.pretrain_jax_pbc_image_cutoff}",
+        f"pretrain_log_every: {summary.pretrain_log_every}",
+        f"pretrain_target_chunk_size: {summary.pretrain_target_chunk_size}",
         f"mcmc_burn_in: {summary.mcmc_burn_in}",
         f"mcmc_steps_per_iteration: {summary.mcmc_steps_per_iteration}",
         "",
@@ -322,6 +344,27 @@ def _build_ferminet_config(
     cfg.pretrain.mcmc_steps = int(
         train_cfg.get("pretrain_mcmc_steps", cfg.pretrain.get("mcmc_steps", 1))
     )
+    cfg.pretrain.log_every = int(
+        train_cfg.get("pretrain_log_every", cfg.pretrain.get("log_every", 1))
+    )
+    cfg.pretrain.target_chunk_size = int(
+        train_cfg.get(
+            "pretrain_target_chunk_size",
+            cfg.pretrain.get("target_chunk_size", 0),
+        )
+    )
+    cfg.pretrain.target_backend = str(
+        train_cfg.get(
+            "pretrain_target_backend",
+            cfg.pretrain.get("target_backend", "pyscf_pbc"),
+        )
+    )
+    cfg.pretrain.jax_pbc_image_cutoff = int(
+        train_cfg.get(
+            "pretrain_jax_pbc_image_cutoff",
+            cfg.pretrain.get("jax_pbc_image_cutoff", 2),
+        )
+    )
     cfg.pretrain.pbc = bool(
         train_cfg.get(
             "pretrain_pbc",
@@ -335,6 +378,21 @@ def _build_ferminet_config(
         )
     )
     if cfg.pretrain.pbc:
+        if cfg.pretrain.target_backend == "jax_pbc_gto":
+            pretrain_basis = cfg.pretrain.basis.lower().replace("_", "-")
+            if pretrain_basis not in {"sto-3g", "ccpvdz", "cc-pvdz"}:
+                raise ValueError(
+                    "pretrain_target_backend=jax_pbc_gto is currently validated "
+                    "only for pretrain_basis=sto-3g or ccpvdz."
+                )
+            if (
+                pretrain_basis in {"ccpvdz", "cc-pvdz"}
+                and int(cfg.pretrain.jax_pbc_image_cutoff) < 3
+            ):
+                raise ValueError(
+                    "pretrain_target_backend=jax_pbc_gto with ccpvdz requires "
+                    "pretrain_jax_pbc_image_cutoff >= 3."
+                )
         cfg.pretrain.lattice = cfg.system.make_local_energy_kwargs.get("lattice")
         cfg.pretrain.twist = tuple(
             float(x) for x in system_section.get("twist", [0.0, 0.0, 0.0])

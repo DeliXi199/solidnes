@@ -1,0 +1,290 @@
+{
+  "ao": {
+    "expected_shape": [
+      32,
+      28
+    ],
+    "finite_checks_passed": true,
+    "groups_by_max_abs": [
+      {
+        "columns": [
+          6,
+          7,
+          8
+        ],
+        "group": "atom0:C:3p:p",
+        "max_abs": 6.98569225853346e-05,
+        "max_abs_expected": 0.041053826387547426,
+        "max_rms_abs": 1.932596832256797e-05,
+        "relative_to_group_max": 0.0017015934623459074
+      },
+      {
+        "columns": [
+          2
+        ],
+        "group": "atom0:C:3s:s",
+        "max_abs": 1.1837251277929672e-05,
+        "max_abs_expected": 0.2332288759782331,
+        "max_rms_abs": 3.410493282316484e-06,
+        "relative_to_group_max": 5.075379808045049e-05
+      },
+      {
+        "columns": [
+          20,
+          21,
+          22
+        ],
+        "group": "atom1:C:3p:p",
+        "max_abs": 8.08235854320681e-06,
+        "max_abs_expected": 0.05185401367564676,
+        "max_rms_abs": 1.984492154727549e-06,
+        "relative_to_group_max": 0.00015586755913945174
+      },
+      {
+        "columns": [
+          16
+        ],
+        "group": "atom1:C:3s:s",
+        "max_abs": 1.05053768950647e-06,
+        "max_abs_expected": 0.23342466902622852,
+        "max_rms_abs": 2.6450080882821424e-07,
+        "relative_to_group_max": 4.500542697089258e-06
+      },
+      {
+        "columns": [
+          9,
+          10,
+          11,
+          12,
+          13
+        ],
+        "group": "atom0:C:3d:d",
+        "max_abs": 9.492406860545088e-15,
+        "max_abs_expected": 0.2767886010832343,
+        "max_rms_abs": 1.839325313507206e-15,
+        "relative_to_group_max": 3.429478968207432e-14
+      },
+      {
+        "columns": [
+          1
+        ],
+        "group": "atom0:C:2s:s",
+        "max_abs": 2.192690473634684e-15,
+        "max_abs_expected": 0.244489721014604,
+        "max_rms_abs": 6.165985009625623e-16,
+        "relative_to_group_max": 8.96843623746337e-15
+      },
+      {
+        "columns": [
+          23,
+          24,
+          25,
+          26,
+          27
+        ],
+        "group": "atom1:C:3d:d",
+        "max_abs": 1.5265566588595902e-15,
+        "max_abs_expected": 0.3003257882822496,
+        "max_rms_abs": 2.8383334295577943e-16,
+        "relative_to_group_max": 5.083002254288316e-15
+      },
+      {
+        "columns": [
+          17,
+          18,
+          19
+        ],
+        "group": "atom1:C:2p:p",
+        "max_abs": 1.4710455076283324e-15,
+        "max_abs_expected": 0.596567026233112,
+        "max_rms_abs": 2.9043290199820606e-16,
+        "relative_to_group_max": 2.465851183423458e-15
+      },
+      {
+        "columns": [
+          15
+        ],
+        "group": "atom1:C:2s:s",
+        "max_abs": 1.2212453270876722e-15,
+        "max_abs_expected": 0.2719330592620155,
+        "max_rms_abs": 2.4420199665159966e-16,
+        "relative_to_group_max": 4.490977781083125e-15
+      },
+      {
+        "columns": [
+          3,
+          4,
+          5
+        ],
+        "group": "atom0:C:2p:p",
+        "max_abs": 1.1206313654810174e-15,
+        "max_abs_expected": 0.5201167340815174,
+        "max_rms_abs": 2.4976863613021494e-16,
+        "relative_to_group_max": 2.1545766402997177e-15
+      },
+      {
+        "columns": [
+          14
+        ],
+        "group": "atom1:C:1s:s",
+        "max_abs": 1.6653345369377348e-16,
+        "max_abs_expected": 0.39780209252770965,
+        "max_rms_abs": 3.0235836913561595e-17,
+        "relative_to_group_max": 4.186339308463373e-16
+      },
+      {
+        "columns": [
+          0
+        ],
+        "group": "atom0:C:1s:s",
+        "max_abs": 1.1102230246251565e-16,
+        "max_abs_expected": 0.36749860243746835,
+        "max_rms_abs": 2.3506282099028155e-17,
+        "relative_to_group_max": 3.021026521628926e-16
+      }
+    ],
+    "max_abs": 6.98569225853346e-05,
+    "max_abs_expected": 0.596567026233112,
+    "max_rel": 0.2616915658641954,
+    "mean_abs_expected": 0.0691269358113855,
+    "rms_abs": 5.974619299030988e-06,
+    "shape": [
+      32,
+      28
+    ],
+    "top_columns_by_max_abs": [
+      {
+        "column": 6,
+        "label": "0 C 3px (x)",
+        "max_abs": 6.98569225853346e-05,
+        "max_abs_expected": 0.041053826387547426,
+        "relative_to_column_max": 0.0017015934623459074,
+        "rms_abs": 1.932596832256797e-05
+      },
+      {
+        "column": 8,
+        "label": "0 C 3pz (z)",
+        "max_abs": 5.784300634517625e-05,
+        "max_abs_expected": 0.03895232901218864,
+        "relative_to_column_max": 0.0014849691356600653,
+        "rms_abs": 1.8308975483414844e-05
+      },
+      {
+        "column": 7,
+        "label": "0 C 3py (y)",
+        "max_abs": 5.286512667191257e-05,
+        "max_abs_expected": 0.035844995685688996,
+        "relative_to_column_max": 0.0014748258623174786,
+        "rms_abs": 1.6419342633203524e-05
+      },
+      {
+        "column": 2,
+        "label": "0 C 3s",
+        "max_abs": 1.1837251277929672e-05,
+        "max_abs_expected": 0.2332288759782331,
+        "relative_to_column_max": 5.075379808045049e-05,
+        "rms_abs": 3.410493282316484e-06
+      },
+      {
+        "column": 20,
+        "label": "1 C 3px (x)",
+        "max_abs": 8.08235854320681e-06,
+        "max_abs_expected": 0.042358251624922495,
+        "relative_to_column_max": 0.00019080954083693484,
+        "rms_abs": 1.984492154727549e-06
+      },
+      {
+        "column": 21,
+        "label": "1 C 3py (y)",
+        "max_abs": 5.2891896861889665e-06,
+        "max_abs_expected": 0.05185401367564676,
+        "relative_to_column_max": 0.00010200154840999386,
+        "rms_abs": 1.6143197253910944e-06
+      },
+      {
+        "column": 22,
+        "label": "1 C 3pz (z)",
+        "max_abs": 5.208282938271372e-06,
+        "max_abs_expected": 0.05162487794767994,
+        "relative_to_column_max": 0.00010088707509487557,
+        "rms_abs": 1.7140629380565573e-06
+      },
+      {
+        "column": 16,
+        "label": "1 C 3s",
+        "max_abs": 1.05053768950647e-06,
+        "max_abs_expected": 0.23342466902622852,
+        "relative_to_column_max": 4.500542697089258e-06,
+        "rms_abs": 2.6450080882821424e-07
+      }
+    ],
+    "worst_column": {
+      "column": 6,
+      "label": "0 C 3px (x)",
+      "max_abs": 6.98569225853346e-05,
+      "max_abs_expected": 0.041053826387547426,
+      "relative_to_column_max": 0.0017015934623459074,
+      "rms_abs": 1.932596832256797e-05
+    }
+  },
+  "basis": "ccpvdz",
+  "cell": {
+    "ao_labels": [
+      "0 C 1s",
+      "0 C 2s",
+      "0 C 3s",
+      "0 C 2px (x)",
+      "0 C 2py (y)",
+      "0 C 2pz (z)",
+      "0 C 3px (x)",
+      "0 C 3py (y)",
+      "0 C 3pz (z)",
+      "0 C 3dxy (xy)",
+      "0 C 3dyz (yz)",
+      "0 C 3dz^2 (z^2)",
+      "0 C 3dxz (xz)",
+      "0 C 3dx2-y2 (x2-y2)",
+      "1 C 1s",
+      "1 C 2s",
+      "1 C 3s",
+      "1 C 2px (x)",
+      "1 C 2py (y)",
+      "1 C 2pz (z)",
+      "1 C 3px (x)",
+      "1 C 3py (y)",
+      "1 C 3pz (z)",
+      "1 C 3dxy (xy)",
+      "1 C 3dyz (yz)",
+      "1 C 3dz^2 (z^2)",
+      "1 C 3dxz (xz)",
+      "1 C 3dx2-y2 (x2-y2)"
+    ],
+    "lattice_rows_bohr": [
+      [
+        0.0,
+        3.376751611985309,
+        3.376751611985309
+      ],
+      [
+        3.376751611985309,
+        0.0,
+        3.376751611985309
+      ],
+      [
+        3.376751611985309,
+        3.376751611985309,
+        0.0
+      ]
+    ],
+    "nao": 28,
+    "nelectron": 12,
+    "volume_bohr3": 77.00649262229645
+  },
+  "created_at": "2026-05-24T01:38:28.459366+00:00",
+  "hf": null,
+  "image_cutoff": 2,
+  "mo": null,
+  "num_points": 32,
+  "seed": 17,
+  "system": "diamond_c_primitive_gamma"
+}

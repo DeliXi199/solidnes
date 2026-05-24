@@ -1,0 +1,33 @@
+{
+  "block_energy_means_hartree": [
+    -75.27307499999999,
+    -75.268055,
+    -75.28905999999999,
+    -75.28369,
+    -75.282805
+  ],
+  "block_energy_stderr_hartree": 0.0038210504445760685,
+  "created_at": "2026-05-24T07:32:43.592509+00:00",
+  "energy_delta_hartree": -39.5578,
+  "first_energy_hartree": -35.7773,
+  "first_step": 0,
+  "initial_energy_hartree": -35.5695,
+  "job_id": "128334",
+  "last_energy_hartree": -75.3351,
+  "last_exp_variance_hartree2": 0.0027,
+  "last_step": 1180,
+  "min_energy_hartree": -75.4491,
+  "min_energy_step": 1158,
+  "pmove_last": 0.54,
+  "pmove_max": 0.89,
+  "pmove_mean": 0.6838865368331922,
+  "pmove_min": 0.53,
+  "rows": 1181,
+  "source_log": "/data/home/yihaoxu/research/projects/solidnes/tasks/phase1_diamond_c/pbc_gamma/training/0062_ferminet_jax_pbc_gto_pretrain1000_ccpvdz_kfac_batch4096_iter10000_2gpu_timebox20m/logs/slurm/0062_pretrain1000_timebox20m_128334.err",
+  "tail_energy_mean_hartree": -75.279337,
+  "tail_energy_stderr_hartree": 0.0047690154533131125,
+  "tail_exp_variance_mean_hartree2": 0.002229,
+  "tail_pmove_mean": 0.5351,
+  "tail_rows": 100,
+  "timed_out": true
+}

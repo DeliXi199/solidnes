@@ -1,0 +1,9 @@
+{
+  "kind": "gpu",
+  "ready": false,
+  "reason": "no_free_gpu_queue_flexible_partitions",
+  "sbatch": null,
+  "selection": {
+    "candidates": []
+  }
+}

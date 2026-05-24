@@ -1,0 +1,37 @@
+training:
+  target: ground_state
+  deterministic: true
+  batch_size: 512
+  iterations: 0
+  optimizer: none
+  learning_rate: 0.03
+  learning_rate_decay: 1.0
+  learning_rate_delay: 10000.0
+  laplacian: folx
+  max_vmap_batch_size: 0
+  clip_local_energy: 5.0
+  clip_median: false
+  center_at_clip: true
+  pretrain_method: pbc_hf
+  pretrain_pbc: true
+  pretrain_basis: ccpvdz
+  pretrain_iterations: 100
+  pretrain_learning_rate: 0.0003
+  pretrain_mcmc_steps: 1
+  pretrain_log_every: 10
+  pretrain_target_chunk_size: 8192
+  pretrain_restricted: true
+  pretrain_precision: 1.0e-8
+  pretrain_exp_to_discard: 0.1
+  checkpoint_every_minutes: 15
+  log_every: 1
+
+stability_checks:
+  finite_energy: true
+  finite_variance: true
+  acceptance_range: [0.05, 0.95]
+
+notes:
+  status: benchmark_ready
+  purpose: small PBC-HF pretraining timing benchmark before JAX-native target work
+  scope: pretrain-only benchmark; normal VMC iterations are disabled

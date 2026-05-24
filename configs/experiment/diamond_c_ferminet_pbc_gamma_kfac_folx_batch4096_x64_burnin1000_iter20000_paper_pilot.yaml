@@ -12,7 +12,7 @@ backend:
 system_config: ../system/diamond_c_primitive_gamma_paper.yaml
 model_config: ../model/ferminet_pbc_paper.yaml
 sampler_config: ../sampler/metropolis_ferminet_pbc_mcmc20_burnin1000.yaml
-train_config: ../train/ground_state_ferminet_pbc_kfac_folx_batch4096_iter20000_no_pretrain.yaml
+train_config: ../train/ground_state_ferminet_pbc_hf_pretrain_jax_gto_ccpvdz_kfac_batch4096_pretrain250_iter20000.yaml
 
 ferminet_config_template:
   module: solidnes/backends/ferminet_configs/diamond_pbc_gamma_paper.py
@@ -38,13 +38,17 @@ diagnostics:
 
 notes:
   status: ready_to_submit
-  purpose: paper-geometry x64 pilot to test whether FermiNet continues toward the DeepSolid supplementary diamond value
+  purpose: paper-geometry x64 pilot with fixed 250-step JAX PBC-HF pretraining to test whether FermiNet continues toward the DeepSolid supplementary diamond value
   paper_reference:
     energy_hartree: -75.4009
     hf_hartree: -74.9784
     cell: 1x1x1 Gamma
     electrons: 12
-  pretraining_caveat: true PBC-HF cc-pVDZ pretraining is not yet implemented in the FermiNet route
+  pretraining:
+    method: pbc_hf
+    target_backend: jax_pbc_gto
+    basis: ccpvdz
+    iterations: 250
   local_patch:
     file: external/ferminet/ferminet/networks.py
     change: construct_symmetric_features uses broadcast_to instead of tile for spin-channel means

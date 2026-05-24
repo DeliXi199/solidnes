@@ -1,0 +1,49 @@
+project: solidnes
+experiment_name: diamond_c_ferminet_pbc_gamma_pbc_hf_pretrain_benchmark_batch512_iter100
+stage: phase1_backend
+phase: ferminet_pbc_hf_pretrain_timing_benchmark
+
+backend:
+  name: ferminet
+  repository: https://github.com/google-deepmind/ferminet
+  inspected_commit: c4312c315dda1c5728994ba89629744f71c6eb66
+  mode: external_backend_with_local_patch
+
+system_config: ../system/diamond_c_primitive_gamma_paper.yaml
+model_config: ../model/ferminet_pbc_paper.yaml
+sampler_config: ../sampler/metropolis_ferminet_pbc_smoke.yaml
+train_config: ../train/ground_state_ferminet_pbc_hf_pretrain_benchmark_batch512_iter100.yaml
+
+ferminet_config_template:
+  module: solidnes/backends/ferminet_configs/diamond_pbc_gamma_paper.py
+
+runtime:
+  target_jax_version: 0.10.1
+  cuda_extra: cuda12
+  precision_profile: fp64
+  x64_enabled: true
+  require_gpu: true
+  xla_python_client_preallocate: true
+  xla_python_client_mem_fraction: 0.90
+
+output:
+  log_dir: tasks/ferminet_pretraining/0046_ferminet_pbc_hf_pretrain_benchmark_batch512_iter100/logs/backend
+  checkpoint_dir: tasks/ferminet_pretraining/0046_ferminet_pbc_hf_pretrain_benchmark_batch512_iter100/results/checkpoints
+  validation_dir: tasks/ferminet_pretraining/0046_ferminet_pbc_hf_pretrain_benchmark_batch512_iter100/results/validation
+
+diagnostics:
+  import_ferminet: true
+  build_pbc_config: true
+  pbc_hf_pretrain: true
+  train_stats: false
+
+notes:
+  status: benchmark_ready
+  purpose: measure PBC-HF pretraining loss, pmove, and per-step timing split
+  pretraining:
+    method: pbc_hf
+    basis: ccpvdz
+    batch_size: 512
+    iterations: 100
+    log_every: 10
+    target_chunk_size: 8192

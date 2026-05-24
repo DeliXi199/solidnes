@@ -1,0 +1,55 @@
+project: solidnes
+experiment_name: diamond_c_ferminet_pbc_gamma_jax_pbc_gto_pretrain_ccpvdz_kfac_batch4096_iter1000_2gpu_fullnode_b
+stage: phase1_backend
+phase: ferminet_jax_pbc_gto_ccpvdz_pretrain_then_kfac_2gpu_fullnode_b
+
+backend:
+  name: ferminet
+  repository: https://github.com/google-deepmind/ferminet
+  inspected_commit: c4312c315dda1c5728994ba89629744f71c6eb66
+  mode: external_backend_with_local_patch
+
+system_config: ../system/diamond_c_primitive_gamma_paper.yaml
+model_config: ../model/ferminet_pbc_paper.yaml
+sampler_config: ../sampler/metropolis_ferminet_pbc_mcmc20.yaml
+train_config: ../train/ground_state_ferminet_pbc_hf_pretrain_jax_gto_ccpvdz_kfac_batch4096_iter1000.yaml
+
+ferminet_config_template:
+  module: solidnes/backends/ferminet_configs/diamond_pbc_gamma_paper.py
+
+runtime:
+  target_jax_version: 0.10.1
+  cuda_extra: cuda12
+  precision_profile: fp64
+  x64_enabled: true
+  require_gpu: true
+  xla_python_client_preallocate: true
+  xla_python_client_mem_fraction: 0.90
+
+output:
+  log_dir: tasks/phase1_diamond_c/pbc_gamma/training/0054_ferminet_jax_pbc_gto_pretrain_ccpvdz_kfac_batch4096_iter1000_2gpu_fullnode_b/logs/backend
+  checkpoint_dir: tasks/phase1_diamond_c/pbc_gamma/training/0054_ferminet_jax_pbc_gto_pretrain_ccpvdz_kfac_batch4096_iter1000_2gpu_fullnode_b/results/checkpoints
+  validation_dir: tasks/phase1_diamond_c/pbc_gamma/training/0054_ferminet_jax_pbc_gto_pretrain_ccpvdz_kfac_batch4096_iter1000_2gpu_fullnode_b/results/validation
+
+diagnostics:
+  import_ferminet: true
+  build_pbc_config: true
+  pbc_hf_pretrain: true
+  jax_pbc_gto_target: true
+  train_stats: true
+  requested_gpus: 2
+  fullnode: true
+  dependency: afterok_0053
+
+notes:
+  status: ready_to_submit
+  purpose: second full-node 2-GPU run, submitted after successful completion of 0053
+  pretraining:
+    method: pbc_hf
+    target_backend: jax_pbc_gto
+    basis: ccpvdz
+    image_cutoff: 3
+    batch_size: 4096
+    iterations: 1000
+    log_every: 10
+    target_chunk_size: 0

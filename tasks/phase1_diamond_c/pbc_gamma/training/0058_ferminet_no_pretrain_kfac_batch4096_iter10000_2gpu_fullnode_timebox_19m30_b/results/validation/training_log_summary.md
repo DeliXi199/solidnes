@@ -1,0 +1,22 @@
+# FermiNet Training Log Summary
+
+- Job id: `128325`
+- Source log: `/data/home/yihaoxu/research/projects/solidnes/tasks/phase1_diamond_c/pbc_gamma/training/0058_ferminet_no_pretrain_kfac_batch4096_iter10000_2gpu_fullnode_timebox_19m30_b/logs/slurm/0058_no_pretrain_timebox_19m30_b_128325.err`
+- Timed out: `True`
+- Parsed rows: `1437`
+- Step range: `0` to `1436`
+- Initial energy: `-20.1518` Ha
+- First logged energy: `-20.0137` Ha
+- Last logged energy: `-75.3094` Ha
+- Minimum energy: `-75.434` Ha at step `1396`
+- Energy delta: `-55.2957` Ha
+- Last exp variance: `0.0021` Ha^2
+- Mean pmove: `0.6586151704940849`
+- Last pmove: `0.54`
+- Tail rows: `100`
+- Tail energy mean: `-75.310207` Ha
+- Tail energy stderr: `0.004920733552730718` Ha
+- Tail exp variance mean: `0.00223` Ha^2
+- Tail pmove mean: `0.535`
+- Block energy means: `[-75.307345, -75.30572, -75.32146, -75.31324, -75.30327]` Ha
+- Block energy stderr: `0.003257877222978947` Ha

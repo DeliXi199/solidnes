@@ -1,0 +1,93 @@
+{
+  "config": {
+    "backend": "ferminet",
+    "batch_size": 4096,
+    "determinants": 8,
+    "forward_laplacian_enabled": true,
+    "hidden_dims": "((256, 32), (256, 32), (256, 32), (256, 32))",
+    "iterations": 1000,
+    "laplacian": "folx",
+    "mcmc_burn_in": 100,
+    "mcmc_steps_per_iteration": 20,
+    "network_type": "ferminet",
+    "optimizer": "kfac",
+    "precision_profile": "fp64",
+    "target_jax_version": "0.10.1",
+    "x64_enabled": true
+  },
+  "created_at": "2026-05-24T04:19:02.497902+00:00",
+  "diagnostics": {
+    "folx_tile_not_in_registry": 0,
+    "traceback": 0
+  },
+  "err_path": "/data/home/yihaoxu/research/projects/solidnes/tasks/phase1_diamond_c/pbc_gamma/training/0054_ferminet_jax_pbc_gto_pretrain_ccpvdz_kfac_batch4096_iter1000_2gpu_fullnode_b/logs/slurm/0054_ferminet_jax_pbc_gto_2gpu_fullnode_b_128316.err",
+  "experiment_name": "diamond_c_ferminet_pbc_gamma_jax_pbc_gto_pretrain_ccpvdz_kfac_batch4096_iter1000_2gpu_fullnode_b",
+  "job_id": "128316",
+  "log_path": "/data/home/yihaoxu/research/projects/solidnes/tasks/phase1_diamond_c/pbc_gamma/training/0054_ferminet_jax_pbc_gto_pretrain_ccpvdz_kfac_batch4096_iter1000_2gpu_fullnode_b/logs/slurm/0054_ferminet_jax_pbc_gto_2gpu_fullnode_b_128316.log",
+  "plan_json_path": "/data/home/yihaoxu/research/projects/solidnes/tasks/phase1_diamond_c/pbc_gamma/training/0054_ferminet_jax_pbc_gto_pretrain_ccpvdz_kfac_batch4096_iter1000_2gpu_fullnode_b/outputs/slurm_plans/plan.json",
+  "runtime": {
+    "elapsed_seconds": 1153.0,
+    "end": "2026-05-24T12:14:30",
+    "seconds_per_optimization_step": 1.153,
+    "seconds_per_stats_row": 1.153,
+    "start": "2026-05-24T11:55:17"
+  },
+  "slurm": {
+    "blocked_partitions": [
+      "gpu80gllm",
+      "gpu40gllm",
+      "h20llm",
+      "gpu4090",
+      "gpu4090_8",
+      "gpu4090_128",
+      "h800",
+      "test"
+    ],
+    "cpus": 96,
+    "gpu_model": "a100_80gb",
+    "gres": "gpu:2",
+    "partition": "intelgpu80g",
+    "ready": true,
+    "reason": "best_idle_gpu_node",
+    "selected_node": "gpu001"
+  },
+  "stats": {
+    "block_count_requested": 5,
+    "block_count_used": 5,
+    "block_energy_means_hartree": [
+      -75.03035902589403,
+      -75.1173437831791,
+      -75.17896954119072,
+      -75.22034743428443,
+      -75.24312598577079
+    ],
+    "block_energy_stderr_hartree": 0.03841776910503934,
+    "energy_delta_hartree": -40.954466540624075,
+    "finite_checks_passed": true,
+    "first10_energy_mean_hartree": -35.139230246162406,
+    "first50_energy_mean_hartree": -40.7410580472436,
+    "first_energy_hartree": -34.3116408101825,
+    "first_ewmean_hartree": -34.3116408101825,
+    "first_step": 0,
+    "last10_energy_mean_hartree": -75.2751320403327,
+    "last50_energy_mean_hartree": -75.25066184760561,
+    "last_energy_hartree": -75.26610735080658,
+    "last_ewmean_hartree": -75.2676164590817,
+    "last_ewvar": 0.0012021220990680317,
+    "last_step": 999,
+    "min_energy_hartree": -75.36110867091864,
+    "min_energy_step": 870,
+    "pmove_max": 0.89468994140625,
+    "pmove_mean": 0.7101472412109375,
+    "pmove_min": 0.566015625,
+    "rows": 1000,
+    "tail_energy_mean_hartree": -75.15802915406381,
+    "tail_energy_stderr_hartree": 0.004282639733076555,
+    "tail_ewmean_mean_hartree": -75.15149877797666,
+    "tail_fraction": 0.5,
+    "tail_pmove_mean": 0.636692138671875,
+    "tail_rows": 500,
+    "tail_start_step": 500
+  },
+  "stats_path": "/data/home/yihaoxu/research/projects/solidnes/tasks/phase1_diamond_c/pbc_gamma/training/0054_ferminet_jax_pbc_gto_pretrain_ccpvdz_kfac_batch4096_iter1000_2gpu_fullnode_b/results/checkpoints/train_stats.csv"
+}

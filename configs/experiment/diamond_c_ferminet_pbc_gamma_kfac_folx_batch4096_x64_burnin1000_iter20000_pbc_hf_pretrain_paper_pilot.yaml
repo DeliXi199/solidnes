@@ -12,7 +12,7 @@ backend:
 system_config: ../system/diamond_c_primitive_gamma_paper.yaml
 model_config: ../model/ferminet_pbc_paper.yaml
 sampler_config: ../sampler/metropolis_ferminet_pbc_mcmc20_burnin1000.yaml
-train_config: ../train/ground_state_ferminet_pbc_kfac_folx_batch4096_iter20000_pbc_hf_pretrain.yaml
+train_config: ../train/ground_state_ferminet_pbc_hf_pretrain_jax_gto_ccpvdz_kfac_batch4096_pretrain250_iter20000.yaml
 
 ferminet_config_template:
   module: solidnes/backends/ferminet_configs/diamond_pbc_gamma_paper.py
@@ -40,7 +40,7 @@ diagnostics:
 
 notes:
   status: ready_to_submit
-  purpose: paper-geometry x64 pilot with true PySCF PBC-HF orbital pretraining before VMC optimization
+  purpose: paper-geometry x64 pilot with fixed 250-step JAX PBC-HF orbital pretraining before VMC optimization
   paper_reference:
     energy_hartree: -75.4009
     hf_hartree: -74.9784
@@ -48,10 +48,11 @@ notes:
     electrons: 12
   pretraining:
     method: pbc_hf
+    target_backend: jax_pbc_gto
     basis: ccpvdz
-    iterations: 1000
+    iterations: 250
     sampling: neural_network_walkers
-    caveat: PySCF PBC orbital evaluation runs on host each pretraining iteration
+    caveat: JAX-native PBC GTO target is the mainline pretraining backend
   local_patch:
     files:
       - external/ferminet/ferminet/base_config.py
