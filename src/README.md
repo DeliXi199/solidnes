@@ -6,7 +6,8 @@ Current source areas:
 
 - `backends/`: adapter code and compatibility helpers for external backends.
 - `excited_states/`: backend-independent overlap and penalty-objective helpers
-  for the Szabo-Noe excited-state VMC route, plus the minimal FermiNet PBC
-  two-state scaffold.
+  for the Szabo-Noe excited-state VMC route, the minimal FermiNet PBC
+  two-state scaffold, and reusable FermiNet/JAX PBC adapter wrappers for
+  externally managed state parameter trees.
 
 Keep command-line glue in `scripts/`; keep reusable logic here.

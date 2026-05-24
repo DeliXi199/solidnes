@@ -66,6 +66,10 @@ the `solidnes-ferminet-jax0101-cuda12` environment. It keeps
 `network.apply` into the scaffold wavefunction-matrix interface, and constructs
 the PBC local-energy wrapper without evaluating the expensive Laplacian path by
 default.
+The FermiNet/JAX wrapper pattern has been promoted from the validation script
+into reusable source at
+`src/solidnes/excited_states/ferminet_pbc_adapter.py`. The validation script now
+calls this module instead of carrying a duplicate implementation.
 Future small task bundles for this phase should go under
 tasks/excited_state_nesvmc/ when they produce build, smoke, experiment,
 evaluation, analysis, SLURM, log, or result artifacts. Pure reference-source
@@ -78,10 +82,11 @@ audits and design notes do not consume a run number.
 Start the first controlled periodic excited-state/NES-VMC implementation step.
 
 Suggested starting point:
-1. Promote the FermiNet/JAX adapter wrapper pattern from the validation script
-   into reusable SolidNES source.
-2. Connect the real FermiNet wavefunction matrix, state energies, and overlap
+1. Connect the real FermiNet wavefunction matrix, state energies, and overlap
    diagnostics to the penalty objective.
+2. Add a build-only validation that evaluates the full penalty terms with a
+   cheap stand-in local-energy path or an explicitly requested real local-energy
+   check.
 3. Define the first carbon-diamond Gamma two-state build/smoke criterion.
 4. Create the first numbered task bundle only if a build-only/smoke step
    produces durable project artifacts under `tasks/`.
@@ -133,8 +138,9 @@ This small step is complete when all of the following are true:
 3. The penalty-based excited-state VMC objective is implemented or scaffolded
    in reusable SolidNES/FermiNet code. Partial: backend-independent utilities
    and a minimal FermiNet PBC scaffold exist under
-   `src/solidnes/excited_states/`; a real FermiNet/JAX build-only adapter
-   check now passes, but reusable training integration is pending.
+   `src/solidnes/excited_states/`; reusable FermiNet/JAX PBC adapter wrappers
+   exist and the build-only adapter check passes, but reusable training
+   integration is pending.
 4. The code exposes state energies plus overlap/orthogonality diagnostics.
    Partial: scaffold-level state-energy and overlap diagnostics exist; real
    FermiNet PBC build integration is proven; real local-energy evaluation and

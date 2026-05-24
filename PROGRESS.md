@@ -37,8 +37,12 @@ Short version:
   `cfg.system.states == 0`, initializes two external state parameter trees,
   wraps `network.apply` into the scaffold interface, and constructs the PBC
   local-energy wrapper.
-- Next action: promote the adapter pattern into reusable source and connect the
-  real FermiNet matrix/state-energy path to the penalty objective.
+- Completed in this step: promoted the FermiNet/JAX adapter wrapper pattern
+  into reusable source at
+  `src/solidnes/excited_states/ferminet_pbc_adapter.py`; the validation script
+  now calls this module.
+- Next action: connect the real FermiNet matrix/state-energy path to the
+  penalty objective.
 
 ## Completed Structural Cleanup
 
@@ -96,6 +100,7 @@ Current implementation scaffold:
 
 - `src/solidnes/excited_states/overlap.py`
 - `src/solidnes/excited_states/penalty.py`
+- `src/solidnes/excited_states/ferminet_pbc_adapter.py`
 - `src/solidnes/excited_states/ferminet_pbc_scaffold.py`
 - `scripts/validation/check_excited_state_penalty_objective.py`
 - `scripts/validation/check_ferminet_pbc_excited_scaffold.py`
@@ -103,6 +108,7 @@ Current implementation scaffold:
 - `records/progress/2026-05-24_excited_state_penalty_utilities.md`
 - `records/progress/2026-05-24_ferminet_pbc_excited_scaffold.md`
 - `records/progress/2026-05-24_ferminet_pbc_excited_adapter_build_check.md`
+- `records/progress/2026-05-24_ferminet_pbc_excited_adapter_source.md`
 
 ## Current Rules
 
