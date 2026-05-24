@@ -28,9 +28,11 @@ Short version:
 - Completed in this step: implemented backend-independent overlap and penalty
   utilities under `src/solidnes/excited_states/` and verified them with
   `scripts/validation/check_excited_state_penalty_objective.py`.
-- Next action: connect the utilities to a minimal FermiNet PBC excited-state
-  scaffold while keeping PBC local-energy evaluation separate from FermiNet's
-  molecular excited-state path.
+- Completed in this step: implemented a minimal FermiNet PBC excited-state
+  scaffold and verified it with
+  `scripts/validation/check_ferminet_pbc_excited_scaffold.py`.
+- Next action: move from synthetic callables to a build-only FermiNet/JAX
+  adapter check, while avoiding FermiNet's molecular `cfg.system.states` path.
 
 ## Completed Structural Cleanup
 
@@ -88,8 +90,11 @@ Current implementation scaffold:
 
 - `src/solidnes/excited_states/overlap.py`
 - `src/solidnes/excited_states/penalty.py`
+- `src/solidnes/excited_states/ferminet_pbc_scaffold.py`
 - `scripts/validation/check_excited_state_penalty_objective.py`
+- `scripts/validation/check_ferminet_pbc_excited_scaffold.py`
 - `records/progress/2026-05-24_excited_state_penalty_utilities.md`
+- `records/progress/2026-05-24_ferminet_pbc_excited_scaffold.md`
 
 ## Current Rules
 

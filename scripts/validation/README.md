@@ -3,6 +3,13 @@
 Repeatable checks for deciding whether a backend run is merely executable or
 also numerically credible.
 
+No-compute excited-state scaffold checks:
+
+```bash
+PYTHONPATH=src python scripts/validation/check_excited_state_penalty_objective.py
+PYTHONPATH=src python scripts/validation/check_ferminet_pbc_excited_scaffold.py
+```
+
 Carbon diamond HF reference:
 
 ```bash
