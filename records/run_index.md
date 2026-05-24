@@ -7,7 +7,7 @@ This file is the canonical ledger for numbered task bundles after the global art
 ## Next Available Run Number
 
 ```text
-0063
+0064
 ```
 
 ## Numbered Runs
@@ -75,6 +75,7 @@ This file is the canonical ledger for numbered task bundles after the global art
 | 0060 | timed_out_expected | 2026-05-24 13:51:05 | `solidnes/tasks/phase1_diamond_c/pbc_gamma/training/0060_ferminet_jax_pbc_gto_pretrain250_ccpvdz_kfac_batch4096_iter10000_2gpu_timebox20m/` | `tasks/phase1_diamond_c/pbc_gamma/training/0060_ferminet_jax_pbc_gto_pretrain250_ccpvdz_kfac_batch4096_iter10000_2gpu_timebox20m/results/` | 1 | 2 |
 | 0061 | timed_out_expected | 2026-05-24 13:51:05 | `solidnes/tasks/phase1_diamond_c/pbc_gamma/training/0061_ferminet_jax_pbc_gto_pretrain500_ccpvdz_kfac_batch4096_iter10000_2gpu_timebox20m/` | `tasks/phase1_diamond_c/pbc_gamma/training/0061_ferminet_jax_pbc_gto_pretrain500_ccpvdz_kfac_batch4096_iter10000_2gpu_timebox20m/results/` | 1 | 2 |
 | 0062 | timed_out_expected | 2026-05-24 13:51:05 | `solidnes/tasks/phase1_diamond_c/pbc_gamma/training/0062_ferminet_jax_pbc_gto_pretrain1000_ccpvdz_kfac_batch4096_iter10000_2gpu_timebox20m/` | `tasks/phase1_diamond_c/pbc_gamma/training/0062_ferminet_jax_pbc_gto_pretrain1000_ccpvdz_kfac_batch4096_iter10000_2gpu_timebox20m/results/` | 1 | 2 |
+| 0063 | completed | 2026-05-24 22:08:53 | `solidnes/tasks/excited_state_nesvmc/0063_ferminet_pbc_real_local_energy_smoke/` | `tasks/excited_state_nesvmc/0063_ferminet_pbc_real_local_energy_smoke/results/` | 2 | 4 |
 
 ## Cleanup Notes
 

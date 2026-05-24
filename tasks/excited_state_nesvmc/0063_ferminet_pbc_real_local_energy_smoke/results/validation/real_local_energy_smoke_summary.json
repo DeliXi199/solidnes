@@ -1,0 +1,58 @@
+{
+  "status": "ok",
+  "experiment": "configs/experiment/diamond_c_ferminet_pbc_gamma_real_local_energy_smoke.yaml",
+  "jax_platform": "gpu",
+  "jax_devices": [
+    "cuda:0",
+    "cuda:1"
+  ],
+  "cfg_system_states": 0,
+  "external_state_params": 2,
+  "walkers_per_state": 1,
+  "local_energy_source": "real_pbc",
+  "penalty_alpha": 1.0,
+  "elapsed_seconds": 99.37028691079468,
+  "shapes": {
+    "local_energy": [
+      2,
+      1
+    ],
+    "state_energy": [
+      2
+    ],
+    "overlap_matrix": [
+      2,
+      2
+    ],
+    "psi_ratio": [
+      2,
+      2,
+      1
+    ],
+    "penalty_objective": []
+  },
+  "local_energy": [
+    [
+      -1.5204181671142578
+    ],
+    [
+      -9.994874954223633
+    ]
+  ],
+  "state_energy": [
+    -1.5204181671142578,
+    -9.994874954223633
+  ],
+  "overlap_matrix": [
+    [
+      1.0,
+      1.1777644157409668
+    ],
+    [
+      1.1777644157409668,
+      1.0
+    ]
+  ],
+  "offdiag_squared_overlap": 1.3871290683746338,
+  "penalty_objective": -4.370517730712891
+}

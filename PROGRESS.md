@@ -51,9 +51,12 @@ Short version:
 - Completed in this step: added a build-only multi-step cheap-local-energy
   optimization smoke, verified by
   `scripts/validation/check_ferminet_pbc_penalty_opt_smoke.py`.
-- Next action: define the first carbon-diamond Gamma two-state real PBC
-  local-energy/Laplacian smoke criterion, then allocate run `0063` only if it
-  will produce durable task artifacts.
+- Completed in this step: scheduled and passed run `0063`, the first
+  carbon-diamond Gamma two-state real PBC local-energy/Laplacian smoke.
+  The full-node retry `128439` used `intelgpu80g/gpu001`, both A100 80GB GPUs,
+  96 CPU cores, and an exclusive allocation; it completed with exit code `0:0`.
+- Next action: start reusable two-state FermiNet PBC penalty-objective
+  training-loop integration.
 
 ## Completed Structural Cleanup
 
@@ -119,6 +122,7 @@ Current implementation scaffold:
 - `scripts/validation/check_ferminet_pbc_penalty_terms.py`
 - `scripts/validation/check_ferminet_pbc_penalty_grad_step.py`
 - `scripts/validation/check_ferminet_pbc_penalty_opt_smoke.py`
+- `scripts/validation/check_ferminet_pbc_real_local_energy_smoke.py`
 - `records/progress/2026-05-24_excited_state_penalty_utilities.md`
 - `records/progress/2026-05-24_ferminet_pbc_excited_scaffold.md`
 - `records/progress/2026-05-24_ferminet_pbc_excited_adapter_build_check.md`
@@ -126,6 +130,7 @@ Current implementation scaffold:
 - `records/progress/2026-05-24_ferminet_pbc_penalty_terms.md`
 - `records/progress/2026-05-24_ferminet_pbc_penalty_grad_step.md`
 - `records/progress/2026-05-24_ferminet_pbc_penalty_opt_smoke.md`
+- `records/progress/2026-05-24_ferminet_pbc_real_local_energy_smoke.md`
 
 ## Current Rules
 

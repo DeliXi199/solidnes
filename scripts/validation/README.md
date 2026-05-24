@@ -42,6 +42,26 @@ conda run -n solidnes-ferminet-jax0101-cuda12 \
   python scripts/validation/check_ferminet_pbc_penalty_opt_smoke.py
 ```
 
+FermiNet/JAX scheduled real PBC local-energy smoke:
+
+```bash
+SOLIDNES_TASK_ROOT=tasks/excited_state_nesvmc/0063_ferminet_pbc_real_local_energy_smoke \
+SOLIDNES_PLAN_JSON=tasks/excited_state_nesvmc/0063_ferminet_pbc_real_local_energy_smoke/outputs/slurm_plans/fullnode_plan.json \
+SOLIDNES_BACKEND_SCRIPT=scripts/validation/check_ferminet_pbc_real_local_energy_smoke.py \
+SOLIDNES_EXPERIMENT=configs/experiment/diamond_c_ferminet_pbc_gamma_real_local_energy_smoke.yaml \
+SOLIDNES_CONDA_ENV=solidnes-ferminet-jax0101-cuda12 \
+SOLIDNES_JOB_NAME=solidnes-nes-real-le-full \
+SOLIDNES_TIME_LIMIT=00:20:00 \
+SOLIDNES_GPU_PARTITIONS=intelgpu80g \
+SOLIDNES_GPU_ALLOWED_COUNTS=2 \
+SOLIDNES_GPU_TARGET_GPUS=2 \
+SOLIDNES_GPU_HARD_MIN_GPUS=2 \
+SOLIDNES_GPU_HARD_MIN_CPUS=96 \
+SOLIDNES_GPU_QUEUE_MIN_GPUS=2 \
+SOLIDNES_GPU_QUEUE_MIN_CPUS=96 \
+bash scripts/slurm/submit_ferminet_gpu_smoke.sh
+```
+
 Carbon diamond HF reference:
 
 ```bash

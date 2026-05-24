@@ -91,27 +91,38 @@ Future small task bundles for this phase should go under
 tasks/excited_state_nesvmc/ when they produce build, smoke, experiment,
 evaluation, analysis, SLURM, log, or result artifacts. Pure reference-source
 audits and design notes do not consume a run number.
+Run 0063 is allocated for the first scheduled real PBC local-energy/Laplacian
+smoke:
+`tasks/excited_state_nesvmc/0063_ferminet_pbc_real_local_energy_smoke/`.
+The dry-run plan passed and selected one A100 80GB GPU on `intelgpu80g`,
+node `gpu001`, with 8 CPU cores and a 20-minute walltime.
+Run 0063 was first submitted as Slurm job `128435` with 1 GPU and 8 CPU
+cores; it completed successfully. Per user request, the task was resubmitted
+as full-node Slurm job `128439` on `intelgpu80g/gpu001`, using both A100 80GB
+GPUs, 96 CPU cores, and an exclusive allocation.
+The full-node real PBC local-energy/Laplacian smoke passed. Job `128439`
+completed in 00:02:05 with exit code `0:0`; JAX reported `cuda:0` and
+`cuda:1`; the validation summary recorded finite `[2, 1]` local energies,
+finite `[2]` state energies, a finite `2x2` overlap matrix, and a finite
+scalar penalty objective.
 ```
 
 ## Next Concrete Action
 
 ```text
-Start the first controlled periodic excited-state/NES-VMC implementation step.
+Start reusable training-loop integration for the two-state FermiNet PBC
+penalty objective.
 
 Suggested starting point:
-1. Define the first carbon-diamond Gamma two-state real PBC
-   local-energy/Laplacian smoke criterion.
-2. Decide whether that check can stay build-only/local or should be scheduled
-   through Slurm for a durable smoke artifact.
-3. If using a scheduled smoke, allocate run 0063 and create the first
-   `tasks/excited_state_nesvmc/` task bundle.
-4. Create the first numbered task bundle only if a build-only/smoke step
-   produces durable project artifacts under `tasks/`.
-5. Keep the first probe on carbon diamond primitive Gamma, same basis/geometry.
-6. Add explicit overlap/orthogonality and state-energy diagnostics before any
-   production-like material test.
-7. After the controlled probe works, choose concrete material tests and record
-   direct-gap, indirect-gap, twist, and finite-size caveats explicitly.
+1. Add a reusable optimization driver that owns multiple external FermiNet PBC
+   state parameter trees.
+2. Keep `cfg.system.states == 0` and continue managing state trees outside
+   upstream FermiNet PBC.
+3. Reuse the real PBC local-energy entry point validated by run 0063.
+4. Add explicit state-energy, overlap, off-diagonal penalty, and collapse
+   diagnostics per step.
+5. Before any longer run, create the next numbered task bundle only if it will
+   produce durable Slurm/log/result artifacts.
 ```
 
 ## Active Or Pending Jobs
@@ -160,13 +171,14 @@ This small step is complete when all of the following are true:
    training integration is pending.
 4. The code exposes state energies plus overlap/orthogonality diagnostics.
    Partial: scaffold-level and adapter-level state-energy/overlap/penalty
-   diagnostics exist; real local-energy evaluation and training integration are
-   pending.
+   diagnostics exist; real local-energy evaluation passed in run 0063, but
+   reusable training integration is pending.
 5. A build-only or smoke-level check proves the new code path can be imported
    and configured. Done for build-only: synthetic utility/scaffold checks,
    the FermiNet/JAX adapter build check, and the cheap-local-energy
    FermiNet/JAX penalty-term, gradient-step, and multi-step optimization
-   checks passed.
+   checks passed. Done for scheduled GPU smoke: run 0063 passed the real PBC
+   local-energy/Laplacian check with two external state parameter trees.
 6. A numbered task bundle is created only for the first build/smoke/run/analysis
    step that produces project artifacts.
 7. The next concrete material/probe run is defined with explicit completion

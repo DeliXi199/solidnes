@@ -157,8 +157,11 @@ update.
 The excited-state penalty-VMC route now has backend-independent overlap and
 penalty utilities, a reusable FermiNet PBC external-state adapter, and
 build-only cheap-local-energy checks for penalty terms, one gradient step, and
-three consecutive SGD updates. The next unproven path is a controlled real PBC
-local-energy/Laplacian smoke.
+three consecutive SGD updates. Run `0063` passed the first scheduled real PBC
+local-energy/Laplacian smoke on `intelgpu80g/gpu001`; the full-node retry job
+`128439` used both A100 80GB GPUs, 96 CPU cores, and an exclusive allocation.
+The next unproven path is reusable multi-step training-loop integration around
+the real local-energy objective.
 
 ## Milestones
 
