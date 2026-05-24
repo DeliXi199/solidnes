@@ -50,11 +50,11 @@ def main() -> int:
 
     from solidnes.backends.ferminet_adapter import build_ferminet_adapter
     from solidnes.excited_states.ferminet_pbc_adapter import (
-        apply_external_state_sgd_step,
         assert_pbc_external_state_config,
         build_external_state_adapter,
-        ferminet_pbc_penalty_objective,
-        value_and_grad_ferminet_pbc_penalty_objective,
+    )
+    from solidnes.excited_states.ferminet_pbc_training import (
+        run_external_state_penalty_sgd,
     )
 
     bundle = build_ferminet_adapter(args.experiment)
@@ -73,50 +73,37 @@ def main() -> int:
         walkers=args.walkers,
     )
 
-    initial_value = ferminet_pbc_penalty_objective(
+    result = run_external_state_penalty_sgd(
         adapter,
         params,
         samples,
+        steps=args.steps,
+        learning_rate=args.learning_rate,
         penalty_alpha=args.penalty_alpha,
         local_energy=cheap_local_energy,
+        block_until_ready=True,
     )
+    initial_value = result.initial_terms["penalty_objective"]
     _assert_finite(adapter, "initial_penalty_objective", initial_value)
-
-    history = []
-    for step in range(args.steps):
-        value, grads = value_and_grad_ferminet_pbc_penalty_objective(
+    for diagnostics in result.history:
+        step = diagnostics.step
+        _assert_finite(
             adapter,
-            params,
-            samples,
-            penalty_alpha=args.penalty_alpha,
-            local_energy=cheap_local_energy,
+            f"penalty_objective_step_{step}",
+            diagnostics.penalty_objective,
         )
-        grad_norm = _tree_l2_norm(adapter, grads)
-        new_params = apply_external_state_sgd_step(
+        _assert_positive_finite(
             adapter,
-            params,
-            grads,
-            learning_rate=args.learning_rate,
+            f"grad_norm_step_{step}",
+            diagnostics.grad_l2_norm,
         )
-        delta = jax.tree_util.tree_map(
-            lambda old, new: new - old,
-            params,
-            new_params,
+        _assert_positive_finite(
+            adapter,
+            f"delta_norm_step_{step}",
+            diagnostics.param_delta_l2_norm,
         )
-        delta_norm = _tree_l2_norm(adapter, delta)
-        _assert_finite(adapter, f"penalty_objective_step_{step}", value)
-        _assert_positive_finite(adapter, f"grad_norm_step_{step}", grad_norm)
-        _assert_positive_finite(adapter, f"delta_norm_step_{step}", delta_norm)
-        history.append((value, grad_norm, delta_norm))
-        params = new_params
 
-    final_value = ferminet_pbc_penalty_objective(
-        adapter,
-        params,
-        samples,
-        penalty_alpha=args.penalty_alpha,
-        local_energy=cheap_local_energy,
-    )
+    final_value = result.final_terms["penalty_objective"]
     _assert_finite(adapter, "final_penalty_objective", final_value)
     if float(final_value) >= float(initial_value):
         raise ValueError(
@@ -134,11 +121,12 @@ def main() -> int:
     print(f"initial_penalty_objective: {float(initial_value):.12g}")
     print(f"final_penalty_objective: {float(final_value):.12g}")
     print(f"objective_delta: {float(final_value - initial_value):.12g}")
-    for step, (value, grad_norm, delta_norm) in enumerate(history):
+    for diagnostics in result.history:
         print(
-            f"step_{step}: objective={float(value):.12g} "
-            f"grad_l2_norm={float(grad_norm):.12g} "
-            f"param_delta_l2_norm={float(delta_norm):.12g}"
+            f"step_{diagnostics.step}: "
+            f"objective={float(diagnostics.penalty_objective):.12g} "
+            f"grad_l2_norm={float(diagnostics.grad_l2_norm):.12g} "
+            f"param_delta_l2_norm={float(diagnostics.param_delta_l2_norm):.12g}"
         )
     return 0
 
@@ -153,16 +141,6 @@ def _cheap_local_energy(adapter):
         return position_scale + spin_scale
 
     return local_energy
-
-
-def _tree_l2_norm(adapter, tree):
-    jnp = adapter.modules.jnp
-    leaves = adapter.modules.jax.tree_util.tree_leaves(tree)
-    total = jnp.asarray(0.0)
-    for leaf in leaves:
-        array = jnp.asarray(leaf)
-        total = total + jnp.sum(jnp.real(array * jnp.conj(array)))
-    return jnp.sqrt(total)
 
 
 def _assert_finite(adapter, name: str, value) -> None:

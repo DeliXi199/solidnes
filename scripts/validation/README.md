@@ -34,7 +34,8 @@ conda run -n solidnes-ferminet-jax0101-cuda12 \
   python scripts/validation/check_ferminet_pbc_penalty_grad_step.py
 ```
 
-FermiNet/JAX build-only multi-step cheap optimization smoke:
+FermiNet/JAX build-only multi-step cheap optimization smoke through the
+reusable fixed-sample training loop:
 
 ```bash
 conda run -n solidnes-ferminet-jax0101-cuda12 \
@@ -45,8 +46,9 @@ conda run -n solidnes-ferminet-jax0101-cuda12 \
 FermiNet/JAX scheduled real PBC local-energy smoke:
 
 ```bash
-SOLIDNES_TASK_ROOT=tasks/excited_state_nesvmc/0063_ferminet_pbc_real_local_energy_smoke \
-SOLIDNES_PLAN_JSON=tasks/excited_state_nesvmc/0063_ferminet_pbc_real_local_energy_smoke/outputs/slurm_plans/fullnode_plan.json \
+TASK=tasks/excited_state_nesvmc/0063_ferminet_pbc_real_local_energy_smoke
+SOLIDNES_TASK_ROOT="$TASK" \
+SOLIDNES_PLAN_JSON="$TASK/outputs/slurm_plans/fullnode_plan.json" \
 SOLIDNES_BACKEND_SCRIPT=scripts/validation/check_ferminet_pbc_real_local_energy_smoke.py \
 SOLIDNES_EXPERIMENT=configs/experiment/diamond_c_ferminet_pbc_gamma_real_local_energy_smoke.yaml \
 SOLIDNES_CONDA_ENV=solidnes-ferminet-jax0101-cuda12 \

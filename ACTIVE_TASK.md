@@ -44,8 +44,8 @@ Fixed-iteration 1000-step comparisons favor pretraining, but matched
 short-wall-clock comparisons are mixed.
 Global agent instructions live in AGENTS.md and must be read at the start of
 every new answer or work session.
-Numbered task bundles through 0062 are recorded in the run index. The next
-available run number is 0063.
+Numbered task bundles through 0063 are recorded in the run index. The next
+available run number is 0064.
 The next development target is to implement the paper-style penalty-based
 excited-state VMC objective in code and run the first controlled periodic
 excited-state/NES-VMC probes.
@@ -105,24 +105,29 @@ completed in 00:02:05 with exit code `0:0`; JAX reported `cuda:0` and
 `cuda:1`; the validation summary recorded finite `[2, 1]` local energies,
 finite `[2]` state energies, a finite `2x2` overlap matrix, and a finite
 scalar penalty objective.
+The first reusable fixed-sample training-loop helper is implemented at
+`src/solidnes/excited_states/ferminet_pbc_training.py`. It owns external
+state-parameter SGD updates, returns per-step penalty/energy/overlap/collapse
+diagnostics, and is verified through
+`scripts/validation/check_ferminet_pbc_penalty_opt_smoke.py` with a cheap
+local-energy stand-in.
 ```
 
 ## Next Concrete Action
 
 ```text
-Start reusable training-loop integration for the two-state FermiNet PBC
-penalty objective.
+Decide the first real-local-energy multi-step training-loop smoke.
 
 Suggested starting point:
-1. Add a reusable optimization driver that owns multiple external FermiNet PBC
-   state parameter trees.
-2. Keep `cfg.system.states == 0` and continue managing state trees outside
+1. Keep `cfg.system.states == 0` and continue managing state trees outside
    upstream FermiNet PBC.
-3. Reuse the real PBC local-energy entry point validated by run 0063.
-4. Add explicit state-energy, overlap, off-diagonal penalty, and collapse
-   diagnostics per step.
-5. Before any longer run, create the next numbered task bundle only if it will
-   produce durable Slurm/log/result artifacts.
+2. Reuse the real PBC local-energy entry point validated by run 0063.
+3. Use the new fixed-sample training-loop helper for a tiny real-local-energy
+   multi-step smoke.
+4. Allocate run 0064 only if that smoke is scheduled or produces durable
+   Slurm/log/result artifacts.
+5. If it passes, start adding sampler/checkpoint/output integration around the
+   training-loop helper.
 ```
 
 ## Active Or Pending Jobs
@@ -167,8 +172,8 @@ This small step is complete when all of the following are true:
    in reusable SolidNES/FermiNet code. Partial: backend-independent utilities
    and a minimal FermiNet PBC scaffold exist under
    `src/solidnes/excited_states/`; reusable FermiNet/JAX PBC adapter wrappers
-   and a differentiable external-state update scaffold exist, but reusable
-   training integration is pending.
+   and a fixed-sample external-state training-loop helper exist, but sampler,
+   checkpoint, and production-driver integration are pending.
 4. The code exposes state energies plus overlap/orthogonality diagnostics.
    Partial: scaffold-level and adapter-level state-energy/overlap/penalty
    diagnostics exist; real local-energy evaluation passed in run 0063, but
@@ -179,6 +184,8 @@ This small step is complete when all of the following are true:
    FermiNet/JAX penalty-term, gradient-step, and multi-step optimization
    checks passed. Done for scheduled GPU smoke: run 0063 passed the real PBC
    local-energy/Laplacian check with two external state parameter trees.
+   Done for source-level training integration: the cheap-local-energy
+   multi-step smoke now exercises the reusable training-loop helper.
 6. A numbered task bundle is created only for the first build/smoke/run/analysis
    step that produces project artifacts.
 7. The next concrete material/probe run is defined with explicit completion

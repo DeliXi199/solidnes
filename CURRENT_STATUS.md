@@ -160,8 +160,10 @@ build-only cheap-local-energy checks for penalty terms, one gradient step, and
 three consecutive SGD updates. Run `0063` passed the first scheduled real PBC
 local-energy/Laplacian smoke on `intelgpu80g/gpu001`; the full-node retry job
 `128439` used both A100 80GB GPUs, 96 CPU cores, and an exclusive allocation.
-The next unproven path is reusable multi-step training-loop integration around
-the real local-energy objective.
+The first reusable fixed-sample external-state training-loop helper is now in
+source and verified with the cheap-local-energy multi-step smoke. The next
+unproven path is a real-local-energy multi-step training-loop smoke, followed
+by sampler/checkpoint/output integration.
 
 ## Milestones
 

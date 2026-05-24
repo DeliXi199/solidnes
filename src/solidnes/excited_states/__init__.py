@@ -25,6 +25,20 @@ from solidnes.excited_states.ferminet_pbc_scaffold import evaluate_overlap_diagn
 from solidnes.excited_states.ferminet_pbc_scaffold import evaluate_penalty_scaffold_terms
 from solidnes.excited_states.ferminet_pbc_scaffold import evaluate_state_energy_estimate
 from solidnes.excited_states.ferminet_pbc_scaffold import evaluate_state_wavefunction_matrix
+from solidnes.excited_states.ferminet_pbc_training import block_tree_until_ready
+from solidnes.excited_states.ferminet_pbc_training import (
+    external_state_penalty_sgd_step,
+)
+from solidnes.excited_states.ferminet_pbc_training import (
+    ExternalStatePenaltyStepDiagnostics,
+)
+from solidnes.excited_states.ferminet_pbc_training import (
+    ExternalStatePenaltyTrainingResult,
+)
+from solidnes.excited_states.ferminet_pbc_training import (
+    run_external_state_penalty_sgd,
+)
+from solidnes.excited_states.ferminet_pbc_training import tree_l2_norm
 from solidnes.excited_states.overlap import estimate_overlap_from_ratios
 from solidnes.excited_states.overlap import offdiag_squared_overlap
 from solidnes.excited_states.overlap import overlap_diagnostics
@@ -42,15 +56,19 @@ __all__ = [
     "FermiNetJAXModules",
     "FermiNetPBCExternalStateAdapter",
     "FermiNetPBCStateSamples",
+    "ExternalStatePenaltyStepDiagnostics",
+    "ExternalStatePenaltyTrainingResult",
     "StateEnergyEstimate",
     "StateWavefunctionMatrix",
     "apply_external_state_sgd_step",
     "assert_pbc_external_state_config",
+    "block_tree_until_ready",
     "broadcast_state_samples",
     "build_external_state_adapter",
     "configure_jax_platform",
     "energy_gap_scale",
     "energy_std_scale",
+    "external_state_penalty_sgd_step",
     "evaluate_overlap_diagnostics",
     "evaluate_penalty_scaffold_terms",
     "evaluate_state_energy_estimate",
@@ -68,7 +86,9 @@ __all__ = [
     "overlap_penalty_loss",
     "penalty_vmc_loss",
     "penalty_vmc_terms",
+    "run_external_state_penalty_sgd",
     "symmetrize_overlap_with_clipped_geometric_mean",
+    "tree_l2_norm",
     "value_and_grad_ferminet_pbc_penalty_objective",
     "wrap_pbc_local_energy",
     "wrap_signed_network",

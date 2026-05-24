@@ -55,8 +55,13 @@ Short version:
   carbon-diamond Gamma two-state real PBC local-energy/Laplacian smoke.
   The full-node retry `128439` used `intelgpu80g/gpu001`, both A100 80GB GPUs,
   96 CPU cores, and an exclusive allocation; it completed with exit code `0:0`.
-- Next action: start reusable two-state FermiNet PBC penalty-objective
-  training-loop integration.
+- Completed in this step: added reusable fixed-sample two-state FermiNet PBC
+  penalty-objective training-loop helpers under
+  `src/solidnes/excited_states/ferminet_pbc_training.py`; the multi-step cheap
+  optimization smoke now exercises this source path.
+- Next action: decide the first real-local-energy multi-step training-loop
+  smoke and allocate run `0064` only if it is scheduled or produces durable
+  task artifacts.
 
 ## Completed Structural Cleanup
 
@@ -64,7 +69,7 @@ Short version:
 - The retired target-specific scaffold was removed.
 - `tasks/TASK_LEDGER.md` is the readable task ledger.
 - `records/run_index.md` is the run-number allocator; the next available run
-  number is `0063`.
+  number is `0064`.
 - Top-level `results/`, `outputs/`, and `logs/` are retired and should not be
   recreated for new work.
 
@@ -116,6 +121,7 @@ Current implementation scaffold:
 - `src/solidnes/excited_states/penalty.py`
 - `src/solidnes/excited_states/ferminet_pbc_adapter.py`
 - `src/solidnes/excited_states/ferminet_pbc_scaffold.py`
+- `src/solidnes/excited_states/ferminet_pbc_training.py`
 - `scripts/validation/check_excited_state_penalty_objective.py`
 - `scripts/validation/check_ferminet_pbc_excited_scaffold.py`
 - `scripts/validation/check_ferminet_pbc_excited_adapter_build.py`
@@ -131,6 +137,7 @@ Current implementation scaffold:
 - `records/progress/2026-05-24_ferminet_pbc_penalty_grad_step.md`
 - `records/progress/2026-05-24_ferminet_pbc_penalty_opt_smoke.md`
 - `records/progress/2026-05-24_ferminet_pbc_real_local_energy_smoke.md`
+- `records/progress/2026-05-24_ferminet_pbc_training_loop.md`
 
 ## Current Rules
 
