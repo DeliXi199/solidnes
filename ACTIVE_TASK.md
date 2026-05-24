@@ -82,6 +82,11 @@ The first differentiable optimization-step scaffold is implemented through
 `scripts/validation/check_ferminet_pbc_penalty_grad_step.py` passed with a
 cheap local-energy stand-in and confirmed finite nonzero gradients plus a real
 parameter update.
+The first build-only multi-step optimization smoke is implemented at
+`scripts/validation/check_ferminet_pbc_penalty_opt_smoke.py`. It uses the real
+FermiNet PBC external-state adapter with a cheap local-energy stand-in and
+confirmed three consecutive finite SGD updates with decreasing penalty
+objective, without creating a numbered task bundle.
 Future small task bundles for this phase should go under
 tasks/excited_state_nesvmc/ when they produce build, smoke, experiment,
 evaluation, analysis, SLURM, log, or result artifacts. Pure reference-source
@@ -94,9 +99,10 @@ audits and design notes do not consume a run number.
 Start the first controlled periodic excited-state/NES-VMC implementation step.
 
 Suggested starting point:
-1. Decide whether the first smoke should use cheap local energy only or an
-   explicitly scheduled real PBC local-energy/Laplacian check.
-2. Define the first carbon-diamond Gamma two-state build/smoke criterion.
+1. Define the first carbon-diamond Gamma two-state real PBC
+   local-energy/Laplacian smoke criterion.
+2. Decide whether that check can stay build-only/local or should be scheduled
+   through Slurm for a durable smoke artifact.
 3. If using a scheduled smoke, allocate run 0063 and create the first
    `tasks/excited_state_nesvmc/` task bundle.
 4. Create the first numbered task bundle only if a build-only/smoke step
@@ -159,7 +165,8 @@ This small step is complete when all of the following are true:
 5. A build-only or smoke-level check proves the new code path can be imported
    and configured. Done for build-only: synthetic utility/scaffold checks,
    the FermiNet/JAX adapter build check, and the cheap-local-energy
-   FermiNet/JAX penalty-term and gradient-step checks passed.
+   FermiNet/JAX penalty-term, gradient-step, and multi-step optimization
+   checks passed.
 6. A numbered task bundle is created only for the first build/smoke/run/analysis
    step that produces project artifacts.
 7. The next concrete material/probe run is defined with explicit completion

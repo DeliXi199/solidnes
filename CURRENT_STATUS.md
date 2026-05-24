@@ -154,6 +154,12 @@ default.
 There are no active Slurm jobs for the current user at the time of this status
 update.
 
+The excited-state penalty-VMC route now has backend-independent overlap and
+penalty utilities, a reusable FermiNet PBC external-state adapter, and
+build-only cheap-local-energy checks for penalty terms, one gradient step, and
+three consecutive SGD updates. The next unproven path is a controlled real PBC
+local-energy/Laplacian smoke.
+
 ## Milestones
 
 ### Completed

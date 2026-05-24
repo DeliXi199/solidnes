@@ -34,6 +34,14 @@ conda run -n solidnes-ferminet-jax0101-cuda12 \
   python scripts/validation/check_ferminet_pbc_penalty_grad_step.py
 ```
 
+FermiNet/JAX build-only multi-step cheap optimization smoke:
+
+```bash
+conda run -n solidnes-ferminet-jax0101-cuda12 \
+  env PYTHONPATH=external/ferminet:src \
+  python scripts/validation/check_ferminet_pbc_penalty_opt_smoke.py
+```
+
 Carbon diamond HF reference:
 
 ```bash
