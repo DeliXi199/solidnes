@@ -113,6 +113,16 @@ FermiNet PBC-HF pretraining tasks are grouped separately under:
 tasks/ferminet_pretraining/NNNN_short_slug/
 ```
 
+Excited-state/NES-VMC implementation and material-test tasks are grouped under:
+
+```text
+tasks/excited_state_nesvmc/NNNN_short_slug/
+```
+
+Use this area for reproducing the Szabo and Noe JCTC 2024 penalty-based
+excited-state VMC method in code, then testing the resulting workflow on
+specific periodic materials.
+
 Inside each task bundle, keep generated files together:
 
 ```text

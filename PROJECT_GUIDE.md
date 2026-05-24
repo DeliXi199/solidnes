@@ -39,19 +39,22 @@ The MVP is successful only if the project can produce:
 ## Current Engineering Focus
 
 The backend route has been proven for the carbon-diamond ground-state
-benchmark. The current engineering focus is to make the FermiNet route faster,
-cleaner, and measurable before adding the first controlled excited-state
-extension.
+benchmark. The FermiNet PBC-HF pretraining route is implemented and validated
+for the current carbon-diamond Gamma cc-pVDZ workflow. The current engineering
+focus is to reproduce the Szabo and Noe JCTC 2024 penalty-based excited-state
+VMC method in code, then test it on concrete periodic materials.
 
 Current route:
 
 ```text
-DeepSolid/FermiNet carbon-diamond reproduction -> adapter interface -> excited-state extension
+DeepSolid/FermiNet carbon-diamond reproduction -> PBC-HF pretraining -> penalty-VMC excited-state reproduction -> material tests
 ```
 
-The DeepSolid and FermiNet carbon-diamond reproductions have passed. The next
-engineering step is to make the FermiNet PBC-HF pretraining path robust and
-measurable.
+The DeepSolid and FermiNet carbon-diamond reproductions have passed. The
+FermiNet PBC-HF pretraining milestone has also passed for diamond Gamma
+cc-pVDZ, with mixed short-wall-clock conclusions. The next engineering step is
+to implement the paper-style excited-state penalty objective and run controlled
+two-state periodic NES-VMC probes before broader material tests.
 
 ## Non-Goals For The First Version
 

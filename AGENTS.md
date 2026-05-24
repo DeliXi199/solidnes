@@ -96,8 +96,14 @@ update a dated record under `records/progress/` and update
 
 ## Current Milestone
 
-The carbon-diamond paper benchmark reproduction milestone is complete at the
-project-validation level.
+Two Phase 1 enabling milestones are complete at the project-validation level:
+
+```text
+1. Carbon-diamond paper benchmark reproduction through both DeepSolid and
+   FermiNet.
+2. FermiNet PBC-HF pretraining implementation and diamond-Gamma validation for
+   the current cc-pVDZ workflow.
+```
 
 Evidence:
 
@@ -112,12 +118,21 @@ FermiNet route:
   Fixed-parameter evaluation job 127992
   Evaluation mean: -75.4125655570 Ha
   DeepSolid supplementary diamond reference: -75.4009 Ha
+
+FermiNet PBC-HF pretraining:
+  Runs 0047--0050
+  JAX PBC GTO cc-pVDZ AO max abs error: 1.12e-9
+  JAX PBC GTO cc-pVDZ occupied-MO max abs error: 8.51e-10
+  Runs 0053--0062
+  Fixed-iteration early training favored pretraining, while short wall-clock
+  timeboxed comparisons were mixed.
 ```
 
 Current next phase:
 
 ```text
-Improve and validate FermiNet PBC-HF pretraining.
+Reproduce the Szabo and Noe JCTC 2024 penalty-based excited-state VMC method
+in code, then test it on concrete periodic materials.
 ```
 
 ## SLURM And Scheduler Rules

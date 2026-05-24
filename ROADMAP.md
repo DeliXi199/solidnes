@@ -85,18 +85,24 @@ Decision:
 - No-go: write a bottleneck report and revise the method.
 
 Status: in progress. The DeepSolid and FermiNet carbon-diamond ground-state
-benchmark reproduction milestone is complete; the active Phase 1 work is
-FermiNet PBC-HF pretraining validation before the first controlled NES-VMC
-excited-state probe.
+benchmark reproduction milestone is complete. The FermiNet PBC-HF pretraining
+implementation and diamond-Gamma validation milestone is also complete for the
+current cc-pVDZ workflow. The active Phase 1 work is now to reproduce the
+Szabo and Noe JCTC 2024 penalty-based excited-state VMC method in code and run
+the first controlled NES-VMC excited-state probes.
 
 ## Phase 1B: Excited-State And Finite-Size Checks
 
-Goal: test whether the method survives an excited-state extension and basic
-finite-size checks.
+Goal: reproduce the penalty-based excited-state VMC method in the SolidNES
+code path, test whether it survives a periodic excited-state extension, and
+then run basic material, finite-size, and twist checks.
 
 Deliverables:
 
-- Carbon-diamond excited-state probe.
+- Reusable penalty-based excited-state VMC objective.
+- State energy, overlap, and orthogonality diagnostics.
+- Carbon-diamond Gamma excited-state probe.
+- Concrete material-test tasks after the controlled probe works.
 - Optional twist-averaged diamond calculation.
 - Finite-size and twist-sensitivity notes.
 

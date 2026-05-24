@@ -10,9 +10,12 @@ principles.
 ## Current Focus
 
 The project has completed the carbon-diamond ground-state benchmark
-reproduction milestone through both DeepSolid and FermiNet. The current route
-is to continue method integration on carbon diamond, with FermiNet as the
-primary efficiency and future-development framework.
+reproduction milestone through both DeepSolid and FermiNet. It has also
+completed the FermiNet PBC-HF pretraining implementation and diamond-Gamma
+validation milestone for the current cc-pVDZ workflow. The current route is to
+reproduce the Szabo and Noe JCTC 2024 penalty-based excited-state VMC method in
+code, then test it on concrete periodic materials, with FermiNet as the primary
+future-development framework.
 
 Passed so far:
 
@@ -30,14 +33,20 @@ Passed so far:
   validation runs are not yet accurate or converged.
 - FermiNet x64 carbon-diamond paper-geometry benchmark and fixed-checkpoint
   evaluation.
+- FermiNet PBC-HF pretraining implementation, JAX PBC GTO cc-pVDZ validation,
+  GPU integration, and matched no-pretraining comparisons for diamond Gamma.
+- Dedicated next-phase task area:
+  `tasks/excited_state_nesvmc/`.
 
 Phase 1 remains deliberately narrow:
 
 - Build a periodic excited-state NQS workflow.
 - Use carbon diamond as the controlled periodic-solid benchmark while the
   backend path is hardened.
-- Add excited-state/NES-VMC machinery only after the ground-state route is
-  reproducible and well-instrumented.
+- Add excited-state/NES-VMC machinery now that the ground-state and
+  pretraining routes are reproducible and well-instrumented.
+- Test the implemented excited-state workflow on concrete materials only after
+  the controlled method probe is stable and its state diagnostics are clear.
 
 ## Start Here
 

@@ -1,12 +1,16 @@
 # Progress
 
-Last updated: 2026-05-23
+Last updated: 2026-05-24
 
 ## Current State
 
 Carbon-diamond benchmark reproduction is complete through both DeepSolid and
-FermiNet. The project is now focused on FermiNet PBC-HF pretraining and, after
-that path is robust, the controlled NES-VMC excited-state extension.
+FermiNet. The FermiNet PBC-HF pretraining implementation and diamond-Gamma
+validation milestone is also complete for the current cc-pVDZ workflow.
+
+The project is now ready to move from ground-state/pretraining route hardening
+to reproducing the Szabo and Noe JCTC 2024 penalty-based excited-state VMC
+method in code, followed by controlled material tests.
 
 ## Active Step
 
@@ -14,12 +18,13 @@ See `ACTIVE_TASK.md` for the exact state and next command.
 
 Short version:
 
-- Active task: FermiNet PBC-HF pretraining validation.
-- State: ready for dry-run and submission preparation.
-- Task bundle:
-  `tasks/ferminet_pretraining/0045_ferminet_kfac_folx_batch4096_x64_burnin1000_iter20000_pbc_hf_pretrain_paper_pilot/`
-- Next action: run the FermiNet GPU submitter in dry-run mode with
-  `SOLIDNES_TASK_ROOT` set to the task bundle above.
+- Active task: Excited-state penalty-VMC method reproduction.
+- State: ready_to_start.
+- Evidence: GPU target/backend probes `0047--0050`, training integration and
+  matched controls `0053--0062`.
+- Next action: create the first numbered task bundle under
+  `tasks/excited_state_nesvmc/` and implement the first FermiNet PBC
+  penalty-state objective scaffold.
 
 ## Completed Structural Cleanup
 
@@ -27,7 +32,7 @@ Short version:
 - The retired target-specific scaffold was removed.
 - `tasks/TASK_LEDGER.md` is the readable task ledger.
 - `records/run_index.md` is the run-number allocator; the next available run
-  number is `0047`.
+  number is `0063`.
 - Top-level `results/`, `outputs/`, and `logs/` are retired and should not be
   recreated for new work.
 
@@ -45,6 +50,27 @@ FermiNet route:
 - Evaluation job `127992`
 - Fixed-parameter evaluation mean: `-75.4125655570 Ha`
 - Paper reference: `-75.4009 Ha`
+
+FermiNet PBC-HF pretraining:
+
+- Implementation record:
+  `records/progress/2026-05-23_ferminet_pbc_hf_pretraining.md`
+- Milestone record:
+  `records/progress/2026-05-24_ferminet_pbc_hf_pretraining_milestone.md`
+- JAX PBC GTO cc-pVDZ validation at image cutoff `3`: AO max abs `1.12e-9`,
+  occupied-MO max abs `8.51e-10`.
+- JAX PBC GTO cc-pVDZ pretraining target was about `2.52x` faster overall than
+  the PySCF target benchmark for the current probe.
+- Fixed-iteration early training favored pretraining; short wall-clock
+  timeboxed comparisons were mixed, so pretraining is a validated option rather
+  than a universal default.
+
+Next-phase task area:
+
+- `tasks/excited_state_nesvmc/`
+- Purpose: future numbered task bundles for reproducing the paper-style
+  penalty-based excited-state VMC method and testing it on specific periodic
+  materials.
 
 ## Current Rules
 

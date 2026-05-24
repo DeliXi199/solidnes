@@ -1,6 +1,6 @@
 # SolidNES Active Task
 
-Last updated: 2026-05-23, Asia/Shanghai
+Last updated: 2026-05-24, Asia/Shanghai
 
 ## Purpose
 
@@ -22,12 +22,13 @@ work belongs in `records/progress/`.
 ## Current Small Step
 
 ```text
-Step name: FermiNet PBC-HF pretraining validation
+Step name: Excited-state penalty-VMC method reproduction
 State: ready_to_start
 Backend: FermiNet
-System: carbon diamond primitive cell
-Goal: verify that PBC-HF pretraining works on GPU and improves the early VMC
-      trajectory against the no-pretraining x64 baseline.
+System: carbon diamond primitive cell first, then selected material tests
+Goal: reproduce the Szabo and Noe JCTC 2024 penalty-based excited-state VMC
+      method in the SolidNES code path, then test it on concrete periodic
+      materials.
 ```
 
 ## Current Position
@@ -35,43 +36,37 @@ Goal: verify that PBC-HF pretraining works on GPU and improves the early VMC
 ```text
 Benchmark reproduction is complete for both DeepSolid and FermiNet.
 No Slurm jobs are currently active.
-The next development target is FermiNet PBC-HF pretraining.
-PBC-HF pretraining code exists and has passed build/local CPU probes.
-Global agent instructions now live in AGENTS.md and must be read at the start
-of every new answer or work session.
-New run artifacts must use one task bundle per task. The bundle is grouped by
-task type and contains its own `results/`, `outputs/`, and `logs/` folders.
-Numbered task bundles through 0046 are migrated where retained. The retired
-target-specific scaffold was removed from the tree, and the next available run
-number is 0047.
-Run number 0045 is the current FermiNet PBC-HF pretraining GPU pilot bundle.
-The existing PBC-HF pretraining experiment YAML now writes to the typed
-numbered task bundle for run 0045, and a FermiNet config build check passed
-after the bundle-layout change.
-The global migration moved legacy artifacts into numbered task bundles and
-retired top-level generated artifact directories.
-The next small step is not a production training run yet; it is a controlled
-GPU pretraining pilot plus diagnostics check.
+FermiNet PBC-HF pretraining is implemented, GPU-tested, and validated for the
+current carbon-diamond Gamma cc-pVDZ workflow.
+JAX PBC GTO target evaluation is validated for the current diamond Gamma
+cc-pVDZ workflow with image cutoff 3.
+Fixed-iteration 1000-step comparisons favor pretraining, but matched
+short-wall-clock comparisons are mixed.
+Global agent instructions live in AGENTS.md and must be read at the start of
+every new answer or work session.
+Numbered task bundles through 0062 are recorded in the run index. The next
+available run number is 0063.
+The next development target is to implement the paper-style penalty-based
+excited-state VMC objective in code and run the first controlled periodic
+excited-state/NES-VMC probes.
+Future small task bundles for this phase should go under
+tasks/excited_state_nesvmc/.
 ```
 
 ## Next Concrete Action
 
 ```text
-Prepare and submit a short GPU PBC-HF pretraining pilot through:
-scripts/slurm/submit_ferminet_gpu_smoke.sh
+Start the first controlled periodic excited-state/NES-VMC implementation step.
 
-Dry-run command:
-SOLIDNES_TASK_ROOT=tasks/ferminet_pretraining/0045_ferminet_kfac_folx_batch4096_x64_burnin1000_iter20000_pbc_hf_pretrain_paper_pilot \
-SOLIDNES_EXPERIMENT=configs/experiment/diamond_c_ferminet_pbc_gamma_kfac_folx_batch4096_x64_burnin1000_iter20000_pbc_hf_pretrain_paper_pilot.yaml \
-SOLIDNES_JOB_NAME=0045_ferminet_pbc_hf_pretrain_pilot \
-SOLIDNES_DRY_RUN=1 \
-bash scripts/slurm/submit_ferminet_gpu_smoke.sh
-
-Before real submission:
-1. Inspect the generated plan under the task bundle's outputs/slurm_plans/.
-2. Verify the selected GPU partition is not test.
-3. Confirm requested GPU/CPU counts obey the project scheduling rule.
-4. Update ACTIVE_TASK.md with the dry-run result.
+Suggested starting point:
+1. Create the first numbered task bundle under tasks/excited_state_nesvmc/.
+2. Define and implement the two-state penalty objective from Szabo and Noe
+   JCTC 2024 for the FermiNet PBC backend.
+3. Keep the first probe on carbon diamond primitive Gamma, same basis/geometry.
+4. Add explicit overlap/orthogonality and state-energy diagnostics before any
+   production-like material test.
+5. After the controlled probe works, choose concrete material tests and record
+   direct-gap, indirect-gap, twist, and finite-size caveats explicitly.
 ```
 
 ## Active Or Pending Jobs
@@ -94,10 +89,11 @@ FermiNet reproduction:
   Fixed-parameter evaluation mean: -75.4125655570 Ha
   Paper reference: -75.4009 Ha
 
-FermiNet PBC-HF pretraining implementation:
+FermiNet PBC-HF pretraining:
   records/progress/2026-05-23_ferminet_pbc_hf_pretraining.md
-  Build-only checks passed.
-  Local CPU one-step PBC pretraining probe passed with a sto-3g target.
+  records/progress/2026-05-24_ferminet_pbc_hf_pretraining_milestone.md
+  GPU pretraining target/backend probes passed in runs 0047--0050.
+  Training integration and matched controls were recorded in runs 0053--0062.
 ```
 
 ## Completion Criteria For This Small Step
@@ -105,15 +101,16 @@ FermiNet PBC-HF pretraining implementation:
 This small step is complete when all of the following are true:
 
 ```text
-1. A GPU PBC-HF pretraining pilot has completed without traceback.
-2. Logs show PBC-HF pretraining actually ran, not silently skipped.
-3. The run records pretraining diagnostics clearly enough to judge behavior.
-4. The resulting early VMC trajectory can be compared with the no-pretraining
-   x64 baseline.
-5. Results, outputs, and logs are all under the run 0045 task bundle.
-6. The task bundle has enough local metadata to identify what was run.
-7. A dated record is written under records/progress/.
-8. The run outcome is recorded in tasks/TASK_LEDGER.md.
+1. A first numbered task bundle exists under tasks/excited_state_nesvmc/.
+2. The penalty-based excited-state VMC objective is implemented or scaffolded
+   in reusable SolidNES/FermiNet code.
+3. The code exposes state energies plus overlap/orthogonality diagnostics.
+4. A build-only or smoke-level check proves the new code path can be imported
+   and configured.
+5. The next concrete material/probe run is defined with explicit completion
+   criteria.
+6. The run outcome is recorded in tasks/TASK_LEDGER.md when a numbered task
+   completes or materially changes.
 ```
 
 ## What To Record On Every Update
