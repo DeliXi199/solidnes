@@ -10,6 +10,7 @@ Current source areas:
   two-state scaffold, and reusable FermiNet/JAX PBC adapter wrappers for
   externally managed state parameter trees. The adapter source now includes a
   unified FermiNet PBC penalty-term entry point for state energies, overlap
-  diagnostics, and penalty objectives.
+  diagnostics, penalty objectives, gradients, and a minimal external-state SGD
+  update helper.
 
 Keep command-line glue in `scripts/`; keep reusable logic here.

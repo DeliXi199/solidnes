@@ -45,8 +45,12 @@ Short version:
   objective through `evaluate_ferminet_pbc_penalty_terms(...)` and verified it
   with `scripts/validation/check_ferminet_pbc_penalty_terms.py` using a cheap
   local-energy stand-in.
-- Next action: add the first differentiable optimization-step scaffold or smoke
-  criterion for externally managed FermiNet state parameters.
+- Completed in this step: added a differentiable external-state penalty
+  objective gradient and minimal SGD update scaffold, verified by
+  `scripts/validation/check_ferminet_pbc_penalty_grad_step.py`.
+- Next action: decide the first carbon-diamond Gamma two-state smoke criterion:
+  cheap-local-energy optimization smoke only, or a scheduled real PBC
+  local-energy/Laplacian smoke.
 
 ## Completed Structural Cleanup
 
@@ -110,11 +114,13 @@ Current implementation scaffold:
 - `scripts/validation/check_ferminet_pbc_excited_scaffold.py`
 - `scripts/validation/check_ferminet_pbc_excited_adapter_build.py`
 - `scripts/validation/check_ferminet_pbc_penalty_terms.py`
+- `scripts/validation/check_ferminet_pbc_penalty_grad_step.py`
 - `records/progress/2026-05-24_excited_state_penalty_utilities.md`
 - `records/progress/2026-05-24_ferminet_pbc_excited_scaffold.md`
 - `records/progress/2026-05-24_ferminet_pbc_excited_adapter_build_check.md`
 - `records/progress/2026-05-24_ferminet_pbc_excited_adapter_source.md`
 - `records/progress/2026-05-24_ferminet_pbc_penalty_terms.md`
+- `records/progress/2026-05-24_ferminet_pbc_penalty_grad_step.md`
 
 ## Current Rules
 

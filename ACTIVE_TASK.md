@@ -76,6 +76,12 @@ wavefunction ratios, overlap diagnostics, and penalty terms. The build-only
 validation script
 `scripts/validation/check_ferminet_pbc_penalty_terms.py` passed with a cheap
 local-energy stand-in.
+The first differentiable optimization-step scaffold is implemented through
+`value_and_grad_ferminet_pbc_penalty_objective(...)` and
+`apply_external_state_sgd_step(...)`. The build-only validation script
+`scripts/validation/check_ferminet_pbc_penalty_grad_step.py` passed with a
+cheap local-energy stand-in and confirmed finite nonzero gradients plus a real
+parameter update.
 Future small task bundles for this phase should go under
 tasks/excited_state_nesvmc/ when they produce build, smoke, experiment,
 evaluation, analysis, SLURM, log, or result artifacts. Pure reference-source
@@ -88,12 +94,11 @@ audits and design notes do not consume a run number.
 Start the first controlled periodic excited-state/NES-VMC implementation step.
 
 Suggested starting point:
-1. Add a minimal optimization-step scaffold or smoke check that computes a
-   differentiable penalty objective for externally managed FermiNet state
-   parameters.
-2. Decide whether the first smoke should use cheap local energy only or an
+1. Decide whether the first smoke should use cheap local energy only or an
    explicitly scheduled real PBC local-energy/Laplacian check.
-3. Define the first carbon-diamond Gamma two-state build/smoke criterion.
+2. Define the first carbon-diamond Gamma two-state build/smoke criterion.
+3. If using a scheduled smoke, allocate run 0063 and create the first
+   `tasks/excited_state_nesvmc/` task bundle.
 4. Create the first numbered task bundle only if a build-only/smoke step
    produces durable project artifacts under `tasks/`.
 5. Keep the first probe on carbon diamond primitive Gamma, same basis/geometry.
@@ -145,8 +150,8 @@ This small step is complete when all of the following are true:
    in reusable SolidNES/FermiNet code. Partial: backend-independent utilities
    and a minimal FermiNet PBC scaffold exist under
    `src/solidnes/excited_states/`; reusable FermiNet/JAX PBC adapter wrappers
-   exist and the build-only adapter check passes, but reusable training
-   integration is pending.
+   and a differentiable external-state update scaffold exist, but reusable
+   training integration is pending.
 4. The code exposes state energies plus overlap/orthogonality diagnostics.
    Partial: scaffold-level and adapter-level state-energy/overlap/penalty
    diagnostics exist; real local-energy evaluation and training integration are
@@ -154,7 +159,7 @@ This small step is complete when all of the following are true:
 5. A build-only or smoke-level check proves the new code path can be imported
    and configured. Done for build-only: synthetic utility/scaffold checks,
    the FermiNet/JAX adapter build check, and the cheap-local-energy
-   FermiNet/JAX penalty-term check passed.
+   FermiNet/JAX penalty-term and gradient-step checks passed.
 6. A numbered task bundle is created only for the first build/smoke/run/analysis
    step that produces project artifacts.
 7. The next concrete material/probe run is defined with explicit completion

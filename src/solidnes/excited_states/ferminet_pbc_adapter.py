@@ -255,6 +255,77 @@ def evaluate_ferminet_pbc_penalty_terms(
     }
 
 
+def ferminet_pbc_penalty_objective(
+    adapter: FermiNetPBCExternalStateAdapter,
+    state_params: tuple[Any, ...],
+    samples: FermiNetPBCStateSamples,
+    *,
+    penalty_alpha: float,
+    local_energy: BatchedLocalEnergy | None = None,
+    energy_weights: Any | None = None,
+    collapse_threshold: float = 0.95,
+    clip_upper: bool = False,
+) -> Any:
+    """Return the scalar FermiNet PBC external-state penalty objective."""
+
+    return evaluate_ferminet_pbc_penalty_terms(
+        adapter,
+        state_params,
+        samples,
+        penalty_alpha=penalty_alpha,
+        local_energy=local_energy,
+        energy_weights=energy_weights,
+        collapse_threshold=collapse_threshold,
+        clip_upper=clip_upper,
+    )["penalty_objective"]
+
+
+def value_and_grad_ferminet_pbc_penalty_objective(
+    adapter: FermiNetPBCExternalStateAdapter,
+    state_params: tuple[Any, ...],
+    samples: FermiNetPBCStateSamples,
+    *,
+    penalty_alpha: float,
+    local_energy: BatchedLocalEnergy | None = None,
+    energy_weights: Any | None = None,
+    collapse_threshold: float = 0.95,
+    clip_upper: bool = False,
+) -> tuple[Any, Any]:
+    """Evaluate the scalar penalty objective and gradients over state params."""
+
+    def objective(params):
+        return ferminet_pbc_penalty_objective(
+            adapter,
+            params,
+            samples,
+            penalty_alpha=penalty_alpha,
+            local_energy=local_energy,
+            energy_weights=energy_weights,
+            collapse_threshold=collapse_threshold,
+            clip_upper=clip_upper,
+        )
+
+    return adapter.modules.jax.value_and_grad(objective)(state_params)
+
+
+def apply_external_state_sgd_step(
+    adapter: FermiNetPBCExternalStateAdapter,
+    state_params: tuple[Any, ...],
+    grads: Any,
+    *,
+    learning_rate: float,
+) -> tuple[Any, ...]:
+    """Apply one simple SGD update to externally managed state params."""
+
+    jax = adapter.modules.jax
+    lr = adapter.modules.jnp.asarray(learning_rate)
+    return jax.tree_util.tree_map(
+        lambda param, grad: param - lr * grad,
+        state_params,
+        grads,
+    )
+
+
 def init_external_state_params(
     network: Any,
     jax: Any,
@@ -391,14 +462,17 @@ def wrap_pbc_local_energy(
 __all__ = [
     "FermiNetJAXModules",
     "FermiNetPBCExternalStateAdapter",
+    "apply_external_state_sgd_step",
     "assert_pbc_external_state_config",
     "build_external_state_adapter",
     "configure_jax_platform",
     "evaluate_ferminet_pbc_penalty_terms",
+    "ferminet_pbc_penalty_objective",
     "init_external_state_params",
     "load_ferminet_jax_modules",
     "make_network_from_config",
     "make_tiny_state_samples",
+    "value_and_grad_ferminet_pbc_penalty_objective",
     "wrap_pbc_local_energy",
     "wrap_signed_network",
 ]
