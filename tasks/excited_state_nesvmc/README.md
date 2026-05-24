@@ -17,6 +17,12 @@ Use this folder for future numbered task bundles related to:
 - recording finite-size, twist, direct-gap, and indirect-gap checks when they
   become part of the tested workflow.
 
+Do not create a child task bundle for pure source audits, literature review, or
+design notes. For example, cloning and reading `external/deepqmc/` to inspect
+the Szabo-Noe penalty method should be recorded under `docs/05_reference_projects/`
+or `records/progress/`, not as `0063`, unless it also produces a build, smoke,
+run, evaluation, analysis, SLURM plan, log, result, or validation artifact.
+
 Future task bundles should follow the project numbering rules:
 
 ```text

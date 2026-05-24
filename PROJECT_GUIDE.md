@@ -93,6 +93,12 @@ Each substantial work session should update:
 - `records/decisions/` when a strategic choice is made.
 - The relevant config or experiment README when an experiment changes.
 
+Pure source audits, literature review, ignored external-code inspection, and
+design notes do not require a numbered task bundle and must not consume a run
+number. Record them in `docs/` or `records/progress/` unless they produce
+build, smoke, experiment, evaluation, analysis, SLURM, log, result, or
+validation artifacts.
+
 ## Decision Rule
 
 No Phase 2 system should be started until Phase 1 has produced either:

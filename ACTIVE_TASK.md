@@ -23,7 +23,7 @@ work belongs in `records/progress/`.
 
 ```text
 Step name: Excited-state penalty-VMC method reproduction
-State: ready_to_start
+State: configuring
 Backend: FermiNet
 System: carbon diamond primitive cell first, then selected material tests
 Goal: reproduce the Szabo and Noe JCTC 2024 penalty-based excited-state VMC
@@ -49,8 +49,13 @@ available run number is 0063.
 The next development target is to implement the paper-style penalty-based
 excited-state VMC objective in code and run the first controlled periodic
 excited-state/NES-VMC probes.
+DeepQMC was cloned for source inspection under ignored `external/deepqmc/`.
+The reference-source audit is recorded in
+`docs/05_reference_projects/deepqmc_penalty_excited_states.md`.
 Future small task bundles for this phase should go under
-tasks/excited_state_nesvmc/.
+tasks/excited_state_nesvmc/ when they produce build, smoke, experiment,
+evaluation, analysis, SLURM, log, or result artifacts. Pure reference-source
+audits and design notes do not consume a run number.
 ```
 
 ## Next Concrete Action
@@ -59,13 +64,19 @@ tasks/excited_state_nesvmc/.
 Start the first controlled periodic excited-state/NES-VMC implementation step.
 
 Suggested starting point:
-1. Create the first numbered task bundle under tasks/excited_state_nesvmc/.
-2. Define and implement the two-state penalty objective from Szabo and Noe
-   JCTC 2024 for the FermiNet PBC backend.
-3. Keep the first probe on carbon diamond primitive Gamma, same basis/geometry.
-4. Add explicit overlap/orthogonality and state-energy diagnostics before any
+1. Implement backend-independent overlap and penalty utilities under
+   `src/solidnes/excited_states/`.
+2. Add no-compute synthetic checks for overlap symmetrization, off-diagonal
+   penalty loss, and penalty scaling.
+3. Define the first minimal two-state penalty objective scaffold from
+   Szabo-Noe JCTC 2024 for the FermiNet PBC backend.
+4. Create the first numbered task bundle only when starting a build-only,
+   smoke, training, evaluation, or analysis step that will produce project
+   artifacts.
+5. Keep the first probe on carbon diamond primitive Gamma, same basis/geometry.
+6. Add explicit overlap/orthogonality and state-energy diagnostics before any
    production-like material test.
-5. After the controlled probe works, choose concrete material tests and record
+7. After the controlled probe works, choose concrete material tests and record
    direct-gap, indirect-gap, twist, and finite-size caveats explicitly.
 ```
 
@@ -101,15 +112,22 @@ FermiNet PBC-HF pretraining:
 This small step is complete when all of the following are true:
 
 ```text
-1. A first numbered task bundle exists under tasks/excited_state_nesvmc/.
-2. The penalty-based excited-state VMC objective is implemented or scaffolded
+1. The DeepQMC/Szabo-Noe reference implementation has been inspected or
+   intentionally deferred with a written reason. Done:
+   `docs/05_reference_projects/deepqmc_penalty_excited_states.md`.
+2. A project-owned source-audit/design note records which parts of the method
+   will be ported to SolidNES/FermiNet PBC and which parts are deferred. Done:
+   `docs/05_reference_projects/deepqmc_penalty_excited_states.md`.
+3. The penalty-based excited-state VMC objective is implemented or scaffolded
    in reusable SolidNES/FermiNet code.
-3. The code exposes state energies plus overlap/orthogonality diagnostics.
-4. A build-only or smoke-level check proves the new code path can be imported
+4. The code exposes state energies plus overlap/orthogonality diagnostics.
+5. A build-only or smoke-level check proves the new code path can be imported
    and configured.
-5. The next concrete material/probe run is defined with explicit completion
+6. A numbered task bundle is created only for the first build/smoke/run/analysis
+   step that produces project artifacts.
+7. The next concrete material/probe run is defined with explicit completion
    criteria.
-6. The run outcome is recorded in tasks/TASK_LEDGER.md when a numbered task
+8. The run outcome is recorded in tasks/TASK_LEDGER.md when a numbered task
    completes or materially changes.
 ```
 

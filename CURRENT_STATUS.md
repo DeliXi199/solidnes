@@ -217,7 +217,9 @@ Recommended next work items:
    same ground-state geometry and basis, and clear orthogonality/overlap
    diagnostics.
 3. Use `tasks/excited_state_nesvmc/` for future numbered implementation,
-   smoke, training, evaluation, and material-test task bundles.
+   smoke, training, evaluation, and material-test task bundles only when those
+   steps produce project artifacts. Pure source audits and design notes should
+   stay in `docs/` or `records/progress/`.
 4. After the controlled diamond probe works, choose concrete material tests and
    record direct-gap, indirect-gap, twist, and finite-size caveats explicitly.
 5. Use PBC-HF pretraining as an optional initialization path, not a mandatory

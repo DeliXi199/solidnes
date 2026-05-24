@@ -19,12 +19,15 @@ See `ACTIVE_TASK.md` for the exact state and next command.
 Short version:
 
 - Active task: Excited-state penalty-VMC method reproduction.
-- State: ready_to_start.
+- State: configuring.
 - Evidence: GPU target/backend probes `0047--0050`, training integration and
   matched controls `0053--0062`.
-- Next action: create the first numbered task bundle under
-  `tasks/excited_state_nesvmc/` and implement the first FermiNet PBC
-  penalty-state objective scaffold.
+- Completed in this step: cloned ignored `external/deepqmc/` at revision
+  `f9e1ff5` and wrote
+  `docs/05_reference_projects/deepqmc_penalty_excited_states.md`.
+- Next action: implement backend-independent overlap and penalty utilities
+  under `src/solidnes/excited_states/`, with no-compute synthetic checks before
+  any numbered task bundle is created.
 
 ## Completed Structural Cleanup
 
@@ -72,10 +75,19 @@ Next-phase task area:
   penalty-based excited-state VMC method and testing it on specific periodic
   materials.
 
+Reference audit:
+
+- `docs/05_reference_projects/deepqmc_penalty_excited_states.md`
+- Local ignored checkout: `external/deepqmc/`
+- Inspected DeepQMC revision: `f9e1ff5`
+
 ## Current Rules
 
-- New artifacts go under one numbered task bundle:
+- Compute and validation artifacts go under one numbered task bundle:
   `tasks/<phase>/<system>/<setup_or_kpoint>/<task_type>/NNNN_short_slug/`.
+- Pure source audits, literature review, external-code inspection, and design
+  notes do not consume a run number and should go under `docs/` or
+  `records/progress/`.
 - Each task bundle contains `results/`, `outputs/`, and `logs/`.
 - SLURM submitters require `SOLIDNES_TASK_ROOT` or explicit plan/log paths.
 - Every completed or materially updated task must update

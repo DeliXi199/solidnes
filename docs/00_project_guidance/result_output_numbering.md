@@ -8,12 +8,20 @@ All run artifacts belong in numbered task bundles under `tasks/`. A task bundle
 keeps result files, generated outputs, and logs together so the project does
 not accumulate unrelated files in shared top-level directories.
 
+Do not create a numbered task bundle for pure source audits, literature review,
+design notes, or reference-code reading that does not produce project-owned
+compute artifacts. Those notes belong in `docs/` or, for substantial completed
+updates, `records/progress/`. Allocate a run number only when there is a
+concrete build, smoke, experiment, evaluation, analysis, SLURM plan, backend
+log, checkpoint, validation summary, or similar artifact to keep together.
+
 Top-level `results/`, `outputs/`, and `logs/` are retired. Do not recreate them
 for new work.
 
 ## Required Layout
 
-Every task that creates files must allocate a run number and create one bundle:
+Every task that creates compute or validation artifacts must allocate a run
+number and create one bundle:
 
 ```text
 tasks/<phase>/<system>/<setup_or_kpoint>/<task_type>/NNNN_short_slug/

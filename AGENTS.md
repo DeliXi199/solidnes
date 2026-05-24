@@ -94,6 +94,14 @@ are analyzed, update `ACTIVE_TASK.md`. When the step is complete, write or
 update a dated record under `records/progress/` and update
 `tasks/TASK_LEDGER.md`.
 
+Do not allocate a run number or create a numbered task bundle for pure source
+audits, literature reading, design notes, or other no-compute work that does
+not create SLURM plans, backend logs, checkpoints, validation summaries, or
+other compute-result artifacts. Put that work under `docs/` or, when it is a
+completed substantial project update, under `records/progress/`. Create a task
+bundle only when there is a concrete build/smoke/experiment/evaluation/analysis
+artifact to keep together.
+
 ## Current Milestone
 
 Two Phase 1 enabling milestones are complete at the project-validation level:
@@ -217,6 +225,11 @@ Before running a serious experiment:
 9. Make sure the purpose and completion criteria are clear in ACTIVE_TASK.md.
 10. Update tasks/TASK_LEDGER.md when the task completes or materially changes.
 ```
+
+Reference-code review is not an experiment. Cloning or reading an ignored
+external repository, such as `external/deepqmc/`, does not require a task
+bundle unless the work also produces project-owned result, output, or log
+artifacts.
 
 Do not create new mixed unnumbered output folders. Preserve task-type grouping
 such as `training/`, `continuation/`, `evaluation/`, `ablation/`, `smoke/`,
