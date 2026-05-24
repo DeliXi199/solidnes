@@ -89,15 +89,18 @@ Use for:
 
 - Backend adapter modules.
 - Smoke-only compatibility shims.
-- Future reusable NES-VMC implementation code.
+- Reusable NES-VMC implementation code such as
+  `src/solidnes/excited_states/`.
 
 Keep command-line glue in `scripts/`; keep reusable logic here.
 
 ## `tasks/`
 
-Numbered task bundles for runs, analyses, probes, and evaluations.
+Numbered task bundles for runs, analyses, probes, and evaluations that produce
+project artifacts.
 
-Every new run/task should create one bundle:
+Every new run/task that creates build, smoke, experiment, evaluation, analysis,
+SLURM, log, result, or validation artifacts should create one bundle:
 
 ```text
 tasks/<phase>/<system>/<setup_or_kpoint>/<task_type>/NNNN_short_slug/
@@ -122,6 +125,10 @@ tasks/excited_state_nesvmc/NNNN_short_slug/
 Use this area for reproducing the Szabo and Noe JCTC 2024 penalty-based
 excited-state VMC method in code, then testing the resulting workflow on
 specific periodic materials.
+
+Do not create a numbered task bundle for pure source audits, literature review,
+external-code inspection, or design notes. Keep those under `docs/` or
+`records/progress/`.
 
 Inside each task bundle, keep generated files together:
 
@@ -175,6 +182,9 @@ New generated SLURM plans belong under a task bundle's
 bundle's `logs/slurm/`.
 
 Use `scripts/maintenance/` for repository and task-layout checks.
+
+Use `scripts/validation/` for lightweight validation and summary scripts,
+including no-compute synthetic checks for reusable source utilities.
 
 ## `.venv/`
 

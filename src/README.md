@@ -1,7 +1,11 @@
 # Source
 
-Python source code will live under `src/solidnes/`.
+Python source code lives under `src/solidnes/`.
 
-Keep this minimal until the project decides whether to adapt FermiNet,
-DeepSolid, or another existing code base.
+Current source areas:
 
+- `backends/`: adapter code and compatibility helpers for external backends.
+- `excited_states/`: backend-independent overlap and penalty-objective helpers
+  for the Szabo-Noe excited-state VMC route.
+
+Keep command-line glue in `scripts/`; keep reusable logic here.

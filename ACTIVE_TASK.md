@@ -52,6 +52,9 @@ excited-state/NES-VMC probes.
 DeepQMC was cloned for source inspection under ignored `external/deepqmc/`.
 The reference-source audit is recorded in
 `docs/05_reference_projects/deepqmc_penalty_excited_states.md`.
+Backend-independent overlap/penalty utilities are implemented under
+`src/solidnes/excited_states/`, with a no-compute synthetic validation script at
+`scripts/validation/check_excited_state_penalty_objective.py`.
 Future small task bundles for this phase should go under
 tasks/excited_state_nesvmc/ when they produce build, smoke, experiment,
 evaluation, analysis, SLURM, log, or result artifacts. Pure reference-source
@@ -64,19 +67,22 @@ audits and design notes do not consume a run number.
 Start the first controlled periodic excited-state/NES-VMC implementation step.
 
 Suggested starting point:
-1. Implement backend-independent overlap and penalty utilities under
-   `src/solidnes/excited_states/`.
-2. Add no-compute synthetic checks for overlap symmetrization, off-diagonal
-   penalty loss, and penalty scaling.
-3. Define the first minimal two-state penalty objective scaffold from
+1. Connect the backend-independent utilities to a minimal FermiNet PBC
+   excited-state scaffold.
+2. Define the data/interface shape for two state parameter trees and two walker
+   populations.
+3. Evaluate all state wavefunctions on all state samples for overlap
+   diagnostics, while keeping PBC local-energy evaluation separate from
+   FermiNet's molecular excited-state path.
+4. Define the first minimal two-state penalty objective scaffold from
    Szabo-Noe JCTC 2024 for the FermiNet PBC backend.
-4. Create the first numbered task bundle only when starting a build-only,
+5. Create the first numbered task bundle only when starting a build-only,
    smoke, training, evaluation, or analysis step that will produce project
    artifacts.
-5. Keep the first probe on carbon diamond primitive Gamma, same basis/geometry.
-6. Add explicit overlap/orthogonality and state-energy diagnostics before any
+6. Keep the first probe on carbon diamond primitive Gamma, same basis/geometry.
+7. Add explicit overlap/orthogonality and state-energy diagnostics before any
    production-like material test.
-7. After the controlled probe works, choose concrete material tests and record
+8. After the controlled probe works, choose concrete material tests and record
    direct-gap, indirect-gap, twist, and finite-size caveats explicitly.
 ```
 
@@ -119,10 +125,15 @@ This small step is complete when all of the following are true:
    will be ported to SolidNES/FermiNet PBC and which parts are deferred. Done:
    `docs/05_reference_projects/deepqmc_penalty_excited_states.md`.
 3. The penalty-based excited-state VMC objective is implemented or scaffolded
-   in reusable SolidNES/FermiNet code.
+   in reusable SolidNES/FermiNet code. Partial: backend-independent utilities
+   exist under `src/solidnes/excited_states/`; FermiNet PBC integration is
+   pending.
 4. The code exposes state energies plus overlap/orthogonality diagnostics.
+   Partial: overlap/orthogonality diagnostics exist; state-energy integration
+   with FermiNet PBC is pending.
 5. A build-only or smoke-level check proves the new code path can be imported
-   and configured.
+   and configured. Partial: no-compute synthetic utility check passed; FermiNet
+   PBC build/smoke is pending.
 6. A numbered task bundle is created only for the first build/smoke/run/analysis
    step that produces project artifacts.
 7. The next concrete material/probe run is defined with explicit completion

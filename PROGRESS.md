@@ -25,9 +25,12 @@ Short version:
 - Completed in this step: cloned ignored `external/deepqmc/` at revision
   `f9e1ff5` and wrote
   `docs/05_reference_projects/deepqmc_penalty_excited_states.md`.
-- Next action: implement backend-independent overlap and penalty utilities
-  under `src/solidnes/excited_states/`, with no-compute synthetic checks before
-  any numbered task bundle is created.
+- Completed in this step: implemented backend-independent overlap and penalty
+  utilities under `src/solidnes/excited_states/` and verified them with
+  `scripts/validation/check_excited_state_penalty_objective.py`.
+- Next action: connect the utilities to a minimal FermiNet PBC excited-state
+  scaffold while keeping PBC local-energy evaluation separate from FermiNet's
+  molecular excited-state path.
 
 ## Completed Structural Cleanup
 
@@ -80,6 +83,13 @@ Reference audit:
 - `docs/05_reference_projects/deepqmc_penalty_excited_states.md`
 - Local ignored checkout: `external/deepqmc/`
 - Inspected DeepQMC revision: `f9e1ff5`
+
+Current implementation scaffold:
+
+- `src/solidnes/excited_states/overlap.py`
+- `src/solidnes/excited_states/penalty.py`
+- `scripts/validation/check_excited_state_penalty_objective.py`
+- `records/progress/2026-05-24_excited_state_penalty_utilities.md`
 
 ## Current Rules
 
