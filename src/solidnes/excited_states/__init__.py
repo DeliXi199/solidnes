@@ -5,6 +5,7 @@ from solidnes.excited_states.ferminet_pbc_adapter import FermiNetPBCExternalStat
 from solidnes.excited_states.ferminet_pbc_adapter import assert_pbc_external_state_config
 from solidnes.excited_states.ferminet_pbc_adapter import build_external_state_adapter
 from solidnes.excited_states.ferminet_pbc_adapter import configure_jax_platform
+from solidnes.excited_states.ferminet_pbc_adapter import evaluate_ferminet_pbc_penalty_terms
 from solidnes.excited_states.ferminet_pbc_adapter import init_external_state_params
 from solidnes.excited_states.ferminet_pbc_adapter import load_ferminet_jax_modules
 from solidnes.excited_states.ferminet_pbc_adapter import make_network_from_config
@@ -48,6 +49,7 @@ __all__ = [
     "evaluate_penalty_scaffold_terms",
     "evaluate_state_energy_estimate",
     "evaluate_state_wavefunction_matrix",
+    "evaluate_ferminet_pbc_penalty_terms",
     "estimate_overlap_from_ratios",
     "init_external_state_params",
     "load_ferminet_jax_modules",

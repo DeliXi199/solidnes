@@ -19,6 +19,9 @@ from solidnes.excited_states.ferminet_pbc_scaffold import BatchedLocalEnergy
 from solidnes.excited_states.ferminet_pbc_scaffold import BatchedSignedNetwork
 from solidnes.excited_states.ferminet_pbc_scaffold import FermiNetPBCStateSamples
 from solidnes.excited_states.ferminet_pbc_scaffold import broadcast_state_samples
+from solidnes.excited_states.ferminet_pbc_scaffold import evaluate_overlap_diagnostics
+from solidnes.excited_states.ferminet_pbc_scaffold import evaluate_state_energy_estimate
+from solidnes.excited_states.penalty import penalty_vmc_terms
 
 
 @dataclass(frozen=True)
@@ -211,6 +214,47 @@ def make_network_from_config(cfg: Any, charges: Any) -> Any:
     raise ValueError(f"Unsupported FermiNet network_type: {cfg.network.network_type}")
 
 
+def evaluate_ferminet_pbc_penalty_terms(
+    adapter: FermiNetPBCExternalStateAdapter,
+    state_params: tuple[Any, ...],
+    samples: FermiNetPBCStateSamples,
+    *,
+    penalty_alpha: float,
+    local_energy: BatchedLocalEnergy | None = None,
+    energy_weights: Any | None = None,
+    collapse_threshold: float = 0.95,
+    clip_upper: bool = False,
+) -> dict[str, Any]:
+    """Evaluate real FermiNet PBC diagnostics and penalty objective terms.
+
+    By default this uses ``adapter.batched_local_energy``.  Build-only checks can
+    pass a cheap local-energy stand-in to validate the full penalty data path
+    without triggering the expensive PBC Laplacian.
+    """
+
+    active_local_energy = local_energy or adapter.batched_local_energy
+    energy = evaluate_state_energy_estimate(active_local_energy, state_params, samples)
+    overlap = evaluate_overlap_diagnostics(
+        adapter.batched_signed_network,
+        state_params,
+        samples,
+        collapse_threshold=collapse_threshold,
+        clip_upper=clip_upper,
+    )
+    terms = penalty_vmc_terms(
+        energy.state_energy,
+        overlap["overlap_matrix"],
+        penalty_alpha=penalty_alpha,
+        energy_weights=energy_weights,
+    )
+    return {
+        "local_energy": energy.local_energy,
+        "state_energy": energy.state_energy,
+        **overlap,
+        **terms,
+    }
+
+
 def init_external_state_params(
     network: Any,
     jax: Any,
@@ -350,6 +394,7 @@ __all__ = [
     "assert_pbc_external_state_config",
     "build_external_state_adapter",
     "configure_jax_platform",
+    "evaluate_ferminet_pbc_penalty_terms",
     "init_external_state_params",
     "load_ferminet_jax_modules",
     "make_network_from_config",

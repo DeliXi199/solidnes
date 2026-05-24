@@ -41,8 +41,12 @@ Short version:
   into reusable source at
   `src/solidnes/excited_states/ferminet_pbc_adapter.py`; the validation script
   now calls this module.
-- Next action: connect the real FermiNet matrix/state-energy path to the
-  penalty objective.
+- Completed in this step: connected the real FermiNet adapter to the penalty
+  objective through `evaluate_ferminet_pbc_penalty_terms(...)` and verified it
+  with `scripts/validation/check_ferminet_pbc_penalty_terms.py` using a cheap
+  local-energy stand-in.
+- Next action: add the first differentiable optimization-step scaffold or smoke
+  criterion for externally managed FermiNet state parameters.
 
 ## Completed Structural Cleanup
 
@@ -105,10 +109,12 @@ Current implementation scaffold:
 - `scripts/validation/check_excited_state_penalty_objective.py`
 - `scripts/validation/check_ferminet_pbc_excited_scaffold.py`
 - `scripts/validation/check_ferminet_pbc_excited_adapter_build.py`
+- `scripts/validation/check_ferminet_pbc_penalty_terms.py`
 - `records/progress/2026-05-24_excited_state_penalty_utilities.md`
 - `records/progress/2026-05-24_ferminet_pbc_excited_scaffold.md`
 - `records/progress/2026-05-24_ferminet_pbc_excited_adapter_build_check.md`
 - `records/progress/2026-05-24_ferminet_pbc_excited_adapter_source.md`
+- `records/progress/2026-05-24_ferminet_pbc_penalty_terms.md`
 
 ## Current Rules
 

@@ -18,6 +18,14 @@ conda run -n solidnes-ferminet-jax0101-cuda12 \
   python scripts/validation/check_ferminet_pbc_excited_adapter_build.py
 ```
 
+FermiNet/JAX build-only penalty-term path check:
+
+```bash
+conda run -n solidnes-ferminet-jax0101-cuda12 \
+  env PYTHONPATH=external/ferminet:src \
+  python scripts/validation/check_ferminet_pbc_penalty_terms.py
+```
+
 Carbon diamond HF reference:
 
 ```bash
