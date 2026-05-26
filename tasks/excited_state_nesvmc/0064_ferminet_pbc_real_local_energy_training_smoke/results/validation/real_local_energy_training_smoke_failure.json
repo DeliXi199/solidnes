@@ -1,0 +1,22 @@
+{
+  "status": "failed",
+  "job_id": "128523",
+  "partition": "intelgpu80g",
+  "node": "gpu001",
+  "elapsed": "00:04:57",
+  "exit_code": "1:0",
+  "resources": {
+    "gpus": 2,
+    "cpus": 96,
+    "exclusive": true
+  },
+  "experiment": "configs/experiment/diamond_c_ferminet_pbc_gamma_real_local_energy_training_smoke.yaml",
+  "backend_script": "scripts/validation/check_ferminet_pbc_real_local_energy_training_smoke.py",
+  "failure": {
+    "stage": "final_terms_validation",
+    "exception": "ValueError",
+    "message": "final_local_energy contains non-finite values: [[nan] [nan]]"
+  },
+  "interpretation": "The scheduled GPU job reached the real FermiNet PBC local-energy/Laplacian path and failed only after the fixed-sample two-step SGD update produced non-finite final local energies. The resource request and environment were valid. Do not resubmit this exact job unchanged.",
+  "next_step": "Implement a paper-faithful penalty-VMC training tangent before another real-local-energy multi-step smoke: lower-state stop-gradient ordering, ratio/local-energy clipping, automatic penalty scaling, and finite-gradient guards."
+}

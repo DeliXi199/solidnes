@@ -1,0 +1,60 @@
+{
+  "status": "ok",
+  "experiment": "configs/experiment/diamond_c_ferminet_pbc_gamma_driver_real_local_energy_walkers4_smoke.yaml",
+  "jax_platform": "gpu",
+  "jax_devices": [
+    "cuda:0",
+    "cuda:1"
+  ],
+  "cfg_system_states": 0,
+  "external_state_params": 2,
+  "walkers_per_state": 4,
+  "iterations": 2,
+  "burn_in": 1,
+  "sampler_steps_per_iteration": 2,
+  "proposal_width": 0.02,
+  "learning_rate": 1e-08,
+  "gradient_mode": "paper_tangent",
+  "local_energy_source": "real_pbc",
+  "checkpoint_roundtrip_bytes": 1234734,
+  "initial_penalty_objective": -2.14052152633667,
+  "final_penalty_objective": -4.250395774841309,
+  "history": [
+    {
+      "iteration": 0,
+      "sampler_steps": 3,
+      "sampler_acceptance": 0.7916666865348816,
+      "penalty_objective": -6.304564476013184,
+      "gradient_objective": -6.304564476013184,
+      "state_energy": [
+        -13.057059288024902,
+        0.44792985916137695
+      ],
+      "offdiag_squared_overlap": 0.0,
+      "grad_l2_norm": 316.4673767089844,
+      "param_delta_l2_norm": 3.198904323653551e-06,
+      "gradient_finite": true,
+      "update_finite": true,
+      "candidate_terms_finite": true,
+      "update_accepted": true
+    },
+    {
+      "iteration": 1,
+      "sampler_steps": 2,
+      "sampler_acceptance": 0.75,
+      "penalty_objective": -4.201423168182373,
+      "gradient_objective": -4.201423168182373,
+      "state_energy": [
+        -13.226180076599121,
+        4.823333740234375
+      ],
+      "offdiag_squared_overlap": 0.0,
+      "grad_l2_norm": 403.5921936035156,
+      "param_delta_l2_norm": 4.0618156162963714e-06,
+      "gradient_finite": true,
+      "update_finite": true,
+      "candidate_terms_finite": true,
+      "update_accepted": true
+    }
+  ]
+}

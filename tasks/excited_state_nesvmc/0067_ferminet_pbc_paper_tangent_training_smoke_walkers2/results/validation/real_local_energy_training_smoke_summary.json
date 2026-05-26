@@ -1,0 +1,113 @@
+{
+  "status": "ok",
+  "experiment": "configs/experiment/diamond_c_ferminet_pbc_gamma_paper_tangent_training_smoke_walkers2.yaml",
+  "jax_platform": "gpu",
+  "jax_devices": [
+    "cuda:0",
+    "cuda:1"
+  ],
+  "cfg_system_states": 0,
+  "external_state_params": 2,
+  "walkers_per_state": 2,
+  "steps": 2,
+  "learning_rate": 1e-08,
+  "gradient_mode": "paper_tangent",
+  "local_energy_source": "real_pbc",
+  "penalty_alpha": 1.0,
+  "elapsed_seconds": 279.27690632268786,
+  "initial_penalty_objective": -11.952571868896484,
+  "final_penalty_objective": -11.967228889465332,
+  "objective_delta": -0.014657020568847656,
+  "initial_state_energy": [
+    -10.147720336914062,
+    -14.60999870300293
+  ],
+  "final_state_energy": [
+    -10.17345142364502,
+    -14.60450553894043
+  ],
+  "final_overlap_matrix": [
+    [
+      1.0,
+      -0.29043060541152954
+    ],
+    [
+      -0.29043060541152954,
+      1.0
+    ]
+  ],
+  "history": [
+    {
+      "step": 0,
+      "penalty_objective": -11.952571868896484,
+      "gradient_objective": -11.952571868896484,
+      "weighted_state_energy": -12.378859519958496,
+      "state_energy": [
+        -10.147720336914062,
+        -14.60999870300293
+      ],
+      "state_energy_std": [
+        16.695892333984375,
+        2.6380672454833984
+      ],
+      "offdiag_squared_overlap": 0.08525747060775757,
+      "scaled_offdiag_squared_overlap": 0.42628735303878784,
+      "overlap_penalty": 0.08525747060775757,
+      "overlap_gradient_scale": [
+        [
+          5.0,
+          5.0
+        ],
+        [
+          4.462278366088867,
+          2.6380672454833984
+        ]
+      ],
+      "max_abs_offdiag_overlap": 0.2919888198375702,
+      "collapse_flag": false,
+      "grad_l2_norm": 557.01806640625,
+      "param_delta_l2_norm": 5.602138116955757e-06,
+      "gradient_objective_finite": true,
+      "gradient_finite": true,
+      "update_finite": true,
+      "candidate_terms_finite": true,
+      "update_accepted": true
+    },
+    {
+      "step": 1,
+      "penalty_objective": -12.040141105651855,
+      "gradient_objective": -12.040141105651855,
+      "weighted_state_energy": -12.468951225280762,
+      "state_energy": [
+        -10.197734832763672,
+        -14.740167617797852
+      ],
+      "state_energy_std": [
+        16.64083480834961,
+        2.763833999633789
+      ],
+      "offdiag_squared_overlap": 0.08576193451881409,
+      "scaled_offdiag_squared_overlap": 0.4288097023963928,
+      "overlap_penalty": 0.08576193451881409,
+      "overlap_gradient_scale": [
+        [
+          5.0,
+          5.0
+        ],
+        [
+          4.54243278503418,
+          2.763833999633789
+        ]
+      ],
+      "max_abs_offdiag_overlap": 0.29285138845443726,
+      "collapse_flag": false,
+      "grad_l2_norm": 555.3357543945312,
+      "param_delta_l2_norm": 5.5834761951700784e-06,
+      "gradient_objective_finite": true,
+      "gradient_finite": true,
+      "update_finite": true,
+      "candidate_terms_finite": true,
+      "update_accepted": true
+    }
+  ]
+}

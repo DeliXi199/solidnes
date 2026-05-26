@@ -1,13 +1,13 @@
 # SolidNES Run Index
 
-Last updated: 2026-05-24, Asia/Shanghai
+Last updated: 2026-05-25, Asia/Shanghai
 
 This file is the canonical ledger for numbered task bundles after the global artifact migration.
 
 ## Next Available Run Number
 
 ```text
-0064
+0080
 ```
 
 ## Numbered Runs
@@ -76,6 +76,22 @@ This file is the canonical ledger for numbered task bundles after the global art
 | 0061 | timed_out_expected | 2026-05-24 13:51:05 | `solidnes/tasks/phase1_diamond_c/pbc_gamma/training/0061_ferminet_jax_pbc_gto_pretrain500_ccpvdz_kfac_batch4096_iter10000_2gpu_timebox20m/` | `tasks/phase1_diamond_c/pbc_gamma/training/0061_ferminet_jax_pbc_gto_pretrain500_ccpvdz_kfac_batch4096_iter10000_2gpu_timebox20m/results/` | 1 | 2 |
 | 0062 | timed_out_expected | 2026-05-24 13:51:05 | `solidnes/tasks/phase1_diamond_c/pbc_gamma/training/0062_ferminet_jax_pbc_gto_pretrain1000_ccpvdz_kfac_batch4096_iter10000_2gpu_timebox20m/` | `tasks/phase1_diamond_c/pbc_gamma/training/0062_ferminet_jax_pbc_gto_pretrain1000_ccpvdz_kfac_batch4096_iter10000_2gpu_timebox20m/results/` | 1 | 2 |
 | 0063 | completed | 2026-05-24 22:08:53 | `solidnes/tasks/excited_state_nesvmc/0063_ferminet_pbc_real_local_energy_smoke/` | `tasks/excited_state_nesvmc/0063_ferminet_pbc_real_local_energy_smoke/results/` | 2 | 4 |
+| 0064 | failed | 2026-05-24 22:41:27 | `solidnes/tasks/excited_state_nesvmc/0064_ferminet_pbc_real_local_energy_training_smoke/` | `tasks/excited_state_nesvmc/0064_ferminet_pbc_real_local_energy_training_smoke/results/` | 1 | 2 |
+| 0065 | failed | 2026-05-25 00:10:35 | `solidnes/tasks/excited_state_nesvmc/0065_ferminet_pbc_paper_tangent_training_smoke/` | `tasks/excited_state_nesvmc/0065_ferminet_pbc_paper_tangent_training_smoke/results/` | 1 | 2 |
+| 0066 | failed | 2026-05-25 00:46:20 | `solidnes/tasks/excited_state_nesvmc/0066_ferminet_pbc_paper_tangent_training_smoke_fix/` | `tasks/excited_state_nesvmc/0066_ferminet_pbc_paper_tangent_training_smoke_fix/results/` | 1 | 2 |
+| 0067 | completed | 2026-05-25 00:56:33 | `solidnes/tasks/excited_state_nesvmc/0067_ferminet_pbc_paper_tangent_training_smoke_walkers2/` | `tasks/excited_state_nesvmc/0067_ferminet_pbc_paper_tangent_training_smoke_walkers2/results/` | 1 | 2 |
+| 0068 | completed | 2026-05-25 07:45:04 | `solidnes/tasks/excited_state_nesvmc/0068_ferminet_pbc_driver_real_local_energy_smoke/` | `tasks/excited_state_nesvmc/0068_ferminet_pbc_driver_real_local_energy_smoke/results/` | 1 | 2 |
+| 0069 | completed | 2026-05-25 08:11:07 | `solidnes/tasks/excited_state_nesvmc/0069_ferminet_pbc_driver_real_local_energy_walkers4_smoke/` | `tasks/excited_state_nesvmc/0069_ferminet_pbc_driver_real_local_energy_walkers4_smoke/results/` | 1 | 2 |
+| 0070 | completed | 2026-05-25 08:56:47 | `solidnes/tasks/excited_state_nesvmc/0070_ferminet_pbc_driver_controlled12_walkers4/` | `tasks/excited_state_nesvmc/0070_ferminet_pbc_driver_controlled12_walkers4/results/` | 1 | 2 |
+| 0071 | completed | 2026-05-25 12:27:16 | `solidnes/tasks/excited_state_nesvmc/0071_ferminet_pbc_driver_kfac_real_local_energy_smoke/` | `tasks/excited_state_nesvmc/0071_ferminet_pbc_driver_kfac_real_local_energy_smoke/results/` | 1 | 2 |
+| 0072 | cancelled | 2026-05-25 12:59:39 | `solidnes/tasks/excited_state_nesvmc/0072_ferminet_pbc_driver_kfac_real_local_energy_iter100_fullnode/` | `tasks/excited_state_nesvmc/0072_ferminet_pbc_driver_kfac_real_local_energy_iter100_fullnode/results/` | 1 | 2 |
+| 0073 | cancelled | 2026-05-25 13:31:44 | `solidnes/tasks/excited_state_nesvmc/0073_ferminet_pbc_driver_kfac_multigpu_iter100_fullnode/` | `tasks/excited_state_nesvmc/0073_ferminet_pbc_driver_kfac_multigpu_iter100_fullnode/results/` | 1 | 4 |
+| 0074 | completed | 2026-05-25 14:06:33 | `solidnes/tasks/excited_state_nesvmc/0074_ferminet_native_vmc_overlap_kfac_smoke/` | `tasks/excited_state_nesvmc/0074_ferminet_native_vmc_overlap_kfac_smoke/results/` | 1 | 4 |
+| 0075 | completed | 2026-05-25 14:25:15 | `solidnes/tasks/excited_state_nesvmc/0075_ferminet_native_vmc_overlap_kfac_batch1024_smoke/` | `tasks/excited_state_nesvmc/0075_ferminet_native_vmc_overlap_kfac_batch1024_smoke/results/` | 1 | 2 |
+| 0076 | completed | 2026-05-25 14:37:50 | `solidnes/tasks/excited_state_nesvmc/0076_ferminet_native_vmc_overlap_kfac_batch4096_iter50/` | `tasks/excited_state_nesvmc/0076_ferminet_native_vmc_overlap_kfac_batch4096_iter50/results/` | 1 | 2 |
+| 0077 | completed | 2026-05-25 15:19:49 | `solidnes/tasks/excited_state_nesvmc/0077_ferminet_native_vmc_overlap_kfac_paper_aligned_smoke/` | `tasks/excited_state_nesvmc/0077_ferminet_native_vmc_overlap_kfac_paper_aligned_smoke/results/` | 1 | 2 |
+| 0078 | completed | 2026-05-25 15:43:33 | `solidnes/tasks/excited_state_nesvmc/0078_ferminet_native_vmc_overlap_kfac_paper_aligned/` | `tasks/excited_state_nesvmc/0078_ferminet_native_vmc_overlap_kfac_paper_aligned/results/` | 1 | 2 |
+| 0079 | completed | 2026-05-25 16:52:04 | `solidnes/tasks/excited_state_nesvmc/0079_ferminet_native_vmc_overlap_kfac_paper_aligned_iter10000/` | `tasks/excited_state_nesvmc/0079_ferminet_native_vmc_overlap_kfac_paper_aligned_iter10000/results/` | 1 | 2 |
 
 ## Cleanup Notes
 

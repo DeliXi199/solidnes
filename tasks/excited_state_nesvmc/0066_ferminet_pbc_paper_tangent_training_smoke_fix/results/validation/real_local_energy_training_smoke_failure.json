@@ -1,0 +1,26 @@
+{
+  "status": "failed",
+  "date": "2026-05-25",
+  "job_id": "128675",
+  "partition": "intelgpu80g",
+  "node": "gpu001",
+  "elapsed": "00:05:01",
+  "exit_code": "1:0",
+  "resources": {
+    "gpus": 2,
+    "cpus": 96,
+    "exclusive": true
+  },
+  "backend_script": "scripts/validation/check_ferminet_pbc_real_local_energy_training_smoke.py",
+  "experiment": "configs/experiment/diamond_c_ferminet_pbc_gamma_paper_tangent_training_smoke_fix.yaml",
+  "task_root": "tasks/excited_state_nesvmc/0066_ferminet_pbc_paper_tangent_training_smoke_fix",
+  "seed": 47,
+  "walkers_per_state": 1,
+  "gradient_mode": "paper_tangent",
+  "failure": {
+    "type": "ValueError",
+    "message": "grad_l2_norm_step_0 must be positive, got 0.0"
+  },
+  "interpretation": "The 0065 NaN objective failure is fixed. The one-walker smoke is degenerate for seed 47 because the centered score-function energy tangent is zero and the overlap tangent also gives zero gradient. A local cheap-local-energy check reproduced this with walkers=1 and passed with walkers=2.",
+  "next_action": "Allocate a new task with at least two walkers per state and rerun the scheduled real-local-energy training smoke."
+}

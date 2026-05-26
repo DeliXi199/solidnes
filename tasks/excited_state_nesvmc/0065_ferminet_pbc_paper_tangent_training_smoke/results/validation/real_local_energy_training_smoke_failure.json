@@ -1,0 +1,24 @@
+{
+  "status": "failed",
+  "date": "2026-05-25",
+  "job_id": "128674",
+  "partition": "intelgpu80g",
+  "node": "gpu001",
+  "elapsed": "00:06:15",
+  "exit_code": "1:0",
+  "resources": {
+    "gpus": 2,
+    "cpus": 96,
+    "exclusive": true
+  },
+  "backend_script": "scripts/validation/check_ferminet_pbc_real_local_energy_training_smoke.py",
+  "experiment": "configs/experiment/diamond_c_ferminet_pbc_gamma_paper_tangent_training_smoke.yaml",
+  "task_root": "tasks/excited_state_nesvmc/0065_ferminet_pbc_paper_tangent_training_smoke",
+  "gradient_mode": "paper_tangent",
+  "failure": {
+    "type": "ValueError",
+    "message": "penalty_objective_step_0 is not finite: nan"
+  },
+  "interpretation": "The scheduler and GPU environment were valid. The non-finite value is the paper-tangent value_and_grad scalar recorded in per-step diagnostics, likely from a non-finite surrogate in the zero-value tangent construction rather than from the separately evaluated true penalty terms.",
+  "next_action": "Make the paper-tangent objective forward-safe, record true pre-update penalty objective diagnostics, rerun validation, and use a new numbered task for the next scheduled smoke."
+}

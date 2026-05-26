@@ -138,6 +138,20 @@ tasks/.../NNNN_short_slug/outputs/
 tasks/.../NNNN_short_slug/logs/
 ```
 
+For comparative sweeps, ablations, or matched controls, use one task bundle for
+the whole comparison and place variants underneath it:
+
+```text
+tasks/.../NNNN_short_slug/runs/<variant>/results/
+tasks/.../NNNN_short_slug/runs/<variant>/outputs/
+tasks/.../NNNN_short_slug/runs/<variant>/logs/
+tasks/.../NNNN_short_slug/results/validation/
+```
+
+The parent `results/validation/` directory holds cross-variant tables and
+plots. Individual variant summaries stay inside their `runs/<variant>/`
+directories.
+
 Use `tasks/TASK_LEDGER.md` as the readable task ledger. Use
 `tasks/MIGRATION_MANIFEST.tsv` as the machine-readable migration map.
 
