@@ -1,0 +1,6 @@
+fixed_ground_checkpoint_shape_check: PASS
+checkpoint: /data/home/yihaoxu/research/projects/solidnes/tasks/phase1_diamond_c/pbc_gamma/training/0044_ferminet_kfac_folx_batch4096_x64_burnin1000_iter20000_paper_pilot/results/checkpoints/qmcjax_ckpt_018349.npz
+leaf_count: 18
+local_device_count: 1
+first_leaf_shape: (30, 96)
+last_leaf_shape: (256, 96)

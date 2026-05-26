@@ -1,0 +1,3 @@
+fixed_ground_noise_config_check: PASS
+init_trainable_noise_scale: 1e-05
+fixed_ground_overlap_penalty: 4.0

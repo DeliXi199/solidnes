@@ -1,0 +1,110 @@
+{
+  "status": "ok",
+  "experiment": "configs/experiment/diamond_c_ferminet_pbc_gamma_native_vmc_overlap_kfac_paper_aligned_spin_beta0001_iter2000.yaml",
+  "job_id": "129327",
+  "rows": 2000,
+  "first_step": 0,
+  "final_step": 1999,
+  "first_energy": -22.317474,
+  "final_energy": -74.05973,
+  "min_energy": -77.175354,
+  "max_energy": -21.797243,
+  "final_ewmean": -73.83713,
+  "final_ewvar": 0.03114862,
+  "mean_pmove": 0.599325355975,
+  "min_pmove": 0.529895,
+  "max_pmove": 0.9157349,
+  "energy_matrix_frames": 2000,
+  "final_state_energy": [
+    -74.36276245117188,
+    -73.45906066894531
+  ],
+  "final_training_state_energy": [
+    -74.3611831665039,
+    -73.45691680908203
+  ],
+  "final_training_gap_hartree": 0.904266357421875,
+  "final_training_gap_ev": 24.606341121059277,
+  "bare_energy_matrix_frames": 2000,
+  "final_bare_state_energy": [
+    -74.36276245117188,
+    -73.45906066894531
+  ],
+  "final_bare_gap_hartree": 0.9037017822265625,
+  "final_bare_gap_ev": 24.590978247354723,
+  "overlap_matrix_frames": 2000,
+  "final_overlap_matrix": [
+    [
+      1.0,
+      -172.64453125
+    ],
+    [
+      1.7070546164177358e-05,
+      1.0
+    ]
+  ],
+  "symmetric_overlap_matrix_frames": 2000,
+  "final_symmetric_overlap_matrix": [
+    [
+      1.0,
+      -0.0
+    ],
+    [
+      0.0,
+      1.0
+    ]
+  ],
+  "overlap_penalty_matrix_frames": 2000,
+  "final_overlap_penalty_matrix": [
+    [
+      1.0,
+      0.0
+    ],
+    [
+      0.0,
+      1.0
+    ]
+  ],
+  "overlap_gradient_scale_frames": 2000,
+  "final_overlap_gradient_scale": [
+    [
+      5.0,
+      5.0
+    ],
+    [
+      5.0,
+      5.0
+    ]
+  ],
+  "state_ordering_frames": 2000,
+  "final_state_ordering": [
+    0,
+    1
+  ],
+  "overlap_scale_energy_ewm_frames": 2000,
+  "final_overlap_scale_energy_ewm": [
+    -74.44186401367188,
+    -73.41714477539062
+  ],
+  "overlap_scale_std_ewm_frames": 2000,
+  "final_overlap_scale_std_ewm": [
+    6.4482502937316895,
+    8.982453346252441
+  ],
+  "s2_matrix_frames": 2000,
+  "final_s2_matrix": [
+    [
+      1.5830098390579224,
+      3729.186279296875
+    ],
+    [
+      0.00021164861391298473,
+      2.1453208923339844
+    ]
+  ],
+  "final_s2_diagonal": [
+    1.5830098390579224,
+    2.1453208923339844
+  ],
+  "final_s2_trace": 3.728330612182617
+}

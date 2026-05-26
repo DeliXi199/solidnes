@@ -1,0 +1,31 @@
+{
+  "kind": "gpu",
+  "ready": false,
+  "reason": "no_free_gpu_queue_flexible_partitions",
+  "sbatch": null,
+  "selection": {
+    "candidates": [
+      {
+        "allocated_cpus": 0,
+        "allocated_gpus": 0,
+        "free_gpus": 4,
+        "free_memory_mb": 503238,
+        "gpu_model_key": "a100_40gb",
+        "gpu_type": "",
+        "gres": "gpu:4",
+        "idle_cpus": 64,
+        "is_available": true,
+        "is_idle": true,
+        "name": "gpu007",
+        "partitions": [
+          "amdgpu40g",
+          "gpu40gllm"
+        ],
+        "state": "IDLE",
+        "total_cpus": 64,
+        "total_gpus": 4,
+        "total_memory_mb": 512000
+      }
+    ]
+  }
+}

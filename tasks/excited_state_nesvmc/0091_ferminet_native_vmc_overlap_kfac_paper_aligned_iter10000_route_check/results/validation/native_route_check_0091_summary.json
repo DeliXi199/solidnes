@@ -1,0 +1,18 @@
+{
+  "job_id": 130365,
+  "job_state": "COMPLETED",
+  "exit_code": "0:0",
+  "elapsed": "00:20:33",
+  "node": "gpu007",
+  "rows": 10000,
+  "last_step": 9999,
+  "finite_rows": 3815,
+  "nonfinite_rows": 6185,
+  "last_finite_step": 3814,
+  "first_nonfinite_step": 3815,
+  "last_finite_energy_hartree": -74.71772,
+  "last_finite_ewmean_hartree": -74.784744,
+  "last_finite_ewvar_hartree2": 0.08745663,
+  "last_finite_pmove": 0.5415039,
+  "conclusion": "The original native vmc_overlap route runs to completion, but this trajectory becomes non-finite after step 3814 and is not a numerically healthy production result."
+}

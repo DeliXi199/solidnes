@@ -1,0 +1,63 @@
+experiment: diamond_c_ferminet_pbc_gamma_native_vmc_overlap_kfac_paper_aligned_iter10000_route_check
+backend: ferminet
+config_module: solidnes/backends/ferminet_configs/diamond_pbc_gamma.py
+
+natoms: 2
+atoms: ['C', 'C']
+nelec: (6, 6)
+kpoints: 15
+
+network_type: ferminet
+determinants: 8
+hidden_dims: ((128, 32), (128, 32), (128, 32))
+full_det: True
+complex_output: False
+
+optimizer: kfac
+objective: vmc_overlap
+method_profile: szabo_noe_2024_penalty
+states: 2
+overlap_penalty: 4.0
+overlap_weights: None
+overlap_scale_by: max_gap_std
+overlap_min_scale: 0.001
+overlap_max_scale: 5.0
+overlap_clip_width: 10.0
+overlap_clip_exclude_width: inf
+overlap_sort_states_by: energy
+overlap_use_ewm_scale: True
+overlap_ewm_max_alpha: 0.999
+overlap_ewm_decay_alpha: 10.0
+fixed_ground_checkpoint: None
+fixed_ground_init_trainable_from_checkpoint: False
+fixed_ground_init_trainable_noise_scale: None
+fixed_ground_overlap_penalty: None
+fixed_ground_overlap_clip_width: None
+fixed_ground_overlap_clip_exclude_width: None
+fixed_ground_overlap_gradient_scale: None
+fixed_ground_symmetric_sampling: False
+fixed_ground_energy_reference: None
+spin_penalty: 0.0
+s2_observable: False
+kfac_norm_constraint: 0.002
+kfac_norm_constraint_scale_by_states: True
+iterations: 10000
+batch_size: 4096
+laplacian: folx
+forward_laplacian_enabled: True
+pretrain_method: None
+pretrain_iterations: 0
+pretrain_target_backend: pyscf_pbc
+pretrain_jax_pbc_image_cutoff: 2
+pretrain_log_every: 1
+pretrain_target_chunk_size: 0
+mcmc_burn_in: 50
+mcmc_steps_per_iteration: 10
+
+target_jax_version: 0.10.1
+precision_profile: speed
+x64_enabled: False
+psiformer_tf32: None
+
+save_path: /data/home/yihaoxu/research/projects/solidnes/tasks/excited_state_nesvmc/0091_ferminet_native_vmc_overlap_kfac_paper_aligned_iter10000_route_check/results/checkpoints
+restore_path:

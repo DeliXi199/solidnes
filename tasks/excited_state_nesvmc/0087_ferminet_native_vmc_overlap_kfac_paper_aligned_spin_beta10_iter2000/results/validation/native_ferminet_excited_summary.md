@@ -1,0 +1,42 @@
+# Native FermiNet Excited-State Summary
+
+```text
+status: ok
+experiment: configs/experiment/diamond_c_ferminet_pbc_gamma_native_vmc_overlap_kfac_paper_aligned_spin_beta10_iter2000.yaml
+job_id: 129431
+rows: 2000
+steps: 0 -> 1999
+energy: 4.462537 -> -74.67413
+energy_range: [-566.0704, 180.54684]
+final_ewmean: -74.72858
+final_ewvar: 0.20385888
+mean_pmove: 0.598226181565
+pmove_range: [0.52911377, 0.91619873]
+energy_matrix_frames: 2000
+final_state_energy: [-74.8182601928711, -74.5074234008789]
+final_training_state_energy: [-74.70938110351562, -74.60674285888672]
+final_training_gap_hartree: 0.10263824462890625
+final_training_gap_ev: 2.7929289182073713
+bare_energy_matrix_frames: 2000
+final_bare_state_energy: [-74.8182601928711, -74.5074234008789]
+final_bare_gap_hartree: 0.3108367919921875
+final_bare_gap_ev: 8.458300006363244
+overlap_matrix_frames: 2000
+final_overlap_matrix: [[1.0, -0.003845532890409231], [-0.06861983984708786, 1.0]]
+symmetric_overlap_matrix_frames: 2000
+final_symmetric_overlap_matrix: [[1.0, -0.016244379803538322], [-0.016244379803538322, 1.0]]
+overlap_penalty_matrix_frames: 2000
+final_overlap_penalty_matrix: [[1.0, 0.0002638798614498228], [0.0002638798614498228, 1.0]]
+overlap_gradient_scale_frames: 2000
+final_overlap_gradient_scale: [[5.0, 5.0], [5.0, 5.0]]
+state_ordering_frames: 2000
+final_state_ordering: [0, 1]
+overlap_scale_energy_ewm_frames: 2000
+final_overlap_scale_energy_ewm: [-74.60125732421875, -74.36951446533203]
+overlap_scale_std_ewm_frames: 2000
+final_overlap_scale_std_ewm: [29.55828857421875, 49.968936920166016]
+s2_matrix_frames: 2000
+final_s2_matrix: [[0.010887863114476204, 0.0012084252666682005], [-0.0820581465959549, -0.009931838139891624]]
+final_s2_diagonal: [0.010887863114476204, -0.009931838139891624]
+final_s2_trace: 0.0009560249745845795
+```

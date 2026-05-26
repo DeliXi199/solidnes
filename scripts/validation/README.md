@@ -35,12 +35,38 @@ conda run -n solidnes-ferminet-jax0101-cuda12 \
 ```
 
 FermiNet/JAX build-only multi-step cheap optimization smoke through the
-reusable fixed-sample training loop:
+reusable fixed-sample paper-tangent training loop. The smoke now accepts
+`--optimizer adam|lamb|sgd|kfac`, `--overlap-ewma-decay`,
+`--param-share-keys`, `--candidate-check-period`, gradient/update norm caps,
+and KFAC damping/norm controls:
 
 ```bash
 conda run -n solidnes-ferminet-jax0101-cuda12 \
   env PYTHONPATH=external/ferminet:src \
-  python scripts/validation/check_ferminet_pbc_penalty_opt_smoke.py
+  python scripts/validation/check_ferminet_pbc_penalty_opt_smoke.py \
+  --optimizer kfac --overlap-ewma-decay 0.95 \
+  --param-share-keys layers/streams --candidate-check-period 2 \
+  --kfac-damping 0.001 --kfac-norm-constraint 0.001
+```
+
+FermiNet/JAX build-only sampler-integrated driver smoke with checkpoint
+roundtrip. The script reads driver defaults such as `local_energy_source`,
+`walkers_per_state`, `iterations`, and sampler settings from the experiment YAML
+`diagnostics` section unless command line arguments or `SOLIDNES_NES_*`
+environment variables override them.
+
+```bash
+conda run -n solidnes-ferminet-jax0101-cuda12 \
+  env PYTHONPATH=external/ferminet:src \
+  python scripts/validation/check_ferminet_pbc_driver_smoke.py
+```
+
+Native FermiNet paper-aligned overlap-loss helper check:
+
+```bash
+conda run -n solidnes-ferminet-jax0101-cuda12 \
+  env JAX_PLATFORMS=cpu PYTHONPATH=external/ferminet:src \
+  python scripts/validation/check_ferminet_native_overlap_loss_alignment.py
 ```
 
 FermiNet/JAX scheduled real PBC local-energy smoke:
@@ -61,7 +87,62 @@ SOLIDNES_GPU_HARD_MIN_GPUS=2 \
 SOLIDNES_GPU_HARD_MIN_CPUS=96 \
 SOLIDNES_GPU_QUEUE_MIN_GPUS=2 \
 SOLIDNES_GPU_QUEUE_MIN_CPUS=96 \
+SOLIDNES_GPU_EXCLUSIVE_WHEN_FULL_NODE=1 \
 bash scripts/slurm/submit_ferminet_gpu_smoke.sh
+```
+
+FermiNet/JAX scheduled real PBC local-energy multi-step training-loop smoke.
+The script reads defaults such as `walkers_per_state`, `steps`, `seed`, and
+`learning_rate` from the experiment YAML `diagnostics` section unless command
+line arguments or `SOLIDNES_NES_*` environment variables override them.
+
+```bash
+TASK=tasks/excited_state_nesvmc/0067_ferminet_pbc_paper_tangent_training_smoke_walkers2
+SOLIDNES_TASK_ROOT="$TASK" \
+SOLIDNES_PLAN_JSON="$TASK/outputs/slurm_plans/plan.json" \
+SOLIDNES_BACKEND_SCRIPT=scripts/validation/check_ferminet_pbc_real_local_energy_training_smoke.py \
+SOLIDNES_EXPERIMENT=configs/experiment/diamond_c_ferminet_pbc_gamma_paper_tangent_training_smoke_walkers2.yaml \
+SOLIDNES_CONDA_ENV=solidnes-ferminet-jax0101-cuda12 \
+SOLIDNES_JOB_NAME=solidnes-0067-nes-pt-w2 \
+SOLIDNES_TIME_LIMIT=00:30:00 \
+SOLIDNES_GPU_PARTITIONS=intelgpu80g \
+SOLIDNES_GPU_ALLOWED_COUNTS=2 \
+SOLIDNES_GPU_TARGET_GPUS=2 \
+SOLIDNES_GPU_HARD_MIN_GPUS=2 \
+SOLIDNES_GPU_HARD_MIN_CPUS=96 \
+SOLIDNES_GPU_QUEUE_MIN_GPUS=2 \
+SOLIDNES_GPU_QUEUE_MIN_CPUS=96 \
+SOLIDNES_GPU_EXCLUSIVE_WHEN_FULL_NODE=1 \
+bash scripts/slurm/submit_ferminet_gpu_smoke.sh
+```
+
+FermiNet/JAX scheduled sampler-integrated real PBC local-energy driver smoke:
+
+```bash
+TASK=tasks/excited_state_nesvmc/0068_ferminet_pbc_driver_real_local_energy_smoke
+SOLIDNES_TASK_ROOT="$TASK" \
+SOLIDNES_PLAN_JSON="$TASK/outputs/slurm_plans/plan.json" \
+SOLIDNES_BACKEND_SCRIPT=scripts/validation/check_ferminet_pbc_driver_smoke.py \
+SOLIDNES_EXPERIMENT=configs/experiment/diamond_c_ferminet_pbc_gamma_driver_real_local_energy_smoke.yaml \
+SOLIDNES_CONDA_ENV=solidnes-ferminet-jax0101-cuda12 \
+SOLIDNES_JOB_NAME=solidnes-0068-nes-driver \
+SOLIDNES_TIME_LIMIT=00:30:00 \
+SOLIDNES_GPU_PARTITIONS=intelgpu80g \
+SOLIDNES_GPU_ALLOWED_COUNTS=2 \
+SOLIDNES_GPU_TARGET_GPUS=2 \
+SOLIDNES_GPU_HARD_MIN_GPUS=2 \
+SOLIDNES_GPU_HARD_MIN_CPUS=96 \
+SOLIDNES_GPU_QUEUE_MIN_GPUS=2 \
+SOLIDNES_GPU_QUEUE_MIN_CPUS=96 \
+SOLIDNES_GPU_EXCLUSIVE_WHEN_FULL_NODE=1 \
+bash scripts/slurm/submit_ferminet_gpu_smoke.sh
+```
+
+Summarize a FermiNet PBC excited-state driver trajectory:
+
+```bash
+python scripts/validation/summarize_ferminet_pbc_driver_run.py \
+  tasks/excited_state_nesvmc/0070_ferminet_pbc_driver_controlled12_walkers4/results/validation/ferminet_pbc_driver_run_summary.json
 ```
 
 Carbon diamond HF reference:

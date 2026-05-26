@@ -63,6 +63,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     gpu.add_argument("--gpu-queue-mode", choices=("auto", "pinned", "flexible"), default="auto")
     gpu.add_argument("--precision-profile", choices=("fp64", "tf32"), default="fp64")
     gpu.add_argument("--reserved-node", action="append", default=[])
+    gpu.add_argument("--exclusive-when-full-node", action="store_true")
 
     fixtures = parser.add_argument_group("fixtures")
     fixtures.add_argument("--scontrol-output", default="")
@@ -133,6 +134,7 @@ def _build_plan(args: argparse.Namespace) -> dict[str, Any]:
         queue_mode=args.gpu_queue_mode,
         precision_profile=args.precision_profile,
         reserved_nodes=normalize_partitions(args.reserved_node),
+        exclusive_when_full_node=args.exclusive_when_full_node,
     )
     return plan_slurm_job(
         kind="gpu",

@@ -1,6 +1,6 @@
 # SolidNES Active Task
 
-Last updated: 2026-05-24, Asia/Shanghai
+Last updated: 2026-05-26, Asia/Shanghai
 
 ## Purpose
 
@@ -22,8 +22,10 @@ work belongs in `records/progress/`.
 ## Current Small Step
 
 ```text
-Step name: Excited-state penalty-VMC method reproduction
-State: configuring
+Step name: Fixed-ground excited-state penalty-VMC follow-up
+State: submitted/queued
+Current action: task 0089 was modified from the `intelgpu80g`-only submission to an automatic GPU queue. Old pending job `129584` was cancelled; replacement Slurm job `129670` is pending across `h200,amdgpu80g,amdgpu40g,h20` with reason `(Resources)`.
+Current blocker: waiting for any eligible 2-GPU allocation in the automatic GPU queue to start and complete.
 Backend: FermiNet
 System: carbon diamond primitive cell first, then selected material tests
 Goal: reproduce the Szabo and Noe JCTC 2024 penalty-based excited-state VMC
@@ -35,7 +37,23 @@ Goal: reproduce the Szabo and Noe JCTC 2024 penalty-based excited-state VMC
 
 ```text
 Benchmark reproduction is complete for both DeepSolid and FermiNet.
-No Slurm jobs are currently active.
+Task 0086 completed the 12 beta values
+`0.000,0.001,0.002,0.005,0.008,0.010,0.012,0.015,0.018,0.020,0.025,0.030`
+as full-node `amdgpu80g` jobs, batch4096, 2000 iterations. Jobs 129314 and
+129327--129337 all completed with exit code `0:0` on `gpu002`.
+No tested low beta is production-ready at the current KFAC settings. `beta=0.008`
+is the least bad continuation candidate, while `beta=0.002` and `beta=0.018`
+are the most useful low/high controls; `beta=0.012` and `beta=0.030` had
+transient non-finite `S^2`/bare-energy diagnostic frames.
+Task 0087 completed the deliberately large `spin_penalty=10.0` 2000-step
+pressure test as Slurm job `129431` on `amdgpu80g/gpu002` with exit `0:0` in
+`00:07:46`. It wrote all 2000 rows and no non-finite arrays, but exposed a
+physical bare-gap instability: final bare gap 8.458 eV, final training gap
+2.793 eV, tail200 bare-gap median 4.520 eV, and tail200 mean/std
+-119.552 +/- 1368.586 eV because step 1946 produced a -18445.091 eV bare-gap
+spike. Final `S^2` diagonal [0.0109, -0.0099] shows the large spin penalty
+suppresses the final spin diagnostic, but not enough to stabilize the physical
+excitation gap.
 FermiNet PBC-HF pretraining is implemented, GPU-tested, and validated for the
 current carbon-diamond Gamma cc-pVDZ workflow.
 JAX PBC GTO target evaluation is validated for the current diamond Gamma
@@ -44,11 +62,53 @@ Fixed-iteration 1000-step comparisons favor pretraining, but matched
 short-wall-clock comparisons are mixed.
 Global agent instructions live in AGENTS.md and must be read at the start of
 every new answer or work session.
-Numbered task bundles through 0063 are recorded in the run index. The next
-available run number is 0064.
-The next development target is to implement the paper-style penalty-based
-excited-state VMC objective in code and run the first controlled periodic
-excited-state/NES-VMC probes.
+Numbered task bundle 0082 contains the earlier 1000-step spin beta sweep
+variants under `runs/<variant>/`. Labels 0083--0085 were consumed as Slurm job
+names before the consolidation and should not be reused. Numbered task bundle
+0086 contains the completed 2000-step, 12-point beta sweep. 0087 contains the
+completed beta=10 pressure test. 0088 contains the completed and analyzed
+beta=0 100000-step baseline; the next available run number is 0089.
+Native FermiNet spin penalty is now wired through SolidNES configs:
+`spin_penalty` maps to `cfg.optim.spin_energy`, `observables_s2` writes
+`s2_matrix.npy`, and spin-penalized runs write `bare_energy_matrix.npy` for
+paper-style physical energy-gap reporting.
+The first 1000-step spin beta sweep found no production-ready value at the
+current learning-rate/KFAC settings: `beta=0.02` was finite but noisy with an
+unstable final gap sign, `beta=0.05` produced NaNs after about step 846, and
+`beta=0.10/0.20` produced finite but much too large bare gaps.
+The 2000-step follow-up sweep and the beta=10 pressure test found no
+production-ready spin-penalty setting at the current optimizer settings.
+Task 0088 is the requested long beta=0 baseline: 100000 native FermiNet PBC
+excited-state `vmc_overlap` iterations, batch4096, KFAC, overlap alpha 4.0,
+`max_gap_std` scaling, `spin_penalty=0.0`, and `S^2` diagnostics enabled.
+Slurm job `129450` completed on `amdgpu80g/gpu002` with exit `0:0` in
+`03:46:24`. It wrote all 100000 rows. Final state energies are
+`[-75.096855, -74.919098] Ha`, final gap is `4.837 eV`, and tail200 gap
+median is `9.205 eV`. The spin diagnostic is not controlled: final `S^2`
+diagonal/trace is `[1.4585, 81.4612] / 82.9197`, full-run `S^2` diagnostics
+contain 35 non-finite frames, and the last 10000 finite frames include
+139 frames with `|S^2 trace| > 10`. Analysis and plots are under
+`tasks/excited_state_nesvmc/0088_ferminet_native_vmc_overlap_kfac_paper_aligned_spin_beta0000_iter100000/results/validation/`.
+Task 0089 is allocated for the fixed-ground follow-up requested after the 0088
+ground-state comparison: instead of co-optimizing a ground and excited state,
+it trains one FermiNet state with `objective=fixed_ground_overlap`, computes
+the overlap penalty against the fixed 0044 ground-state checkpoint
+`qmcjax_ckpt_018349.npz`, disables spin terms (`spin_penalty=0.0`,
+`observables_s2=false`), and writes both scalar objective energy and
+`physical_energy` to `train_stats.csv`.
+Local checks passed before submission: Python compile, adapter build-only,
+fixed-ground checkpoint shape compatibility, fixed-ground custom-JVP
+forward/backward smoke, and `git diff --check`. The dry-run plan is
+`tasks/excited_state_nesvmc/0089_ferminet_fixed_ground_overlap_beta0_iter20000/outputs/slurm_plans/plan.json`
+and requests `intelgpu80g`, `gpu:2`, 96 CPU cores, `--exclusive`, and
+06:00:00 walltime.
+Per user request, the `intelgpu80g`-only pending job `129584` was cancelled
+and replaced by automatic GPU submission job `129670`. The replacement plan is
+`tasks/excited_state_nesvmc/0089_ferminet_fixed_ground_overlap_beta0_iter20000/outputs/slurm_plans/plan_auto_gpu_requeue.json`
+and queues on `h200,amdgpu80g,amdgpu40g,h20` with `gpu:2`, 32 CPU cores,
+`--exclusive`, and 12:00:00 walltime. Initial queue state is `PD (Resources)`.
+The direct real-local-energy `value_and_grad` SGD path has been replaced with a
+paper-tangent penalty-VMC update path for the fixed-sample helper.
 DeepQMC was cloned for source inspection under ignored `external/deepqmc/`.
 The reference-source audit is recorded in
 `docs/05_reference_projects/deepqmc_penalty_excited_states.md`.
@@ -111,23 +171,146 @@ state-parameter SGD updates, returns per-step penalty/energy/overlap/collapse
 diagnostics, and is verified through
 `scripts/validation/check_ferminet_pbc_penalty_opt_smoke.py` with a cheap
 local-energy stand-in.
+After run 0064 failed, the training path was updated with ordered lower-state
+stop-gradient overlap behavior, psi-ratio clipping, local-energy clipping,
+automatic overlap-gradient scaling from gap/std diagnostics, optional global
+gradient clipping, finite-gradient/update guards, and candidate-term finite
+checks before parameter commits. The no-compute scaffold check, FermiNet/JAX
+adapter build check, penalty terms check, gradient-step check, and multi-step
+cheap-local-energy optimization smoke all pass after this source change. The
+source-update record is
+`records/progress/2026-05-24_ferminet_pbc_paper_tangent_guards.md`.
+Run 0064 was allocated for the first scheduled real-local-energy multi-step
+training-loop smoke:
+`tasks/excited_state_nesvmc/0064_ferminet_pbc_real_local_energy_training_smoke/`.
+The run used
+`scripts/validation/check_ferminet_pbc_real_local_energy_training_smoke.py`
+with two external state parameter trees, one walker per state, and two SGD
+steps through the real PBC local-energy/Laplacian path.
+The dry-run plan passed. Because `intelgpu80g/gpu001` was busy, the planner
+generated a queued full-node plan on `intelgpu80g` with `gpu:2`, 96 CPU cores,
+exclusive allocation, and a 30-minute walltime.
+Run 0064 was submitted as Slurm job `128523`. It started on
+`intelgpu80g/gpu001`, ran for `00:04:57`, and failed with exit code `1:0`.
+JAX saw both A100 80GB GPUs, but final validation raised
+`ValueError: final_local_energy contains non-finite values: [[nan] [nan]]`.
+The failure summary is recorded in
+`tasks/excited_state_nesvmc/0064_ferminet_pbc_real_local_energy_training_smoke/results/validation/real_local_energy_training_smoke_failure.md`.
+Run 0065 was submitted as Slurm job `128674`. It started on
+`intelgpu80g/gpu001`, ran for `00:06:15`, and failed with exit code `1:0`.
+JAX saw both A100 80GB GPUs, but validation raised
+`ValueError: penalty_objective_step_0 is not finite: nan`. The failure summary
+is recorded in
+`tasks/excited_state_nesvmc/0065_ferminet_pbc_paper_tangent_training_smoke/results/validation/real_local_energy_training_smoke_failure.md`.
+After the 0065 failure, the paper-tangent path was updated so the gradient
+objective reuses precomputed true penalty terms outside `value_and_grad`, avoids
+calling the real local-energy/Laplacian under the parameter-gradient transform,
+records the true pre-update penalty objective separately from the gradient
+objective, and uses a forward-safe zero-primal surrogate correction. Local
+checks pass, including a regression that confirms no extra local-energy calls
+inside `value_and_grad`.
+Run 0066 has been allocated for the fixed scheduled real-local-energy
+multi-step smoke:
+`tasks/excited_state_nesvmc/0066_ferminet_pbc_paper_tangent_training_smoke_fix/`.
+The approved FermiNet GPU submitter dry-run passed and selected
+`intelgpu80g/gpu001`, `gpu:2`, 96 CPU cores, an exclusive allocation, and a
+30-minute walltime. The job was submitted as Slurm job `128675`.
+Run 0066 failed after `00:05:01` with
+`ValueError: grad_l2_norm_step_0 must be positive, got 0.0`. The 0065 NaN
+objective issue was fixed; local checks reproduced the zero-gradient condition
+with `seed=47, walkers=1` and passed with `walkers=2`.
+Run 0067 has been allocated for the same fixed real-local-energy multi-step
+smoke with two walkers per state:
+`tasks/excited_state_nesvmc/0067_ferminet_pbc_paper_tangent_training_smoke_walkers2/`.
+The approved FermiNet GPU submitter dry-run passed and selected
+`intelgpu80g/gpu001`, `gpu:2`, 96 CPU cores, an exclusive allocation, and a
+30-minute walltime. The job was submitted as Slurm job `128677`.
+Run 0067 completed successfully in `00:05:04` with exit code `0:0`. The
+validation summary recorded finite `[2, 2]` real local-energy matrices, finite
+state energies, finite overlap diagnostics, finite true and gradient
+objectives, finite nonzero gradient/update norms, and accepted guarded updates
+for both fixed-sample steps. The final penalty objective was
+`-11.967228889465332`, from initial `-11.952571868896484`.
+The sampler-integrated FermiNet PBC driver is implemented at
+`src/solidnes/excited_states/ferminet_pbc_driver.py`, with per-state Metropolis
+sampling, PBC position wrapping, paper-tangent guarded updates, diagnostics,
+and checkpoint save/load helpers. Run 0068 validated this path with real PBC
+local energy and two walkers per state; job `128751` completed in `00:05:44`
+with exit `0:0`. Run 0069 scaled the same path to four walkers per state; job
+`128752` completed in `00:04:31` with exit `0:0`.
+The production backend runner is implemented at
+`scripts/backends/run_ferminet_pbc_excited_driver.py`. It reads YAML driver
+settings, runs in checkpoint-sized segments, writes JSON/Markdown summaries,
+and resumes from saved driver checkpoints. Run 0070 used this runner for a
+12-iteration, four-walker real-local-energy trajectory. Job `128758` completed
+on `intelgpu80g/gpu001` in `00:14:28` with exit `0:0`, wrote checkpoints at
+iterations 4, 8, and 12, and accepted all guarded updates.
+The post-0070 source iteration added SGD/Adam/LAMB/direct-KFAC external-state
+optimizer support, EWMA overlap-gradient scaling, shared-parameter
+projection, optimizer-state/running-stat checkpointing, candidate-check
+cadence, update caps, and separated optimizer-update versus sharing-projection
+diagnostics. CPU cheap-local-energy smokes passed for Adam, LAMB, KFAC, the
+sampler-integrated KFAC driver checkpoint roundtrip, and KFAC runner resume.
+The source-update record is
+`records/progress/2026-05-25_ferminet_pbc_optimizer_sharing_numeric_driver_update.md`.
+Run 0071 validated the direct-KFAC path with the real PBC local-energy driver.
+Job `129088` completed on `amdgpu40g/gpu006` in `00:07:51` with exit `0:0`,
+using one A100 40GB GPU and 8 CPU cores. The runner completed 2/2 iterations,
+wrote checkpoints at iterations 1 and 2, accepted both KFAC updates, kept
+optimizer update norms near `1e-3`, and ended with objective `-7.182288`,
+final state energies `[-7.621417, -8.340336]`, and final off-diagonal overlap
+`-0.399647`.
+Run 0073 proved that the external wrapper can allocate and checkpoint a
+multi-device KFAC state, but sampled GPU utilization stayed near zero while
+the Python process was CPU-bound; it was cancelled after checkpoint 30.
+Run 0074 moved the method onto FermiNet's native excited-state `vmc_overlap`
+architecture. The first attempt exposed FermiNet's missing PBC excited-state
+Hamiltonian branch; SolidNES now supplies that branch in
+`src/solidnes/backends/ferminet_pbc_hamiltonian.py`. Retry job `129219`
+completed 20 native KFAC steps on four A100 40GB GPUs in `00:01:55`.
+Run 0075 repeated the native path with batch1024 to avoid drawing conclusions
+from too-small sample counts. Job `129240` completed on `amdgpu40g/gpu005` in
+`00:01:59`; native KFAC registered per-device loss shape `float32[256,2]`,
+and the final overlap matrix was recorded.
+Run 0076 completed the next step: native FermiNet excited-state
+`vmc_overlap` KFAC with batch4096 and 50 iterations. The build-only adapter
+check passed, and the Slurm dry-run selected `amdgpu40g/gpu005`, `gpu:4`,
+64 CPU cores, exclusive allocation, and a 45-minute walltime.
+Run 0076 was submitted as Slurm job `129249`.
+Job `129249` completed in `00:03:14` with exit `0:0`. It wrote 50 training
+rows, `energy_matrix.npy`, `overlap_matrix.npy`, native excited-state summary,
+and benchmark summary files. The backend window was 149 seconds, or 2.98
+seconds per short-run step including startup, burn-in, and compilation.
+Run 0077 completed the paper-aligned native FermiNet overlap-loss smoke:
+`alpha=4.0`, `scale_by=max_gap_std`, psi-ratio clipping, median local-energy
+clipping, energy-based lower-state ordering, native KFAC, batch4096, and 5
+iterations. Job `129257` completed on `amdgpu40g/gpu005` with four A100 40GB
+GPUs in `00:02:04` and exit `0:0`. It wrote 5 training rows plus
+`energy_matrix.npy`, `overlap_matrix.npy`, `overlap_gradient_scale.npy`, and
+`overlap_state_ordering.npy`.
+Run 0078 completed the longer 1000-step paper-aligned native FermiNet
+trajectory as job `129262` on `amdgpu40g/gpu005`.
+Run 0079 completed the 10000-step cleaned native method trajectory as job
+`129272` on `amdgpu40g/gpu005` after fixed-shape EWM overlap-scale arrays were
+added to keep KFAC traces equivalent across steps.
+The native overlap-scale EWM has since been changed from a simple recursive
+mean to the DeepQMC-style finite-buffer EWM. `overlap_penalty=4.0` remains a
+fixed scalar alpha; the automatic component is the overlap-gradient scale.
 ```
 
 ## Next Concrete Action
 
 ```text
-Decide the first real-local-energy multi-step training-loop smoke.
+Run `0079` completed as job `129272` on `amdgpu40g/gpu005`, with `gpu:4`, 64
+CPU cores, exclusive allocation, and exit `0:0`. It wrote 10000 training rows,
+all native excited-state diagnostics, and a native summary. Final energy was
+`-74.583840`; final state energies were `[-74.792580, -74.169594]`; final
+symmetric overlap matrix was `[[1.0, 0.0159107], [0.0159107, 1.0]]`; final
+overlap penalty matrix was `[[1.0, 0.000253152], [0.000253152, 1.0]]`.
 
-Suggested starting point:
-1. Keep `cfg.system.states == 0` and continue managing state trees outside
-   upstream FermiNet PBC.
-2. Reuse the real PBC local-energy entry point validated by run 0063.
-3. Use the new fixed-sample training-loop helper for a tiny real-local-energy
-   multi-step smoke.
-4. Allocate run 0064 only if that smoke is scheduled or produces durable
-   Slurm/log/result artifacts.
-5. If it passes, start adding sampler/checkpoint/output integration around the
-   training-loop helper.
+Next engineering step: do not launch a 10000-step spin run from the tested beta
+values. Run a smaller stability sweep around `beta <= 0.02`, likely paired with
+a reduced KFAC norm constraint or learning rate, then pick a production setting.
 ```
 
 ## Active Or Pending Jobs
@@ -171,13 +354,15 @@ This small step is complete when all of the following are true:
 3. The penalty-based excited-state VMC objective is implemented or scaffolded
    in reusable SolidNES/FermiNet code. Partial: backend-independent utilities
    and a minimal FermiNet PBC scaffold exist under
-   `src/solidnes/excited_states/`; reusable FermiNet/JAX PBC adapter wrappers
-   and a fixed-sample external-state training-loop helper exist, but sampler,
-   checkpoint, and production-driver integration are pending.
+   `src/solidnes/excited_states/`; reusable FermiNet/JAX PBC adapter wrappers,
+   a fixed-sample helper, a sampler-integrated driver, and a production runner
+   with checkpoint/resume support now exist.
 4. The code exposes state energies plus overlap/orthogonality diagnostics.
    Partial: scaffold-level and adapter-level state-energy/overlap/penalty
-   diagnostics exist; real local-energy evaluation passed in run 0063, but
-   reusable training integration is pending.
+   diagnostics exist; real local-energy evaluation passed in run 0063, the
+   fixed-sample training helper passed in run 0067, the sampler-integrated
+   driver passed in runs 0068 and 0069, and the production runner completed a
+   12-iteration trajectory in run 0070.
 5. A build-only or smoke-level check proves the new code path can be imported
    and configured. Done for build-only: synthetic utility/scaffold checks,
    the FermiNet/JAX adapter build check, and the cheap-local-energy
@@ -185,7 +370,13 @@ This small step is complete when all of the following are true:
    checks passed. Done for scheduled GPU smoke: run 0063 passed the real PBC
    local-energy/Laplacian check with two external state parameter trees.
    Done for source-level training integration: the cheap-local-energy
-   multi-step smoke now exercises the reusable training-loop helper.
+   multi-step smoke exercises the reusable training-loop helper. Done for
+   scheduled real-local-energy driver integration: runs 0068 and 0069 passed.
+   Done for production-runner integration: run 0070 passed. Done for native
+   FermiNet spin-penalty plumbing: run 0080 passed. Done for paper-style
+   spin bare-energy reporting: run 0081 passed. Done for first grouped spin
+   beta sweep: task 0082 completed, but none of the variants is
+   production-ready.
 6. A numbered task bundle is created only for the first build/smoke/run/analysis
    step that produces project artifacts.
 7. The next concrete material/probe run is defined with explicit completion

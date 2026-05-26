@@ -1,0 +1,41 @@
+{
+  "kind": "direct_sbatch",
+  "job_id": 130209,
+  "job_name": "0090_fixed_sym_4gpu40g_r2",
+  "status_after_submit": "RUNNING",
+  "requested_partition": "amdgpu40g",
+  "effective_partition": "amdgpu40g",
+  "account": "hmt03",
+  "nodes": 1,
+  "node_list": "gpu007",
+  "gres": "gpu:4",
+  "cpus_per_task": 64,
+  "exclusive": true,
+  "memory": "0",
+  "time_limit": "12:00:00",
+  "experiment": "configs/experiment/diamond_c_ferminet_pbc_gamma_fixed_ground_symmetric_overlap_beta0_iter20000.yaml",
+  "train_config": "configs/train/excited_state_ferminet_pbc_fixed_ground_symmetric_overlap_beta0_iter20000.yaml",
+  "stdout": "tasks/excited_state_nesvmc/0090_ferminet_fixed_ground_symmetric_overlap_beta0_iter20000/logs/slurm/0090_fixed_sym_4gpu40g_r2_130209.log",
+  "stderr": "tasks/excited_state_nesvmc/0090_ferminet_fixed_ground_symmetric_overlap_beta0_iter20000/logs/slurm/0090_fixed_sym_4gpu40g_r2_130209.err",
+  "script": "scripts/slurm/run_ferminet_gpu_smoke.slurm",
+  "supersedes_jobs": [
+    {
+      "job_id": 130202,
+      "partition": "gpu80gllm",
+      "final_status": "CANCELLED",
+      "reason": "PartitionConfig"
+    },
+    {
+      "job_id": 130203,
+      "partition": "amdgpu80g",
+      "final_status": "CANCELLED",
+      "reason": "user requested amdgpu40g"
+    },
+    {
+      "job_id": 130207,
+      "partition": "amdgpu40g",
+      "final_status": "FAILED",
+      "reason": "fixed-ground donated-buffer aliasing before code fix"
+    }
+  ]
+}

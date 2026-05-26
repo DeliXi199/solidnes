@@ -17,6 +17,10 @@ final_state_energy: [-74.7925796508789, -74.16959381103516]
 final_training_state_energy: [-74.7925796508789, -74.16959381103516]
 final_training_gap_hartree: 0.62298583984375
 final_training_gap_ev: 16.9523083137695
+bare_energy_matrix_frames: 0
+final_bare_state_energy: [-74.7925796508789, -74.16959381103516]
+final_bare_gap_hartree: 0.62298583984375
+final_bare_gap_ev: 16.9523083137695
 overlap_matrix_frames: 10000
 final_overlap_matrix: [[1.0, 4861089.0], [5.2077189782728794e-11, 1.0]]
 symmetric_overlap_matrix_frames: 10000
@@ -31,4 +35,8 @@ overlap_scale_energy_ewm_frames: 10000
 final_overlap_scale_energy_ewm: [-74.92725372314453, -74.2492904663086]
 overlap_scale_std_ewm_frames: 10000
 final_overlap_scale_std_ewm: [6.065402984619141, 7.452642440795898]
+s2_matrix_frames: 0
+final_s2_matrix: None
+final_s2_diagonal: None
+final_s2_trace: None
 ```

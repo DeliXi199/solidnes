@@ -1,13 +1,13 @@
 # SolidNES Run Index
 
-Last updated: 2026-05-25, Asia/Shanghai
+Last updated: 2026-05-26, Asia/Shanghai
 
 This file is the canonical ledger for numbered task bundles after the global artifact migration.
 
 ## Next Available Run Number
 
 ```text
-0080
+0091
 ```
 
 ## Numbered Runs
@@ -92,9 +92,25 @@ This file is the canonical ledger for numbered task bundles after the global art
 | 0077 | completed | 2026-05-25 15:19:49 | `solidnes/tasks/excited_state_nesvmc/0077_ferminet_native_vmc_overlap_kfac_paper_aligned_smoke/` | `tasks/excited_state_nesvmc/0077_ferminet_native_vmc_overlap_kfac_paper_aligned_smoke/results/` | 1 | 2 |
 | 0078 | completed | 2026-05-25 15:43:33 | `solidnes/tasks/excited_state_nesvmc/0078_ferminet_native_vmc_overlap_kfac_paper_aligned/` | `tasks/excited_state_nesvmc/0078_ferminet_native_vmc_overlap_kfac_paper_aligned/results/` | 1 | 2 |
 | 0079 | completed | 2026-05-25 16:52:04 | `solidnes/tasks/excited_state_nesvmc/0079_ferminet_native_vmc_overlap_kfac_paper_aligned_iter10000/` | `tasks/excited_state_nesvmc/0079_ferminet_native_vmc_overlap_kfac_paper_aligned_iter10000/results/` | 1 | 2 |
+| 0080 | completed | 2026-05-25 20:18:03 | `solidnes/tasks/excited_state_nesvmc/0080_ferminet_native_vmc_overlap_kfac_paper_aligned_spin_smoke/` | `tasks/excited_state_nesvmc/0080_ferminet_native_vmc_overlap_kfac_paper_aligned_spin_smoke/results/` | 1 | 4 |
+| 0081 | completed | 2026-05-25 20:33:30 | `solidnes/tasks/excited_state_nesvmc/0081_ferminet_native_vmc_overlap_kfac_paper_aligned_spin_bare_smoke/` | `tasks/excited_state_nesvmc/0081_ferminet_native_vmc_overlap_kfac_paper_aligned_spin_bare_smoke/results/` | 1 | 2 |
+| 0082 | completed | 2026-05-25 21:03:08 | `solidnes/tasks/excited_state_nesvmc/0082_ferminet_native_vmc_overlap_kfac_paper_aligned_spin_beta_sweep_iter1000/` | `tasks/excited_state_nesvmc/0082_ferminet_native_vmc_overlap_kfac_paper_aligned_spin_beta_sweep_iter1000/results/` | 4 | 8 |
+| 0086 | completed | 2026-05-25 22:05:43 | `solidnes/tasks/excited_state_nesvmc/0086_ferminet_native_vmc_overlap_kfac_paper_aligned_spin_beta_sweep_iter2000/` | `tasks/excited_state_nesvmc/0086_ferminet_native_vmc_overlap_kfac_paper_aligned_spin_beta_sweep_iter2000/results/` | 12 | 24 |
+| 0087 | completed | 2026-05-26 | `solidnes/tasks/excited_state_nesvmc/0087_ferminet_native_vmc_overlap_kfac_paper_aligned_spin_beta10_iter2000/` | `tasks/excited_state_nesvmc/0087_ferminet_native_vmc_overlap_kfac_paper_aligned_spin_beta10_iter2000/results/` | 1 | 2 |
+| 0088 | completed | 2026-05-26 | `solidnes/tasks/excited_state_nesvmc/0088_ferminet_native_vmc_overlap_kfac_paper_aligned_spin_beta0000_iter100000/` | `tasks/excited_state_nesvmc/0088_ferminet_native_vmc_overlap_kfac_paper_aligned_spin_beta0000_iter100000/results/` | 43 | 2 |
+| 0089 | completed_unphysical_gap | 2026-05-26 | `solidnes/tasks/excited_state_nesvmc/0089_ferminet_fixed_ground_overlap_beta0_iter20000/` | `tasks/excited_state_nesvmc/0089_ferminet_fixed_ground_overlap_beta0_iter20000/results/` | 2 | 0 |
+| 0090 | cancelled_method_issue | 2026-05-26 | `solidnes/tasks/excited_state_nesvmc/0090_ferminet_fixed_ground_symmetric_overlap_beta0_iter20000/` | `tasks/excited_state_nesvmc/0090_ferminet_fixed_ground_symmetric_overlap_beta0_iter20000/results/` | 4 | 4 |
+| 0091 | completed_nonfinite | 2026-05-26 | `solidnes/tasks/excited_state_nesvmc/0091_ferminet_native_vmc_overlap_kfac_paper_aligned_iter10000_route_check/` | `tasks/excited_state_nesvmc/0091_ferminet_native_vmc_overlap_kfac_paper_aligned_iter10000_route_check/results/` | 1 | 2 |
+| 0092 | cancelled_slow_debug | 2026-05-26 | `solidnes/tasks/excited_state_nesvmc/0092_ferminet_native_vmc_overlap_kfac_paper_aligned_iter10000_reset_route_check/` | `tasks/excited_state_nesvmc/0092_ferminet_native_vmc_overlap_kfac_paper_aligned_iter10000_reset_route_check/results/` | 1 | 2 |
+| 0093 | completed | 2026-05-26 | `solidnes/tasks/excited_state_nesvmc/0093_ferminet_native_vmc_overlap_kfac_paper_aligned_iter10000_fast_nan_guard/` | `tasks/excited_state_nesvmc/0093_ferminet_native_vmc_overlap_kfac_paper_aligned_iter10000_fast_nan_guard/results/` | 1 | 2 |
 
 ## Cleanup Notes
 
 The pre-existing partial task tree backup was verified, then removed on
 2026-05-23 after its useful task summaries were consolidated into
 `solidnes/tasks/TASK_LEDGER.md`.
+
+Comparative sweeps and ablations are recorded as one numbered task bundle with
+variant subruns under `runs/<variant>/`. Run labels `0083--0085` were consumed
+as Slurm job names before this convention was applied to the spin beta sweep;
+do not reuse those numbers.

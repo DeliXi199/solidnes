@@ -444,6 +444,7 @@ def plan_gpu_job(
     elif config.queue_mode in {"auto", "flexible"}:
         partition_arg = ",".join(_flexible_gpu_partitions(config))
         reason = "no_free_gpu_queue_flexible_partitions"
+        exclusive = config.exclusive_when_full_node
     if not partition_arg:
         return {"kind": "gpu", "ready": False, "reason": reason, "selection": {"candidates": [node.to_dict() for node in eligible]}, "sbatch": None}
 
@@ -487,6 +488,7 @@ def plan_gpu_job(
             "queue_min_cpus": config.queue_min_cpus,
             "queue_mode": config.queue_mode,
             "precision_profile": config.precision_profile,
+            "exclusive_when_full_node": config.exclusive_when_full_node,
         },
         "selection": {
             "selected_partition": partition_arg,
@@ -673,10 +675,15 @@ def _selected_gpu_partition(node: GpuNode, config: GpuSchedulingConfig) -> str:
 
 def _flexible_gpu_partitions(config: GpuSchedulingConfig) -> tuple[str, ...]:
     base = config.allowed_partitions or GPU_FLEXIBLE_QUEUE_PARTITIONS_DEFAULT
+    excluded = (
+        ()
+        if config.allowed_partitions
+        else GPU_FLEXIBLE_QUEUE_EXCLUDED_PARTITIONS_DEFAULT
+    )
     return tuple(
         partition
         for partition in base
-        if partition not in config.blocked_partitions and partition not in GPU_FLEXIBLE_QUEUE_EXCLUDED_PARTITIONS_DEFAULT
+        if partition not in config.blocked_partitions and partition not in excluded
     )
 
 

@@ -1,0 +1,172 @@
+{
+  "task": "0087",
+  "job_id": "129431",
+  "beta": 10.0,
+  "rows": 2000,
+  "first_step": 0,
+  "final_step": 1999,
+  "final_energy": -74.67413,
+  "final_ewmean": -74.72858,
+  "final_ewvar": 0.20385888,
+  "mean_pmove": 0.598226181565,
+  "pmove_tail200_mean": 0.53665998855,
+  "energy_range": [
+    -566.0704,
+    180.54684
+  ],
+  "energy_after300_range": [
+    -106.76103,
+    31.617668
+  ],
+  "final_bare_state_energy_ha": [
+    -74.8182601928711,
+    -74.5074234008789
+  ],
+  "final_training_state_energy_ha": [
+    -74.70938110351562,
+    -74.60674285888672
+  ],
+  "final_bare_gap_ev": 8.458300006363244,
+  "final_training_gap_ev": 2.7929289182073713,
+  "tail100_bare_gap_ev": {
+    "count": 100,
+    "finite_count": 100,
+    "nonfinite_count": 0,
+    "mean": -181.51141028622595,
+    "std": 1837.1303789138065,
+    "min": -18445.091347595884,
+    "max": 228.29458692006645,
+    "median": 6.2984668092644265
+  },
+  "tail200_bare_gap_ev": {
+    "count": 200,
+    "finite_count": 200,
+    "nonfinite_count": 0,
+    "mean": -119.55211384327191,
+    "std": 1368.5860020498928,
+    "min": -18445.091347595884,
+    "max": 474.14405973400324,
+    "median": 4.51990276836035,
+    "q05": -109.20792195761817,
+    "q95": 97.3757168990136,
+    "abs_gt_50_count": 46,
+    "abs_gt_100_count": 24,
+    "abs_gt_500_count": 2,
+    "abs_gt_1000_count": 2,
+    "worst_abs_step": 1946,
+    "worst_abs_gap_ev": -18445.091347595884,
+    "worst_abs_bare_state_energy_ha": [
+      221.62445068359372,
+      -456.22015380859375
+    ]
+  },
+  "tail1000_bare_gap_ev": {
+    "count": 1000,
+    "finite_count": 1000,
+    "nonfinite_count": 0,
+    "mean": -28.81959345644631,
+    "std": 708.124079042583,
+    "min": -18445.091347595884,
+    "max": 2744.1841807940373,
+    "median": 4.842211706553833
+  },
+  "tail100_training_gap_ev": {
+    "count": 100,
+    "finite_count": 100,
+    "nonfinite_count": 0,
+    "mean": 0.7689388177450386,
+    "std": 45.232527598646,
+    "min": -382.6061414198389,
+    "max": 85.98102157074672,
+    "median": 5.7866132265809895
+  },
+  "tail200_training_gap_ev": {
+    "count": 200,
+    "finite_count": 200,
+    "nonfinite_count": 0,
+    "mean": 5.923942266035588,
+    "std": 56.22514112216651,
+    "min": -382.6061414198389,
+    "max": 474.49304609477826,
+    "median": 6.821738744025572
+  },
+  "tail1000_training_gap_ev": {
+    "count": 1000,
+    "finite_count": 1000,
+    "nonfinite_count": 0,
+    "mean": -3.7399513133475653,
+    "std": 314.2029687761389,
+    "min": -9631.357348448924,
+    "max": 1052.9523677243026,
+    "median": 7.648012221648803
+  },
+  "tail200_negative_bare_gap_fraction": 0.4,
+  "tail1000_negative_bare_gap_fraction": 0.404,
+  "final_s2_diag": [
+    0.010887863114476204,
+    -0.009931838139891624
+  ],
+  "final_s2_trace": 0.000956025,
+  "tail100_s2_diag_mean": [
+    -0.2800398959580343,
+    0.3898280210676603
+  ],
+  "tail200_s2_diag_mean": [
+    -0.14631576337385924,
+    0.31480020175222306
+  ],
+  "tail1000_s2_diag_mean": [
+    -0.043363669850630684,
+    0.048802323174488266
+  ],
+  "tail200_s2_diag_std": [
+    2.0901150887312334,
+    3.098326503688292
+  ],
+  "tail200_abs_s2_diag_mean": [
+    0.1897288922930602,
+    0.3749053657776676
+  ],
+  "full_s2_trace": {
+    "count": 2000,
+    "finite_count": 2000,
+    "nonfinite_count": 0,
+    "mean": 0.17415320102627005,
+    "std": 6.285323961908164,
+    "min": -257.52826,
+    "max": 42.130165,
+    "median": 0.0294091295
+  },
+  "tail200_s2_trace": {
+    "count": 200,
+    "finite_count": 200,
+    "nonfinite_count": 0,
+    "mean": 0.16848444143360003,
+    "std": 1.6422348403599287,
+    "min": -0.87479556,
+    "max": 21.50732,
+    "median": 0.00224633115
+  },
+  "tail200_abs_sym_overlap01_mean": 0.004362092475639656,
+  "tail200_abs_sym_overlap01_std": 0.007271116846682797,
+  "final_sym_overlap01": -0.016244379803538322,
+  "final_overlap01": -0.003845532890409231,
+  "final_overlap10": -0.06861983984708786,
+  "final_overlap_penalty01": 0.0002638798614498228,
+  "final_overlap_scale01": 5.0,
+  "nonfinite_counts": {
+    "train_energy": 0,
+    "bare_energy_matrix": 0,
+    "training_energy_matrix": 0,
+    "s2_matrix": 0,
+    "sym_overlap_matrix": 0
+  },
+  "tail1000_state_energy_ha": {
+    "bare_state0_mean": -73.82217629623413,
+    "bare_state1_mean": -74.88127682113648,
+    "training_state0_mean": -74.25581295585633,
+    "training_state1_mean": -74.39325363159179,
+    "bare_state0_final": -74.8182601928711,
+    "bare_state1_final": -74.5074234008789
+  }
+}

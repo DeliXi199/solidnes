@@ -25,6 +25,7 @@ SOLIDNES_GPU_QUEUE_MIN_CPUS="${SOLIDNES_GPU_QUEUE_MIN_CPUS:-64}"
 SOLIDNES_GPU_QUEUE_MEMORY_MB="${SOLIDNES_GPU_QUEUE_MEMORY_MB:-64000}"
 SOLIDNES_GPU_QUEUE_MODE="${SOLIDNES_GPU_QUEUE_MODE:-auto}"
 SOLIDNES_GPU_PRECISION_PROFILE="${SOLIDNES_GPU_PRECISION_PROFILE:-tf32}"
+SOLIDNES_GPU_EXCLUSIVE_WHEN_FULL_NODE="${SOLIDNES_GPU_EXCLUSIVE_WHEN_FULL_NODE:-0}"
 SOLIDNES_TASK_ROOT="${SOLIDNES_TASK_ROOT:-}"
 if [ -n "$SOLIDNES_TASK_ROOT" ]; then
   SOLIDNES_SLURM_LOG_DIR="${SOLIDNES_SLURM_LOG_DIR:-$SOLIDNES_TASK_ROOT/logs/slurm}"
@@ -91,6 +92,10 @@ for partition in ${SOLIDNES_GPU_BLOCKED_PARTITIONS//,/ }; do
   fi
 done
 
+if [ "$SOLIDNES_GPU_EXCLUSIVE_WHEN_FULL_NODE" = "1" ] || [ "$SOLIDNES_GPU_EXCLUSIVE_WHEN_FULL_NODE" = "true" ]; then
+  planner_args+=("--exclusive-when-full-node")
+fi
+
 if [ "$SOLIDNES_DRY_RUN" != "1" ] && [ "$SOLIDNES_DRY_RUN" != "true" ]; then
   planner_args+=("--run-sbatch")
 fi
@@ -107,6 +112,7 @@ echo "  queue_min_cpus=${SOLIDNES_GPU_QUEUE_MIN_CPUS}"
 echo "  allow_test=${SOLIDNES_GPU_ALLOW_TEST}"
 echo "  queue_mode=${SOLIDNES_GPU_QUEUE_MODE}"
 echo "  precision_profile=${SOLIDNES_GPU_PRECISION_PROFILE}"
+echo "  exclusive_when_full_node=${SOLIDNES_GPU_EXCLUSIVE_WHEN_FULL_NODE}"
 echo "  venv_dir=${SOLIDNES_VENV_DIR:-none}"
 echo "  conda_env=${SOLIDNES_CONDA_ENV:-none}"
 echo "  submit_script=${SOLIDNES_SUBMIT_SCRIPT}"

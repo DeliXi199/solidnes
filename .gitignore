@@ -32,6 +32,13 @@ tasks/**/logs/
 *.npz
 *.npy
 
+# Large/generated validation artifacts; keep summaries and selected PNGs instead.
+tasks/**/results/validation/*.svg
+tasks/**/results/validation/**/*.svg
+tasks/**/results/validation/*timeseries.csv
+tasks/**/results/validation/*series.csv
+tasks/**/results/validation/*gap_trend.csv
+
 # Logs
 *.log
 slurm-*.out

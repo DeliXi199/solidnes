@@ -1,0 +1,50 @@
+training:
+  target: excited_state
+  deterministic: true
+  batch_size: 4096
+  iterations: 20000
+  optimizer: kfac
+  objective: fixed_ground_overlap
+  states: 0
+  fixed_ground:
+    checkpoint: tasks/phase1_diamond_c/pbc_gamma/training/0044_ferminet_kfac_folx_batch4096_x64_burnin1000_iter20000_paper_pilot/results/checkpoints/qmcjax_ckpt_018349.npz
+    init_trainable_from_checkpoint: true
+    init_trainable_noise_scale: 1.0e-5
+    overlap_penalty: 4.0
+    clip_width: 10.0
+    clip_exclude_width: .inf
+    gradient_scale: 1.0
+    energy_reference: -75.4118625314
+  spin_penalty: 0.0
+  observables_s2: false
+  learning_rate: 0.03
+  learning_rate_decay: 1.0
+  learning_rate_delay: 10000.0
+  laplacian: folx
+  max_vmap_batch_size: 0
+  clip_local_energy: 5.0
+  clip_median: true
+  center_at_clip: true
+  pretrain_method: null
+  pretrain_iterations: 0
+  checkpoint_every_minutes: 10
+  log_every: 1
+  kfac:
+    invert_every: 1
+    cov_update_every: 1
+    damping: 0.001
+    cov_ema_decay: 0.95
+    norm_constraint: 0.001
+
+stability_checks:
+  finite_energy: true
+  finite_variance: true
+  acceptance_range: [0.05, 0.95]
+  finite_fixed_ground_overlap: true
+
+notes:
+  status: ready_for_build_check
+  purpose: >-
+    Train a single excited-state FermiNet with beta=0/no spin terms while the
+    overlap penalty is computed against the fixed final ground-state checkpoint
+    from task 0044.

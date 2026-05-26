@@ -1,0 +1,8 @@
+fixed_ground_loss_jvp_check: PASS
+init_trainable_noise_scale: 1e-05
+forward_loss: -70.684700012207
+grad_loss: -70.684700012207
+physical_energy: -75.000000000000
+fixed_ground_overlap: 1.038664817810
+fixed_ground_overlap_penalty: 4.315298557281
+grad_norm: 226.248992919922

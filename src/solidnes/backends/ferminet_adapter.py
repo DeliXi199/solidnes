@@ -8,6 +8,7 @@ from pathlib import Path
 import sys
 from typing import Any
 
+import ml_collections
 
 from solidnes.backends.deepsolid_adapter import load_yaml
 from solidnes.backends.deepsolid_adapter import resolve_config_path
@@ -56,6 +57,19 @@ class FermiNetAdapterSummary:
     overlap_use_ewm_scale: bool
     overlap_ewm_max_alpha: float
     overlap_ewm_decay_alpha: float
+    fixed_ground_checkpoint: str | None
+    fixed_ground_init_trainable_from_checkpoint: bool
+    fixed_ground_init_trainable_noise_scale: float | None
+    fixed_ground_overlap_penalty: float | None
+    fixed_ground_overlap_clip_width: float | None
+    fixed_ground_overlap_clip_exclude_width: float | None
+    fixed_ground_overlap_gradient_scale: float | None
+    fixed_ground_symmetric_sampling: bool
+    fixed_ground_energy_reference: float | None
+    spin_penalty: float
+    s2_observable: bool
+    check_nan: bool
+    reset_if_nan: bool
     kfac_norm_constraint: float | None
     kfac_norm_constraint_scale_by_states: bool
     iterations: int
@@ -107,6 +121,27 @@ class FermiNetAdapterSummary:
             "overlap_use_ewm_scale": self.overlap_use_ewm_scale,
             "overlap_ewm_max_alpha": self.overlap_ewm_max_alpha,
             "overlap_ewm_decay_alpha": self.overlap_ewm_decay_alpha,
+            "fixed_ground_checkpoint": self.fixed_ground_checkpoint,
+            "fixed_ground_init_trainable_from_checkpoint": (
+                self.fixed_ground_init_trainable_from_checkpoint
+            ),
+            "fixed_ground_init_trainable_noise_scale": (
+                self.fixed_ground_init_trainable_noise_scale
+            ),
+            "fixed_ground_overlap_penalty": self.fixed_ground_overlap_penalty,
+            "fixed_ground_overlap_clip_width": self.fixed_ground_overlap_clip_width,
+            "fixed_ground_overlap_clip_exclude_width": (
+                self.fixed_ground_overlap_clip_exclude_width
+            ),
+            "fixed_ground_overlap_gradient_scale": (
+                self.fixed_ground_overlap_gradient_scale
+            ),
+            "fixed_ground_symmetric_sampling": self.fixed_ground_symmetric_sampling,
+            "fixed_ground_energy_reference": self.fixed_ground_energy_reference,
+            "spin_penalty": self.spin_penalty,
+            "s2_observable": self.s2_observable,
+            "check_nan": self.check_nan,
+            "reset_if_nan": self.reset_if_nan,
             "kfac_norm_constraint": self.kfac_norm_constraint,
             "kfac_norm_constraint_scale_by_states": self.kfac_norm_constraint_scale_by_states,
             "iterations": self.iterations,
@@ -162,6 +197,7 @@ class FermiNetAdapterBundle:
             }
         )
         runtime = self.experiment.get("runtime", {})
+        fixed_ground = self.cfg.optim.get("fixed_ground", {})
         return FermiNetAdapterSummary(
             experiment_name=self.experiment["experiment_name"],
             backend=self.experiment["backend"]["name"],
@@ -197,6 +233,47 @@ class FermiNetAdapterBundle:
             overlap_ewm_decay_alpha=float(
                 self.cfg.optim.overlap.get("ewm_decay_alpha", 10.0)
             ),
+            fixed_ground_checkpoint=fixed_ground.get("checkpoint"),
+            fixed_ground_init_trainable_from_checkpoint=bool(
+                fixed_ground.get("init_trainable_from_checkpoint", False)
+            ),
+            fixed_ground_init_trainable_noise_scale=(
+                float(fixed_ground.get("init_trainable_noise_scale"))
+                if fixed_ground.get("init_trainable_noise_scale") is not None
+                else None
+            ),
+            fixed_ground_overlap_penalty=(
+                float(fixed_ground.get("overlap_penalty"))
+                if fixed_ground.get("overlap_penalty") is not None
+                else None
+            ),
+            fixed_ground_overlap_clip_width=(
+                float(fixed_ground.get("clip_width"))
+                if fixed_ground.get("clip_width") is not None
+                else None
+            ),
+            fixed_ground_overlap_clip_exclude_width=(
+                float(fixed_ground.get("clip_exclude_width"))
+                if fixed_ground.get("clip_exclude_width") is not None
+                else None
+            ),
+            fixed_ground_overlap_gradient_scale=(
+                float(fixed_ground.get("gradient_scale"))
+                if fixed_ground.get("gradient_scale") is not None
+                else None
+            ),
+            fixed_ground_symmetric_sampling=bool(
+                fixed_ground.get("symmetric_sampling", False)
+            ),
+            fixed_ground_energy_reference=(
+                float(fixed_ground.get("energy_reference"))
+                if fixed_ground.get("energy_reference") is not None
+                else None
+            ),
+            spin_penalty=float(self.cfg.optim.get("spin_energy", 0.0)),
+            s2_observable=bool(self.cfg.observables.get("s2", False)),
+            check_nan=bool(self.cfg.debug.get("check_nan", False)),
+            reset_if_nan=bool(self.cfg.optim.get("reset_if_nan", False)),
             kfac_norm_constraint=(
                 float(self.cfg.optim.kfac.norm_constraint)
                 if self.cfg.optim.optimizer == "kfac"
@@ -324,6 +401,37 @@ def format_summary(summary: FermiNetAdapterSummary) -> str:
         f"overlap_use_ewm_scale: {summary.overlap_use_ewm_scale}",
         f"overlap_ewm_max_alpha: {summary.overlap_ewm_max_alpha}",
         f"overlap_ewm_decay_alpha: {summary.overlap_ewm_decay_alpha}",
+        f"fixed_ground_checkpoint: {summary.fixed_ground_checkpoint}",
+        (
+            "fixed_ground_init_trainable_from_checkpoint: "
+            f"{summary.fixed_ground_init_trainable_from_checkpoint}"
+        ),
+        (
+            "fixed_ground_init_trainable_noise_scale: "
+            f"{summary.fixed_ground_init_trainable_noise_scale}"
+        ),
+        f"fixed_ground_overlap_penalty: {summary.fixed_ground_overlap_penalty}",
+        (
+            "fixed_ground_overlap_clip_width: "
+            f"{summary.fixed_ground_overlap_clip_width}"
+        ),
+        (
+            "fixed_ground_overlap_clip_exclude_width: "
+            f"{summary.fixed_ground_overlap_clip_exclude_width}"
+        ),
+        (
+            "fixed_ground_overlap_gradient_scale: "
+            f"{summary.fixed_ground_overlap_gradient_scale}"
+        ),
+        (
+            "fixed_ground_symmetric_sampling: "
+            f"{summary.fixed_ground_symmetric_sampling}"
+        ),
+        f"fixed_ground_energy_reference: {summary.fixed_ground_energy_reference}",
+        f"spin_penalty: {summary.spin_penalty}",
+        f"s2_observable: {summary.s2_observable}",
+        f"check_nan: {summary.check_nan}",
+        f"reset_if_nan: {summary.reset_if_nan}",
         f"kfac_norm_constraint: {summary.kfac_norm_constraint}",
         f"kfac_norm_constraint_scale_by_states: {summary.kfac_norm_constraint_scale_by_states}",
         f"iterations: {summary.iterations}",
@@ -417,6 +525,9 @@ def _build_ferminet_config(
     cfg.debug.check_nan = bool(train_cfg.get("check_nan", False))
     cfg.optim.iterations = int(train_cfg["iterations"])
     cfg.optim.optimizer = str(train_cfg["optimizer"])
+    cfg.optim.reset_if_nan = bool(
+        train_cfg.get("reset_if_nan", cfg.optim.get("reset_if_nan", False))
+    )
     cfg.optim.objective = str(train_cfg.get("objective", cfg.optim.objective))
     cfg.optim.method_profile = method_profile
     cfg.system.states = int(
@@ -498,11 +609,95 @@ def _build_ferminet_config(
             profile_defaults.get("overlap_ewm_decay_alpha", 10.0),
         )
     )
+    fixed_ground_cfg = dict(train_cfg.get("fixed_ground", {}))
+    if cfg.optim.objective == "fixed_ground_overlap":
+        if cfg.system.states:
+            raise ValueError(
+                "FermiNet fixed_ground_overlap trains one excited state at a time; "
+                "set training.states to 0."
+            )
+        checkpoint_value = fixed_ground_cfg.get(
+            "checkpoint", train_cfg.get("fixed_ground_checkpoint")
+        )
+        if checkpoint_value is None:
+            raise ValueError(
+                "FermiNet fixed_ground_overlap requires fixed_ground.checkpoint"
+            )
+        checkpoint_path = Path(checkpoint_value)
+        if not checkpoint_path.is_absolute():
+            checkpoint_path = project_root / checkpoint_path
+        checkpoint_path = checkpoint_path.resolve()
+        if not checkpoint_path.exists():
+            raise FileNotFoundError(checkpoint_path)
+        fixed_ground = ml_collections.ConfigDict()
+        fixed_ground.checkpoint = str(checkpoint_path)
+        fixed_ground.init_trainable_from_checkpoint = bool(
+            fixed_ground_cfg.get(
+                "init_trainable_from_checkpoint",
+                train_cfg.get("fixed_ground_init_trainable_from_checkpoint", True),
+            )
+        )
+        fixed_ground.init_trainable_noise_scale = float(
+            fixed_ground_cfg.get(
+                "init_trainable_noise_scale",
+                train_cfg.get("fixed_ground_init_trainable_noise_scale", 0.0),
+            )
+        )
+        fixed_ground.overlap_penalty = float(
+            fixed_ground_cfg.get(
+                "overlap_penalty",
+                train_cfg.get("overlap_penalty", cfg.optim.overlap.penalty),
+            )
+        )
+        fixed_ground.clip_width = float(
+            fixed_ground_cfg.get(
+                "clip_width",
+                train_cfg.get("overlap_clip_width", cfg.optim.overlap.clip_width),
+            )
+        )
+        fixed_ground.clip_exclude_width = float(
+            fixed_ground_cfg.get(
+                "clip_exclude_width",
+                train_cfg.get(
+                    "overlap_clip_exclude_width",
+                    cfg.optim.overlap.clip_exclude_width,
+                ),
+            )
+        )
+        fixed_ground.gradient_scale = float(
+            fixed_ground_cfg.get(
+                "gradient_scale",
+                train_cfg.get("fixed_ground_overlap_gradient_scale", 1.0),
+            )
+        )
+        fixed_ground.symmetric_sampling = bool(
+            fixed_ground_cfg.get(
+                "symmetric_sampling",
+                train_cfg.get("fixed_ground_symmetric_sampling", False),
+            )
+        )
+        energy_reference = fixed_ground_cfg.get(
+            "energy_reference", train_cfg.get("fixed_ground_energy_reference")
+        )
+        fixed_ground.energy_reference = (
+            None if energy_reference is None else float(energy_reference)
+        )
+        cfg.optim.fixed_ground = fixed_ground
+    else:
+        cfg.optim.fixed_ground = ml_collections.ConfigDict()
     cfg.optim.laplacian = str(train_cfg.get("laplacian", "folx"))
     cfg.optim.max_vmap_batch_size = int(train_cfg.get("max_vmap_batch_size", 0))
     cfg.optim.clip_local_energy = float(train_cfg.get("clip_local_energy", 5.0))
     cfg.optim.clip_median = bool(train_cfg.get("clip_median", False))
     cfg.optim.center_at_clip = bool(train_cfg.get("center_at_clip", True))
+    spin_penalty = train_cfg.get("spin_penalty", train_cfg.get("spin_energy", 0.0))
+    cfg.optim.spin_energy = float(spin_penalty)
+    cfg.observables.s2 = bool(
+        train_cfg.get(
+            "observables_s2",
+            train_cfg.get("s2_observable", cfg.optim.spin_energy > 0.0),
+        )
+    )
     cfg.optim.lr.rate = float(train_cfg.get("learning_rate", cfg.optim.lr.rate))
     cfg.optim.lr.decay = float(train_cfg.get("learning_rate_decay", cfg.optim.lr.decay))
     cfg.optim.lr.delay = float(train_cfg.get("learning_rate_delay", cfg.optim.lr.delay))

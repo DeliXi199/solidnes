@@ -52,9 +52,10 @@ DeepSolid/FermiNet carbon-diamond reproduction -> PBC-HF pretraining -> penalty-
 
 The DeepSolid and FermiNet carbon-diamond reproductions have passed. The
 FermiNet PBC-HF pretraining milestone has also passed for diamond Gamma
-cc-pVDZ, with mixed short-wall-clock conclusions. The next engineering step is
-to implement the paper-style excited-state penalty objective and run controlled
-two-state periodic NES-VMC probes before broader material tests.
+cc-pVDZ, with mixed short-wall-clock conclusions. The paper-style
+excited-state penalty objective is implemented in the native FermiNet path; the
+current engineering step is controlled beta-sweep validation before any broader
+material tests.
 
 ## Non-Goals For The First Version
 
@@ -98,6 +99,13 @@ design notes do not require a numbered task bundle and must not consume a run
 number. Record them in `docs/` or `records/progress/` unless they produce
 build, smoke, experiment, evaluation, analysis, SLURM, log, result, or
 validation artifacts.
+
+Comparative sweeps, ablations, and matched controls belong in one numbered task
+bundle when the variants answer one shared question. Use `runs/<variant>/` for
+variant-specific logs, outputs, and checkpoints, and keep shared comparison
+tables and plots in the parent task's `results/validation/`. Do not allocate a
+new top-level run number for each variant unless the variants are independent
+scientific tasks.
 
 ## Decision Rule
 

@@ -1,0 +1,28 @@
+{
+  "kind": "direct_sbatch",
+  "job_id": 130203,
+  "job_name": "0090_fixed_sym_4gpu80g_20k",
+  "status_after_submit": "PENDING",
+  "pending_reason_after_submit": "Resources",
+  "requested_partition": "gpu80gllm",
+  "requested_partition_result": {
+    "job_id": 130202,
+    "status": "CANCELLED",
+    "reason": "PartitionConfig",
+    "note": "gpu80gllm AllowAccounts excludes the current hmt03/yihaoxu accounts."
+  },
+  "effective_partition": "amdgpu80g",
+  "account": "hmt03",
+  "nodes": 1,
+  "node_list": "gpu[002-003]",
+  "gres": "gpu:4",
+  "cpus_per_task": 64,
+  "exclusive": true,
+  "memory": "0",
+  "time_limit": "12:00:00",
+  "experiment": "configs/experiment/diamond_c_ferminet_pbc_gamma_fixed_ground_symmetric_overlap_beta0_iter20000.yaml",
+  "train_config": "configs/train/excited_state_ferminet_pbc_fixed_ground_symmetric_overlap_beta0_iter20000.yaml",
+  "stdout": "tasks/excited_state_nesvmc/0090_ferminet_fixed_ground_symmetric_overlap_beta0_iter20000/logs/slurm/0090_fixed_sym_4gpu80g_20k_130203.log",
+  "stderr": "tasks/excited_state_nesvmc/0090_ferminet_fixed_ground_symmetric_overlap_beta0_iter20000/logs/slurm/0090_fixed_sym_4gpu80g_20k_130203.err",
+  "script": "scripts/slurm/run_ferminet_gpu_smoke.slurm"
+}

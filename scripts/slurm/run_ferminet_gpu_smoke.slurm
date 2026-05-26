@@ -66,6 +66,7 @@ echo "Working directory: $(pwd)"
 
 SOLIDNES_PYTHON="${SOLIDNES_PYTHON:-python}"
 SOLIDNES_BACKEND_SCRIPT="${SOLIDNES_BACKEND_SCRIPT:-scripts/backends/run_ferminet_train.py}"
+SOLIDNES_BACKEND_ARGS="${SOLIDNES_BACKEND_ARGS:-}"
 SOLIDNES_EXPERIMENT="${SOLIDNES_EXPERIMENT:-configs/experiment/diamond_c_ferminet_pbc_gamma_smoke.yaml}"
 SOLIDNES_FERMINET_ROOT="${SOLIDNES_FERMINET_ROOT:-external/ferminet}"
 SOLIDNES_REQUIRE_JAX_GPU="${SOLIDNES_REQUIRE_JAX_GPU:-1}"
@@ -87,11 +88,25 @@ fi
 
 echo "SOLIDNES_EXPERIMENT=${SOLIDNES_EXPERIMENT}"
 echo "SOLIDNES_BACKEND_SCRIPT=${SOLIDNES_BACKEND_SCRIPT}"
+echo "SOLIDNES_BACKEND_ARGS=${SOLIDNES_BACKEND_ARGS:-none}"
 echo "SOLIDNES_FERMINET_ROOT=${SOLIDNES_FERMINET_ROOT}"
 echo "SOLIDNES_VENV_DIR=${SOLIDNES_VENV_DIR:-none}"
 echo "SOLIDNES_CONDA_ENV=${SOLIDNES_CONDA_ENV:-none}"
 echo "FermiNet GPU smoke starts at $(date)"
 
-"${SOLIDNES_PYTHON}" "${SOLIDNES_BACKEND_SCRIPT}" "${SOLIDNES_EXPERIMENT}"
+SOLIDNES_BACKEND_ARGV=()
+if [ -n "${SOLIDNES_BACKEND_ARGS}" ]; then
+  mapfile -t SOLIDNES_BACKEND_ARGV < <(
+    "${SOLIDNES_PYTHON}" - <<'PY'
+import os
+import shlex
+
+for item in shlex.split(os.environ.get("SOLIDNES_BACKEND_ARGS", "")):
+    print(item)
+PY
+  )
+fi
+
+"${SOLIDNES_PYTHON}" "${SOLIDNES_BACKEND_SCRIPT}" "${SOLIDNES_EXPERIMENT}" "${SOLIDNES_BACKEND_ARGV[@]}"
 
 echo "FermiNet GPU smoke ends at $(date)"

@@ -178,9 +178,11 @@ L += spin_penalty * <S^2>
 ```
 
 For SolidNES periodic diamond Gamma, the first controlled two-state probe
-should defer this. Spin targeting needs a periodic spin observable story and a
-clear target sector. The initial acceptance criterion should focus on finite
-state energies and non-collapsed overlap diagnostics.
+initially deferred this while the overlap method was being stabilized. The
+native FermiNet path now exposes this as `spin_penalty`, mapped to
+`cfg.optim.spin_energy`, with `observables_s2` writing `s2_matrix.npy`.
+Spin-targeted runs still need an explicit target sector and penalty strength in
+the experiment YAML.
 
 ## Current SolidNES/FermiNet Mapping
 

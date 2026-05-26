@@ -1,0 +1,70 @@
+project: solidnes
+experiment_name: diamond_c_ferminet_pbc_gamma_fixed_ground_symmetric_overlap_beta0_iter20000
+stage: excited_state_nesvmc
+phase: ferminet_fixed_ground_symmetric_overlap_beta0_iter20000
+
+backend:
+  name: ferminet
+  repository: https://github.com/google-deepmind/ferminet
+  inspected_commit: c4312c315dda1c5728994ba89629744f71c6eb66
+  mode: native_ferminet_fixed_ground_symmetric_overlap
+
+system_config: ../system/diamond_c_primitive_gamma_paper.yaml
+model_config: ../model/ferminet_pbc_paper.yaml
+sampler_config: ../sampler/metropolis_ferminet_pbc_mcmc20_burnin1000.yaml
+train_config: ../train/excited_state_ferminet_pbc_fixed_ground_symmetric_overlap_beta0_iter20000.yaml
+
+ferminet_config_template:
+  module: solidnes/backends/ferminet_configs/diamond_pbc_gamma_paper.py
+
+runtime:
+  target_jax_version: 0.10.1
+  cuda_extra: cuda12
+  precision_profile: fp64
+  x64_enabled: true
+  require_gpu: true
+  xla_python_client_preallocate: true
+  xla_python_client_mem_fraction: 0.90
+
+output:
+  log_dir: tasks/excited_state_nesvmc/0090_ferminet_fixed_ground_symmetric_overlap_beta0_iter20000/logs/backend
+  checkpoint_dir: tasks/excited_state_nesvmc/0090_ferminet_fixed_ground_symmetric_overlap_beta0_iter20000/results/checkpoints
+  validation_dir: tasks/excited_state_nesvmc/0090_ferminet_fixed_ground_symmetric_overlap_beta0_iter20000/results/validation
+
+diagnostics:
+  import_ferminet: true
+  build_pbc_config: true
+  fixed_ground_overlap_objective: true
+  fixed_ground_symmetric_sampling: true
+  expected_states: 0
+  objective: fixed_ground_overlap
+  optimizer: kfac
+  batch_size: 4096
+  iterations: 20000
+  spin_penalty: 0.0
+  observables_s2: false
+  fixed_ground_checkpoint: tasks/phase1_diamond_c/pbc_gamma/training/0044_ferminet_kfac_folx_batch4096_x64_burnin1000_iter20000_paper_pilot/results/checkpoints/qmcjax_ckpt_018349.npz
+  fixed_ground_energy_reference_hartree: -75.4118625314
+  fixed_ground_init_trainable_noise_scale: 1.0e-5
+  expected_outputs:
+    - train_stats.csv
+    - fixed_ground_overlap_on_excited column in train_stats.csv
+    - fixed_ground_overlap_on_ground column in train_stats.csv
+    - physical_energy column in train_stats.csv
+    - qmcjax checkpoints
+
+notes:
+  status: ready_for_gpu80gllm_submit
+  purpose: >-
+    User-requested retry of fixed-ground beta=0/no-spin excited-state training
+    after replacing the one-sided fixed-reference overlap with a symmetric
+    fixed-ground/excited walker estimator.
+  fixed_ground_source:
+    task: 0044
+    checkpoint: qmcjax_ckpt_018349.npz
+    evaluation_reference_hartree: -75.4118625314
+  method_caveat: >-
+    The trainable state is still initialized from the ground checkpoint plus a
+    tiny perturbation; the improved overlap estimator tests whether fixed
+    independent ground walkers remove the ground-state leakage seen in task
+    0089.

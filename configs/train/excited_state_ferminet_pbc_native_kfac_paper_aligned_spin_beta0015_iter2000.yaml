@@ -1,0 +1,59 @@
+training:
+  target: excited_state
+  deterministic: true
+  batch_size: 4096
+  iterations: 2000
+  optimizer: kfac
+  objective: vmc_overlap
+  method_profile: szabo_noe_2024_penalty
+  states: 2
+  overlap_penalty: 4.0
+  overlap_weights: null
+  overlap_scale_by: max_gap_std
+  overlap_min_scale: 0.001
+  overlap_max_scale: 5.0
+  overlap_clip_width: 10.0
+  overlap_clip_exclude_width: .inf
+  overlap_sort_states_by: energy
+  overlap_use_ewm_scale: true
+  overlap_ewm_max_alpha: 0.999
+  overlap_ewm_decay_alpha: 10.0
+  spin_penalty: 0.015
+  observables_s2: true
+  learning_rate: 0.05
+  learning_rate_decay: 1.0
+  learning_rate_delay: 50000.0
+  laplacian: folx
+  max_vmap_batch_size: 0
+  clip_local_energy: 5.0
+  clip_median: true
+  center_at_clip: true
+  pretrain_method: null
+  pretrain_iterations: 0
+  checkpoint_every_minutes: 10
+  log_every: 1
+  kfac:
+    invert_every: 1
+    cov_update_every: 1
+    damping: 0.001
+    cov_ema_decay: 0.95
+    norm_constraint: 0.001
+    norm_constraint_scale_by_states: true
+
+stability_checks:
+  finite_energy: true
+  finite_variance: true
+  acceptance_range: [0.05, 0.95]
+  finite_overlap_matrix: true
+  finite_symmetric_overlap_matrix: true
+  finite_overlap_penalty_matrix: true
+  finite_overlap_gradient_scale: true
+  finite_state_ordering: true
+  finite_s2_matrix: true
+  finite_bare_energy_matrix: true
+
+notes:
+  status: spin_beta0015_iter2000_ready
+  purpose: >-
+    2000-step beta sweep point for the paper-aligned native FermiNet
+    excited-state loss with spin penalty and bare-energy reporting enabled.

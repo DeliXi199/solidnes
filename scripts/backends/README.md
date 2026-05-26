@@ -67,7 +67,53 @@ SOLIDNES_TASK_ROOT=tasks/phase1_diamond_c/sto3g/smoke/NNNN_deepsolid_adapter_pro
   bash scripts/slurm/submit_deepsolid_gpu_smoke.sh
 ```
 
-This folder will contain backend-specific run notes and thin wrapper scripts.
+This folder contains backend-specific run notes and thin wrapper scripts. Add
+production launchers only after the backend environment has been confirmed.
 
-Do not add production launchers before the backend environment has been
-confirmed.
+## FermiNet Excited-State Driver
+
+Run the sampler-integrated PBC excited-state driver locally with a cheap
+local-energy stand-in:
+
+```bash
+conda run -n solidnes-ferminet-jax0101-cuda12 \
+  env PYTHONPATH=external/ferminet:src \
+  python scripts/backends/run_ferminet_pbc_excited_driver.py \
+  configs/experiment/diamond_c_ferminet_pbc_gamma_driver_controlled12_walkers4.yaml \
+  --local-energy-source cheap --platform cpu
+```
+
+Useful optimizer/stability knobs for the same runner:
+
+```bash
+--optimizer adam \
+--overlap-ewma-decay 0.95 \
+--param-share-keys "layers/streams" \
+--candidate-check-period 4 \
+--max-grad-l2-norm 1000 \
+--max-update-l2-norm 1e-4
+```
+
+`--optimizer lamb` and `--optimizer kfac` are also available.  The KFAC path
+uses `kfac_jax.Optimizer` directly on the external-state paper-tangent loss and
+accepts the usual damping/norm controls:
+
+```bash
+--optimizer kfac \
+--kfac-damping 0.001 \
+--kfac-norm-constraint 0.001 \
+--kfac-invert-every 1
+```
+
+Run the scheduled real PBC local-energy trajectory through the approved FermiNet
+GPU submitter:
+
+```bash
+TASK=tasks/excited_state_nesvmc/0070_ferminet_pbc_driver_controlled12_walkers4
+SOLIDNES_TASK_ROOT="$TASK" \
+SOLIDNES_BACKEND_SCRIPT=scripts/backends/run_ferminet_pbc_excited_driver.py \
+SOLIDNES_EXPERIMENT=configs/experiment/diamond_c_ferminet_pbc_gamma_driver_controlled12_walkers4.yaml \
+SOLIDNES_CONDA_ENV=solidnes-ferminet-jax0101-cuda12 \
+SOLIDNES_JOB_NAME=solidnes-0070-nes-drv12 \
+bash scripts/slurm/submit_ferminet_gpu_smoke.sh
+```

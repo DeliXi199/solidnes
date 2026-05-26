@@ -1,0 +1,94 @@
+{
+  "config": {
+    "allowed_gpu_counts": [],
+    "allowed_partitions": [],
+    "blocked_partitions": [
+      "gpu80gllm",
+      "gpu40gllm",
+      "h20llm",
+      "gpu4090",
+      "gpu4090_8",
+      "gpu4090_128",
+      "h800",
+      "test"
+    ],
+    "exclusive_when_full_node": true,
+    "idle_extra_partitions": [
+      "intelgpu80g",
+      "amdgpu40g",
+      "amdgpu80g"
+    ],
+    "min_cpus": 32,
+    "min_gpus": 2,
+    "precision_profile": "fp64",
+    "queue_min_cpus": 32,
+    "queue_min_gpus": 2,
+    "queue_mode": "auto",
+    "target_gpus": 0
+  },
+  "kind": "gpu",
+  "ready": true,
+  "reason": "no_free_gpu_queue_flexible_partitions",
+  "sbatch": {
+    "request": {
+      "cpus": 32,
+      "gpus": 2,
+      "gres": "gpu:2",
+      "partition": "h200,amdgpu80g,amdgpu40g,h20"
+    },
+    "sbatch_args": [
+      "--nodes",
+      "1",
+      "--partition",
+      "h200,amdgpu80g,amdgpu40g,h20",
+      "--gres",
+      "gpu:2",
+      "--cpus-per-task",
+      "32",
+      "--exclusive",
+      "--job-name",
+      "0089_fixed_ground_auto_20k",
+      "--account",
+      "hmt03",
+      "--time",
+      "12:00:00",
+      "--export",
+      "ALL,SOLIDNES_TOTAL_GPUS=2,SOLIDNES_TOTAL_CPU_CORES=32,SOLIDNES_CPUS_PER_GPU_BASE=16,SOLIDNES_CPU_REMAINDER=0,SOLIDNES_CPUS_PER_GPU_LIST=16:16,SOLIDNES_CPU_BATCHES=gpu0:0-15;gpu1:16-31,SOLIDNES_CPU_PARALLELISM=32",
+      "--output",
+      "tasks/excited_state_nesvmc/0089_ferminet_fixed_ground_overlap_beta0_iter20000/logs/slurm/%x_%j.log",
+      "--error",
+      "tasks/excited_state_nesvmc/0089_ferminet_fixed_ground_overlap_beta0_iter20000/logs/slurm/%x_%j.err"
+    ],
+    "sbatch_command": [
+      "sbatch",
+      "--nodes",
+      "1",
+      "--partition",
+      "h200,amdgpu80g,amdgpu40g,h20",
+      "--gres",
+      "gpu:2",
+      "--cpus-per-task",
+      "32",
+      "--exclusive",
+      "--job-name",
+      "0089_fixed_ground_auto_20k",
+      "--account",
+      "hmt03",
+      "--time",
+      "12:00:00",
+      "--export",
+      "ALL,SOLIDNES_TOTAL_GPUS=2,SOLIDNES_TOTAL_CPU_CORES=32,SOLIDNES_CPUS_PER_GPU_BASE=16,SOLIDNES_CPU_REMAINDER=0,SOLIDNES_CPUS_PER_GPU_LIST=16:16,SOLIDNES_CPU_BATCHES=gpu0:0-15;gpu1:16-31,SOLIDNES_CPU_PARALLELISM=32",
+      "--output",
+      "tasks/excited_state_nesvmc/0089_ferminet_fixed_ground_overlap_beta0_iter20000/logs/slurm/%x_%j.log",
+      "--error",
+      "tasks/excited_state_nesvmc/0089_ferminet_fixed_ground_overlap_beta0_iter20000/logs/slurm/%x_%j.err",
+      "scripts/slurm/run_ferminet_gpu_smoke.slurm"
+    ],
+    "sbatch_command_quoted": "sbatch --nodes 1 --partition h200,amdgpu80g,amdgpu40g,h20 --gres gpu:2 --cpus-per-task 32 --exclusive --job-name 0089_fixed_ground_auto_20k --account hmt03 --time 12:00:00 --export 'ALL,SOLIDNES_TOTAL_GPUS=2,SOLIDNES_TOTAL_CPU_CORES=32,SOLIDNES_CPUS_PER_GPU_BASE=16,SOLIDNES_CPU_REMAINDER=0,SOLIDNES_CPUS_PER_GPU_LIST=16:16,SOLIDNES_CPU_BATCHES=gpu0:0-15;gpu1:16-31,SOLIDNES_CPU_PARALLELISM=32' --output tasks/excited_state_nesvmc/0089_ferminet_fixed_ground_overlap_beta0_iter20000/logs/slurm/%x_%j.log --error tasks/excited_state_nesvmc/0089_ferminet_fixed_ground_overlap_beta0_iter20000/logs/slurm/%x_%j.err scripts/slurm/run_ferminet_gpu_smoke.slurm"
+  },
+  "selection": {
+    "candidates": [],
+    "selected_node": null,
+    "selected_partition": "h200,amdgpu80g,amdgpu40g,h20"
+  }
+}

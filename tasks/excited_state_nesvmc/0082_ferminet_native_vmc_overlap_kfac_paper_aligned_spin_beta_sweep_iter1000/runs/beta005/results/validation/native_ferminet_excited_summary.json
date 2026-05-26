@@ -1,0 +1,110 @@
+{
+  "status": "ok",
+  "experiment": "configs/experiment/diamond_c_ferminet_pbc_gamma_native_vmc_overlap_kfac_paper_aligned_spin_beta005_iter1000.yaml",
+  "job_id": "129310",
+  "rows": 1000,
+  "first_step": 0,
+  "final_step": 999,
+  "first_energy": -21.479055,
+  "final_energy": NaN,
+  "min_energy": -74.63986,
+  "max_energy": -21.020163,
+  "final_ewmean": NaN,
+  "final_ewvar": NaN,
+  "mean_pmove": 0.5396163079599999,
+  "min_pmove": 0.0,
+  "max_pmove": 0.9148315,
+  "energy_matrix_frames": 1000,
+  "final_state_energy": [
+    NaN,
+    NaN
+  ],
+  "final_training_state_energy": [
+    NaN,
+    NaN
+  ],
+  "final_training_gap_hartree": NaN,
+  "final_training_gap_ev": NaN,
+  "bare_energy_matrix_frames": 1000,
+  "final_bare_state_energy": [
+    NaN,
+    NaN
+  ],
+  "final_bare_gap_hartree": NaN,
+  "final_bare_gap_ev": NaN,
+  "overlap_matrix_frames": 1000,
+  "final_overlap_matrix": [
+    [
+      NaN,
+      NaN
+    ],
+    [
+      NaN,
+      NaN
+    ]
+  ],
+  "symmetric_overlap_matrix_frames": 1000,
+  "final_symmetric_overlap_matrix": [
+    [
+      NaN,
+      NaN
+    ],
+    [
+      NaN,
+      NaN
+    ]
+  ],
+  "overlap_penalty_matrix_frames": 1000,
+  "final_overlap_penalty_matrix": [
+    [
+      NaN,
+      NaN
+    ],
+    [
+      NaN,
+      NaN
+    ]
+  ],
+  "overlap_gradient_scale_frames": 1000,
+  "final_overlap_gradient_scale": [
+    [
+      1.0,
+      1.0
+    ],
+    [
+      1.4634110927581787,
+      1.4634110927581787
+    ]
+  ],
+  "state_ordering_frames": 1000,
+  "final_state_ordering": [
+    0,
+    1
+  ],
+  "overlap_scale_energy_ewm_frames": 1000,
+  "final_overlap_scale_energy_ewm": [
+    NaN,
+    NaN
+  ],
+  "overlap_scale_std_ewm_frames": 1000,
+  "final_overlap_scale_std_ewm": [
+    0.6736806631088257,
+    1.4490513801574707
+  ],
+  "s2_matrix_frames": 1000,
+  "final_s2_matrix": [
+    [
+      NaN,
+      NaN
+    ],
+    [
+      NaN,
+      NaN
+    ]
+  ],
+  "final_s2_diagonal": [
+    NaN,
+    NaN
+  ],
+  "final_s2_trace": NaN
+}
