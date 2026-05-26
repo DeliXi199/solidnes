@@ -91,6 +91,25 @@ def estimate_overlap_from_ratios(
     return symmetrize_overlap_with_clipped_geometric_mean(overlap, clip_upper=clip_upper)
 
 
+def clip_psi_ratios_by_median(
+    psi_ratio: ArrayLike,
+    *,
+    clip_width: float = 10.0,
+    exclude_width: float = _np.inf,
+) -> tuple[ArrayLike, ArrayLike]:
+    """Clip wavefunction ratios along the walker axis and return a grad mask."""
+
+    ratios = _asarray(psi_ratio)
+    center = _jnp.median(ratios, axis=-1, keepdims=True)
+    deviation = _jnp.abs(ratios - center)
+    sigma = _jnp.median(deviation, axis=-1, keepdims=True)
+    lower = center - clip_width * sigma
+    upper = center + clip_width * sigma
+    clipped = _jnp.clip(ratios, lower, upper)
+    mask = deviation < exclude_width
+    return clipped, mask
+
+
 def offdiag_squared_overlap(overlap_matrix: ArrayLike) -> ArrayLike:
     """Return per-batch `sum_{i < j} S_ij^2`."""
 
@@ -98,6 +117,23 @@ def offdiag_squared_overlap(overlap_matrix: ArrayLike) -> ArrayLike:
     if offdiag.shape[-1] == 0:
         return _jnp.zeros(_asarray(overlap_matrix).shape[:-2])
     return _jnp.sum(offdiag * offdiag, axis=-1)
+
+
+def scaled_offdiag_squared_overlap(
+    overlap_matrix: ArrayLike,
+    overlap_scale: ArrayLike,
+) -> ArrayLike:
+    """Return `sum_{i < j} scale_ij * S_ij^2`."""
+
+    offdiag = _triu_values(overlap_matrix, k=1)
+    if offdiag.shape[-1] == 0:
+        return _jnp.zeros(_asarray(overlap_matrix).shape[:-2])
+    scale = _asarray(overlap_scale)
+    if scale.ndim == 0:
+        offdiag_scale = scale
+    else:
+        offdiag_scale = _triu_values(scale, k=1)
+    return _jnp.sum(offdiag_scale * offdiag * offdiag, axis=-1)
 
 
 def overlap_penalty_loss(overlap_matrix: ArrayLike) -> ArrayLike:

@@ -8,6 +8,7 @@ from pathlib import Path
 import sys
 from typing import Any
 
+
 from solidnes.backends.deepsolid_adapter import load_yaml
 from solidnes.backends.deepsolid_adapter import resolve_config_path
 
@@ -41,6 +42,22 @@ class FermiNetAdapterSummary:
     kpoints: int | None
     batch_size: int
     optimizer: str
+    objective: str
+    method_profile: str | None
+    states: int
+    overlap_penalty: float
+    overlap_weights: tuple[float, ...] | None
+    overlap_scale_by: str | None
+    overlap_min_scale: float
+    overlap_max_scale: float
+    overlap_clip_width: float
+    overlap_clip_exclude_width: float
+    overlap_sort_states_by: str | None
+    overlap_use_ewm_scale: bool
+    overlap_ewm_max_alpha: float
+    overlap_ewm_decay_alpha: float
+    kfac_norm_constraint: float | None
+    kfac_norm_constraint_scale_by_states: bool
     iterations: int
     pretrain_method: str | None
     pretrain_iterations: int
@@ -76,6 +93,22 @@ class FermiNetAdapterSummary:
             "kpoints": self.kpoints,
             "batch_size": self.batch_size,
             "optimizer": self.optimizer,
+            "objective": self.objective,
+            "method_profile": self.method_profile,
+            "states": self.states,
+            "overlap_penalty": self.overlap_penalty,
+            "overlap_weights": self.overlap_weights,
+            "overlap_scale_by": self.overlap_scale_by,
+            "overlap_min_scale": self.overlap_min_scale,
+            "overlap_max_scale": self.overlap_max_scale,
+            "overlap_clip_width": self.overlap_clip_width,
+            "overlap_clip_exclude_width": self.overlap_clip_exclude_width,
+            "overlap_sort_states_by": self.overlap_sort_states_by,
+            "overlap_use_ewm_scale": self.overlap_use_ewm_scale,
+            "overlap_ewm_max_alpha": self.overlap_ewm_max_alpha,
+            "overlap_ewm_decay_alpha": self.overlap_ewm_decay_alpha,
+            "kfac_norm_constraint": self.kfac_norm_constraint,
+            "kfac_norm_constraint_scale_by_states": self.kfac_norm_constraint_scale_by_states,
             "iterations": self.iterations,
             "pretrain_method": self.pretrain_method,
             "pretrain_iterations": self.pretrain_iterations,
@@ -140,6 +173,40 @@ class FermiNetAdapterBundle:
             kpoints=int(kpoints.shape[0]) if kpoints is not None else None,
             batch_size=int(self.cfg.batch_size),
             optimizer=self.cfg.optim.optimizer,
+            objective=str(self.cfg.optim.objective),
+            method_profile=self.cfg.optim.get("method_profile"),
+            states=int(self.cfg.system.get("states", 0)),
+            overlap_penalty=float(self.cfg.optim.overlap.penalty),
+            overlap_weights=None
+            if self.cfg.optim.overlap.weights is None
+            else tuple(float(x) for x in self.cfg.optim.overlap.weights),
+            overlap_scale_by=self.cfg.optim.overlap.get("scale_by"),
+            overlap_min_scale=float(self.cfg.optim.overlap.get("min_scale", 0.001)),
+            overlap_max_scale=float(self.cfg.optim.overlap.get("max_scale", 5.0)),
+            overlap_clip_width=float(self.cfg.optim.overlap.get("clip_width", 10.0)),
+            overlap_clip_exclude_width=float(
+                self.cfg.optim.overlap.get("clip_exclude_width", float("inf"))
+            ),
+            overlap_sort_states_by=self.cfg.optim.overlap.get("sort_states_by"),
+            overlap_use_ewm_scale=bool(
+                self.cfg.optim.overlap.get("use_ewm_scale", False)
+            ),
+            overlap_ewm_max_alpha=float(
+                self.cfg.optim.overlap.get("ewm_max_alpha", 0.999)
+            ),
+            overlap_ewm_decay_alpha=float(
+                self.cfg.optim.overlap.get("ewm_decay_alpha", 10.0)
+            ),
+            kfac_norm_constraint=(
+                float(self.cfg.optim.kfac.norm_constraint)
+                if self.cfg.optim.optimizer == "kfac"
+                else None
+            ),
+            kfac_norm_constraint_scale_by_states=bool(
+                self.cfg.optim.kfac.get("norm_constraint_scale_by_states", False)
+            )
+            if self.cfg.optim.optimizer == "kfac"
+            else False,
             iterations=int(self.cfg.optim.iterations),
             pretrain_method=self.cfg.pretrain.method,
             pretrain_iterations=int(self.cfg.pretrain.iterations),
@@ -243,6 +310,22 @@ def format_summary(summary: FermiNetAdapterSummary) -> str:
         f"complex_output: {summary.complex_output}",
         "",
         f"optimizer: {summary.optimizer}",
+        f"objective: {summary.objective}",
+        f"method_profile: {summary.method_profile}",
+        f"states: {summary.states}",
+        f"overlap_penalty: {summary.overlap_penalty}",
+        f"overlap_weights: {summary.overlap_weights}",
+        f"overlap_scale_by: {summary.overlap_scale_by}",
+        f"overlap_min_scale: {summary.overlap_min_scale}",
+        f"overlap_max_scale: {summary.overlap_max_scale}",
+        f"overlap_clip_width: {summary.overlap_clip_width}",
+        f"overlap_clip_exclude_width: {summary.overlap_clip_exclude_width}",
+        f"overlap_sort_states_by: {summary.overlap_sort_states_by}",
+        f"overlap_use_ewm_scale: {summary.overlap_use_ewm_scale}",
+        f"overlap_ewm_max_alpha: {summary.overlap_ewm_max_alpha}",
+        f"overlap_ewm_decay_alpha: {summary.overlap_ewm_decay_alpha}",
+        f"kfac_norm_constraint: {summary.kfac_norm_constraint}",
+        f"kfac_norm_constraint_scale_by_states: {summary.kfac_norm_constraint_scale_by_states}",
         f"iterations: {summary.iterations}",
         f"batch_size: {summary.batch_size}",
         f"laplacian: {summary.laplacian}",
@@ -265,6 +348,28 @@ def format_summary(summary: FermiNetAdapterSummary) -> str:
         f"restore_path: {summary.restore_path}",
     ]
     return "\n".join(lines)
+
+
+def _method_profile_defaults(method_profile: str | None) -> dict[str, Any]:
+    """Return SolidNES method-profile defaults for FermiNet config expansion."""
+
+    if method_profile in (None, "", "none"):
+        return {}
+    if method_profile == "szabo_noe_2024_penalty":
+        return {
+            "overlap_penalty": 4.0,
+            "overlap_scale_by": "max_gap_std",
+            "overlap_min_scale": 0.001,
+            "overlap_max_scale": 5.0,
+            "overlap_clip_width": 10.0,
+            "overlap_clip_exclude_width": float("inf"),
+            "overlap_sort_states_by": "energy",
+            "overlap_use_ewm_scale": True,
+            "overlap_ewm_max_alpha": 0.999,
+            "overlap_ewm_decay_alpha": 10.0,
+            "kfac_norm_constraint_scale_by_states": True,
+        }
+    raise ValueError(f"Unsupported FermiNet method_profile: {method_profile}")
 
 
 def _build_ferminet_config(
@@ -305,11 +410,94 @@ def _build_ferminet_config(
 
     sampler_cfg = sampler["sampler"]
     train_cfg = train["training"]
+    method_profile = train_cfg.get("method_profile")
+    profile_defaults = _method_profile_defaults(method_profile)
     cfg.batch_size = int(train_cfg["batch_size"])
     cfg.debug.deterministic = bool(train_cfg.get("deterministic", True))
     cfg.debug.check_nan = bool(train_cfg.get("check_nan", False))
     cfg.optim.iterations = int(train_cfg["iterations"])
     cfg.optim.optimizer = str(train_cfg["optimizer"])
+    cfg.optim.objective = str(train_cfg.get("objective", cfg.optim.objective))
+    cfg.optim.method_profile = method_profile
+    cfg.system.states = int(
+        train_cfg.get(
+            "states",
+            train_cfg.get("excited_states", cfg.system.get("states", 0)),
+        )
+    )
+    if cfg.optim.objective == "vmc_overlap" and cfg.system.states <= 0:
+        raise ValueError("FermiNet vmc_overlap objective requires training.states > 0")
+    cfg.optim.overlap.penalty = float(
+        train_cfg.get(
+            "overlap_penalty",
+            profile_defaults.get(
+                "overlap_penalty",
+                4.0
+                if cfg.optim.objective == "vmc_overlap"
+                else cfg.optim.overlap.penalty,
+            ),
+        )
+    )
+    if "overlap_weights" in train_cfg:
+        overlap_weights = train_cfg.get("overlap_weights")
+        cfg.optim.overlap.weights = (
+            None
+            if overlap_weights is None
+            else tuple(float(weight) for weight in overlap_weights)
+        )
+    cfg.optim.overlap.scale_by = train_cfg.get(
+        "overlap_scale_by",
+        profile_defaults.get(
+            "overlap_scale_by",
+            "max_gap_std" if cfg.optim.objective == "vmc_overlap" else None,
+        ),
+    )
+    cfg.optim.overlap.min_scale = float(
+        train_cfg.get(
+            "overlap_min_scale",
+            profile_defaults.get("overlap_min_scale", 0.001),
+        )
+    )
+    cfg.optim.overlap.max_scale = float(
+        train_cfg.get(
+            "overlap_max_scale",
+            profile_defaults.get("overlap_max_scale", 5.0),
+        )
+    )
+    cfg.optim.overlap.clip_width = float(
+        train_cfg.get(
+            "overlap_clip_width",
+            profile_defaults.get("overlap_clip_width", 10.0),
+        )
+    )
+    cfg.optim.overlap.clip_exclude_width = float(
+        train_cfg.get(
+            "overlap_clip_exclude_width",
+            profile_defaults.get("overlap_clip_exclude_width", float("inf")),
+        )
+    )
+    cfg.optim.overlap.sort_states_by = train_cfg.get(
+        "overlap_sort_states_by",
+        profile_defaults.get("overlap_sort_states_by"),
+    )
+    cfg.optim.overlap.use_ewm_scale = bool(
+        train_cfg.get(
+            "overlap_use_ewm_scale",
+            profile_defaults.get("overlap_use_ewm_scale", False),
+        )
+    )
+    cfg.optim.overlap.ewm_max_alpha = float(
+        train_cfg.get(
+            "overlap_ewm_max_alpha",
+            profile_defaults.get("overlap_ewm_max_alpha", 0.999),
+        )
+    )
+    cfg.optim.overlap.ewm_decay_alpha = float(
+        train_cfg.get(
+            "overlap_ewm_decay_alpha",
+            profile_defaults.get("overlap_ewm_decay_alpha", 10.0),
+        )
+    )
     cfg.optim.laplacian = str(train_cfg.get("laplacian", "folx"))
     cfg.optim.max_vmap_batch_size = int(train_cfg.get("max_vmap_batch_size", 0))
     cfg.optim.clip_local_energy = float(train_cfg.get("clip_local_energy", 5.0))
@@ -318,11 +506,34 @@ def _build_ferminet_config(
     cfg.optim.lr.rate = float(train_cfg.get("learning_rate", cfg.optim.lr.rate))
     cfg.optim.lr.decay = float(train_cfg.get("learning_rate_decay", cfg.optim.lr.decay))
     cfg.optim.lr.delay = float(train_cfg.get("learning_rate_delay", cfg.optim.lr.delay))
+    norm_constraint_scale_by_states = bool(
+        train_cfg.get(
+            "kfac_norm_constraint_scale_by_states",
+            profile_defaults.get("kfac_norm_constraint_scale_by_states", False),
+        )
+    )
     if "kfac" in train_cfg:
-        for key, value in train_cfg["kfac"].items():
+        kfac_cfg = dict(train_cfg["kfac"])
+        norm_constraint_scale_by_states = bool(
+            kfac_cfg.pop(
+                "norm_constraint_scale_by_states",
+                norm_constraint_scale_by_states,
+            )
+        )
+        for key, value in kfac_cfg.items():
             if key not in cfg.optim.kfac:
                 raise ValueError(f"Unknown FermiNet KFAC option in train config: {key}")
             cfg.optim.kfac[key] = value
+    cfg.optim.kfac.norm_constraint_scale_by_states = norm_constraint_scale_by_states
+    if (
+        cfg.optim.objective == "vmc_overlap"
+        and cfg.optim.optimizer == "kfac"
+        and norm_constraint_scale_by_states
+        and cfg.system.states > 1
+    ):
+        cfg.optim.kfac.norm_constraint = (
+            float(cfg.optim.kfac.norm_constraint) * int(cfg.system.states)
+        )
     cfg.pretrain.method = train_cfg.get("pretrain_method")
     cfg.pretrain.iterations = int(train_cfg.get("pretrain_iterations", 0))
     system_section = system.get("system", {})

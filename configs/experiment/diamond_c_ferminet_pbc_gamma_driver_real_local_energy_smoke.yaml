@@ -1,0 +1,83 @@
+project: solidnes
+experiment_name: diamond_c_ferminet_pbc_gamma_driver_real_local_energy_smoke
+stage: excited_state_nesvmc
+phase: ferminet_pbc_driver_real_local_energy_smoke
+
+backend:
+  name: ferminet
+  repository: https://github.com/google-deepmind/ferminet
+  inspected_commit: c4312c315dda1c5728994ba89629744f71c6eb66
+  mode: external_backend_with_local_patch
+
+system_config: ../system/diamond_c_primitive_gamma.yaml
+model_config: ../model/ferminet_pbc_small.yaml
+sampler_config: ../sampler/metropolis_ferminet_pbc_short.yaml
+train_config: ../train/ground_state_ferminet_pbc_adam_short100.yaml
+
+ferminet_config_template:
+  module: solidnes/backends/ferminet_configs/diamond_pbc_gamma.py
+
+runtime:
+  target_jax_version: 0.10.1
+  cuda_extra: cuda12
+  precision_profile: speed
+  x64_enabled: false
+  require_gpu: true
+  xla_python_client_preallocate: true
+  xla_python_client_mem_fraction: 0.90
+
+output:
+  log_dir: >-
+    tasks/excited_state_nesvmc/0068_ferminet_pbc_driver_real_local_energy_smoke/logs/backend
+  checkpoint_dir: >-
+    tasks/excited_state_nesvmc/0068_ferminet_pbc_driver_real_local_energy_smoke/results/checkpoints
+  validation_dir: >-
+    tasks/excited_state_nesvmc/0068_ferminet_pbc_driver_real_local_energy_smoke/results/validation
+
+diagnostics:
+  import_ferminet: true
+  build_pbc_config: true
+  real_pbc_local_energy_driver_smoke: true
+  expected_external_states: 2
+  walkers_per_state: 2
+  iterations: 2
+  seed: 53
+  learning_rate: 1.0e-8
+  gradient_mode: paper_tangent
+  local_energy_source: real_pbc
+  sampler:
+    burn_in: 1
+    steps_per_iteration: 2
+    proposal_width: 0.02
+    wrap_positions: true
+  update_guards:
+    finite_gradient: true
+    finite_update: true
+    finite_candidate_terms: true
+    reject_nonfinite_update: true
+  clipping:
+    psi_ratio_clip_width: 10.0
+    max_logabs_ratio: 30.0
+    local_energy_clip_width: 5.0
+  overlap_scaling:
+    scale_by: max_gap_std
+    min_gap_scale_factor: 0.001
+    max_scale_factor: 5.0
+  expected_output:
+    - finite initial and final local-energy matrices with shape [2, 2]
+    - finite sampler acceptance in [0, 1] for each driver iteration
+    - finite true and gradient penalty objectives for each driver iteration
+    - finite nonzero gradient and parameter-update norms for each driver iteration
+    - accepted guarded update for each driver iteration
+    - checkpoint roundtrip bytes greater than zero
+
+notes:
+  status: ready_for_dry_run
+  purpose: >-
+    first scheduled GPU smoke for the sampler-integrated FermiNet PBC
+    excited-state driver with real local-energy/Laplacian diagnostics and
+    checkpoint roundtrip
+  previous_success: tasks/excited_state_nesvmc/0067_ferminet_pbc_paper_tangent_training_smoke_walkers2
+  local_patch:
+    file: external/ferminet/ferminet/networks.py
+    change: construct_symmetric_features uses broadcast_to instead of tile for spin-channel means

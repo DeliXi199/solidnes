@@ -1,0 +1,55 @@
+project: solidnes
+experiment_name: diamond_c_ferminet_pbc_gamma_native_vmc_overlap_kfac_batch4096_iter50
+stage: excited_state_nesvmc
+phase: ferminet_native_vmc_overlap_kfac_batch4096_iter50
+
+backend:
+  name: ferminet
+  repository: https://github.com/google-deepmind/ferminet
+  inspected_commit: c4312c315dda1c5728994ba89629744f71c6eb66
+  mode: native_ferminet_excited_state
+
+system_config: ../system/diamond_c_primitive_gamma.yaml
+model_config: ../model/ferminet_pbc_small.yaml
+sampler_config: ../sampler/metropolis_ferminet_pbc_short.yaml
+train_config: ../train/excited_state_ferminet_pbc_native_kfac_batch4096_iter50.yaml
+
+ferminet_config_template:
+  module: solidnes/backends/ferminet_configs/diamond_pbc_gamma.py
+
+runtime:
+  target_jax_version: 0.10.1
+  cuda_extra: cuda12
+  precision_profile: speed
+  x64_enabled: false
+  require_gpu: true
+  xla_python_client_preallocate: true
+  xla_python_client_mem_fraction: 0.90
+
+output:
+  log_dir: tasks/excited_state_nesvmc/0076_ferminet_native_vmc_overlap_kfac_batch4096_iter50/logs/backend
+  checkpoint_dir: tasks/excited_state_nesvmc/0076_ferminet_native_vmc_overlap_kfac_batch4096_iter50/results/checkpoints
+  validation_dir: tasks/excited_state_nesvmc/0076_ferminet_native_vmc_overlap_kfac_batch4096_iter50/results/validation
+
+diagnostics:
+  import_ferminet: true
+  build_pbc_config: true
+  native_ferminet_excited_state: true
+  expected_states: 2
+  objective: vmc_overlap
+  optimizer: kfac
+  batch_size: 4096
+  iterations: 50
+  expected_outputs:
+    - train_stats.csv with 50 native FermiNet rows
+    - energy_matrix.npy with 50 state-energy frames
+    - overlap_matrix.npy with 50 overlap-matrix frames
+    - per-step wall time comparable to the reproduced ground-state FermiNet KFAC path after compile overhead
+
+notes:
+  status: ready_for_build_check
+  purpose: >-
+    Short production-shaped speed and stability baseline for the native
+    FermiNet PBC excited-state path, using batch4096 and 50 KFAC iterations
+    before starting longer trajectories.
+  previous_native_smoke: tasks/excited_state_nesvmc/0075_ferminet_native_vmc_overlap_kfac_batch1024_smoke

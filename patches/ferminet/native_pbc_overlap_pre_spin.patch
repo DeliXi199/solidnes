@@ -1,0 +1,1256 @@
+diff --git a/ferminet/base_config.py b/ferminet/base_config.py
+index e491143..4ff1919 100644
+--- a/ferminet/base_config.py
++++ b/ferminet/base_config.py
+@@ -309,9 +309,29 @@ def default() -> ml_collections.ConfigDict:
+           'deterministic': False,  # Use a deterministic seed.
+       },
+       'pretrain': {
+-          'method': 'hf',  # Currently only 'hf' is supported.
++          'method': 'hf',  # Supported: 'hf'; local SolidNES PBC route: 'pbc_hf'.
+           'iterations': 1000,  # Only used if method is 'hf'.
+           'basis': 'ccpvdz',  # Larger than STO-6G, but good for excited states
++          # Use a PySCF PBC KHF/KUHF target instead of the molecular PySCF
++          # target. This is only used by the local SolidNES PBC route.
++          'pbc': False,
++          'twist': (0.0, 0.0, 0.0),
++          'cell_precision': 1e-8,
++          'cell_exp_to_discard': 0.1,
++          'restricted': True,
++          'learning_rate': 3.e-4,
++          'mcmc_steps': 1,
++          # PBC target evaluator. Local SolidNES values:
++          # - pyscf_pbc: host-side PySCF PBCGTOval_sph target evaluation.
++          # - jax_pbc_gto: experimental JAX image-sum PBC GTO evaluator.
++          'target_backend': 'pyscf_pbc',
++          'jax_pbc_image_cutoff': 2,
++          # Log detailed PBC-HF pretraining timing every N iterations. Set to 0
++          # to suppress the per-iteration pretraining timing log.
++          'log_every': 1,
++          # Maximum number of electron-coordinate rows sent to PySCF PBC GTO
++          # evaluation at once. Set to 0 to evaluate the full target batch.
++          'target_chunk_size': 0,
+           # Fraction of SCF to use in pretraining MCMC. This enables pretraining
+           # similar to the original FermiNet paper.
+           'scf_fraction': 1.0,
+diff --git a/ferminet/loss.py b/ferminet/loss.py
+index 06821ae..51e6f21 100644
+--- a/ferminet/loss.py
++++ b/ferminet/loss.py
+@@ -41,6 +41,11 @@ class AuxiliaryLossData:
+     local_energy_mat: for excited states, the local energy matrix.
+     s_ij: Matrix of overlaps between wavefunctions.
+     mean_s_ij: Mean value of the overlap between wavefunctions across walkers.
++    symmetric_s_ij: Signed symmetrized overlap estimator.
++    squared_s_ij: Squared symmetrized overlap penalty matrix.
++    overlap_gradient_scale: Pairwise scale applied only to overlap gradients.
++    state_ordering: State ordering used for lower-state-detached overlap
++      gradients.
+   """
+   energy: jax.Array  # for some losses, the energy and loss are not the same
+   variance: jax.Array
+@@ -50,6 +55,10 @@ class AuxiliaryLossData:
+   local_energy_mat: jax.Array | None = None
+   s_ij: jax.Array | None = None
+   mean_s_ij: jax.Array | None = None
++  symmetric_s_ij: jax.Array | None = None
++  squared_s_ij: jax.Array | None = None
++  overlap_gradient_scale: jax.Array | None = None
++  state_ordering: jax.Array | None = None
+
+
+ class LossFn(Protocol):
+@@ -150,6 +159,121 @@ def clip_local_values(
+   return diff_center, diff
+
+
++def _symmetrized_squared_overlap(overlap: jnp.ndarray) -> jnp.ndarray:
++  """Returns S_ij^2 from non-symmetric overlap estimates.
++
++  This follows the Szabo-Noe/DeepQMC clipped-geometric estimator: the signed
++  square root is not needed for the penalty, so this helper returns the clipped
++  product directly.
++  """
++
++  return jnp.maximum(overlap * jnp.swapaxes(overlap, -1, -2), 0.0)
++
++
++def _symmetrized_overlap(overlap: jnp.ndarray) -> jnp.ndarray:
++  """Returns the signed clipped-geometric overlap estimator."""
++
++  return jnp.sign(overlap) * jnp.sqrt(_symmetrized_squared_overlap(overlap))
++
++
++def _clip_overlap_ratios(
++    overlap_ratio: jnp.ndarray,
++    clip_width: float,
++    exclude_width: float,
++) -> tuple[jnp.ndarray, jnp.ndarray]:
++  """Median-clip overlap ratios and return a gradient mask.
++
++  Clipping is pairwise over the walker/device sample axis, matching the
++  DeepQMC psi-ratio clipping idea.  The forward overlap value is still computed
++  from the unclipped ratios; clipped ratios only affect the custom-JVP tangent.
++  """
++
++  if clip_width <= 0.0 and exclude_width == float('inf'):
++    return overlap_ratio, jnp.ones_like(overlap_ratio, dtype=bool)
++  all_ratios = constants.all_gather(overlap_ratio).real
++  flat_ratios = all_ratios.reshape((-1,) + all_ratios.shape[-2:])
++  center = jnp.median(flat_ratios, axis=0)
++  deviation = jnp.abs(overlap_ratio - center)
++  flat_deviation = jnp.abs(flat_ratios - center)
++  sigma = jnp.median(flat_deviation, axis=0)
++  clipped = jnp.clip(
++      overlap_ratio,
++      center - clip_width * sigma,
++      center + clip_width * sigma)
++  mask = deviation < exclude_width
++  return clipped, mask
++
++
++def _masked_centered_overlap_diff(
++    clipped_overlap: jnp.ndarray,
++    ratio_gradient_mask: jnp.ndarray,
++) -> jnp.ndarray:
++  """Centers clipped overlap ratios and applies a samplewise gradient mask."""
++
++  clipped_mean = constants.pmean(jnp.mean(clipped_overlap, axis=0))
++  centered = clipped_overlap - clipped_mean
++  mask = ratio_gradient_mask.astype(clipped_overlap.dtype)
++  mask_fraction = constants.pmean(jnp.mean(mask, axis=0))
++  safe_weight = jnp.where(mask_fraction > 0, mask / mask_fraction, 0.0)
++  return centered * safe_weight
++
++
++def _overlap_gradient_scale(
++    energy: jnp.ndarray,
++    variance: jnp.ndarray,
++    scale_by: str | None,
++    min_scale: float,
++    max_scale: float,
++    scale_energy: jnp.ndarray | None = None,
++    scale_std: jnp.ndarray | None = None,
++) -> jnp.ndarray:
++  """Pairwise scale for overlap-gradient tangents."""
++
++  scale_energy = energy if scale_energy is None else scale_energy
++  if scale_std is None:
++    scale_std = jnp.sqrt(jnp.maximum(jnp.nan_to_num(variance, nan=0.0), 0.0))
++
++  if scale_by is None or scale_by == 'none':
++    return jnp.ones((energy.shape[-1], energy.shape[-1]), dtype=energy.dtype)
++  energy_gap = jnp.abs(scale_energy[:, None] - scale_energy[None, :])
++  energy_gap = jnp.nan_to_num(energy_gap, nan=1.0)
++  state_std = jnp.nan_to_num(scale_std, nan=max_scale)[:, None]
++  if scale_by == 'energy_gap':
++    scale = energy_gap
++  elif scale_by == 'energy_std':
++    scale = jnp.broadcast_to(state_std, energy_gap.shape)
++  elif scale_by == 'max_gap_std':
++    scale = jnp.maximum(energy_gap, state_std)
++  else:
++    raise ValueError(f'Unsupported overlap gradient scale: {scale_by}')
++  return jnp.clip(scale, min_scale, max_scale)
++
++
++def _state_ordering(
++    energy: jnp.ndarray,
++    sort_states_by: str | None,
++    order_energy: jnp.ndarray | None = None,
++) -> jnp.ndarray:
++  """Returns the lower-to-higher state ordering used by overlap tangents."""
++
++  order_energy = energy if order_energy is None else order_energy
++  if sort_states_by is None or sort_states_by == 'none':
++    return jnp.arange(energy.shape[-1])
++  if sort_states_by == 'energy':
++    return jnp.argsort(order_energy)
++  raise ValueError(f'Unsupported state ordering: {sort_states_by}')
++
++
++def _permute_state_matrix(matrix: jnp.ndarray, ordering: jnp.ndarray) -> jnp.ndarray:
++  matrix = jnp.take(matrix, ordering, axis=-2)
++  return jnp.take(matrix, ordering, axis=-1)
++
++
++def _unpermute_state_vector(vector: jnp.ndarray, ordering: jnp.ndarray) -> jnp.ndarray:
++  inverse = jnp.zeros_like(ordering).at[ordering].set(jnp.arange(ordering.shape[0]))
++  return jnp.take(vector, inverse, axis=-1)
++
++
+ def make_loss(network: networks.LogFermiNetLike,
+               local_energy: hamiltonian.LocalEnergy,
+               clip_local_energy: float = 0.0,
+@@ -446,6 +570,12 @@ def make_energy_overlap_loss(network: networks.LogFermiNetLike,
+                              center_at_clipped_energy: bool = True,
+                              overlap_penalty: float = 1.0,
+                              overlap_weight: Tuple[float, ...] = (1.0,),
++                             overlap_scale_by: str | None = None,
++                             overlap_min_scale: float = 0.001,
++                             overlap_max_scale: float = 5.0,
++                             overlap_clip_width: float = 10.0,
++                             overlap_clip_exclude_width: float = jnp.inf,
++                             overlap_sort_states_by: str | None = None,
+                              complex_output: bool = False,
+                              max_vmap_batch_size: int = 0) -> LossFn:
+   """Creates the loss function for the penalty method for excited states.
+@@ -474,6 +604,16 @@ def make_energy_overlap_loss(network: networks.LogFermiNetLike,
+       orthogonal.
+     overlap_weight: The weight to apply to each individual energy in the overall
+       optimization.
++    overlap_scale_by: Optional scale for overlap-gradient tangents. Supported:
++      none, energy_gap, energy_std, max_gap_std.
++    overlap_min_scale: Lower bound for overlap-gradient scaling.
++    overlap_max_scale: Upper bound for overlap-gradient scaling.
++    overlap_clip_width: Median-MAD width for psi-ratio/overlap-ratio clipping
++      in the custom-JVP tangent. Set <=0 to disable clipping.
++    overlap_clip_exclude_width: Deviation threshold for excluding overlap-ratio
++      outliers from the tangent. Defaults to no exclusion.
++    overlap_sort_states_by: Optional lower-to-higher state ordering for the
++      lower-state-detached overlap tangent. Supported: none, energy.
+     complex_output: If true, the network output is complex-valued.
+     max_vmap_batch_size: If 0, use standard vmap. If >0, use batched_vmap with
+       the given batch size.
+@@ -525,7 +665,21 @@ def make_energy_overlap_loss(network: networks.LogFermiNetLike,
+     log_psi_diag = jax.vmap(jnp.diag)(log_psi)[..., None]
+     s_ij_local = sign_psi * sign_psi_diag * jnp.exp(log_psi - log_psi_diag)
+     s_ij = constants.pmean(jnp.mean(s_ij_local, axis=0))
+-    total_overlap = jnp.sum(jnp.triu(s_ij * s_ij.T, 1))
++    symmetric_s_ij = _symmetrized_overlap(s_ij)
++    s_ij_squared = symmetric_s_ij * symmetric_s_ij
++    total_overlap = jnp.sum(jnp.triu(s_ij_squared, 1))
++    scale_energy = data.overlap_scale_energy
++    scale_std = data.overlap_scale_std
++    order_energy = data.overlap_state_order_energy
++    scale = _overlap_gradient_scale(
++        loss.real,
++        variance.real,
++        overlap_scale_by,
++        overlap_min_scale,
++        overlap_max_scale,
++        scale_energy,
++        scale_std)
++    ordering = _state_ordering(loss.real, overlap_sort_states_by, order_energy)
+
+     return (weighted_energy + overlap_penalty * total_overlap,
+             AuxiliaryLossData(
+@@ -535,7 +689,11 @@ def make_energy_overlap_loss(network: networks.LogFermiNetLike,
+                 clipped_energy=loss,
+                 s_ij=s_ij_local,
+                 mean_s_ij=s_ij,
+-                local_energy_mat=e_l))
++                symmetric_s_ij=symmetric_s_ij,
++                squared_s_ij=s_ij_squared,
++                local_energy_mat=e_l,
++                overlap_gradient_scale=scale,
++                state_ordering=ordering.astype(loss.real.dtype)))
+
+   @total_energy_and_overlap.defjvp
+   def total_energy_and_overlap_jvp(primals, tangents):  # pylint: disable=unused-variable
+@@ -569,19 +727,24 @@ def make_energy_overlap_loss(network: networks.LogFermiNetLike,
+     # Again, because the two expectations are taken over independent samples,
+     # the product of empirical estimates will be unbiased.
+
+-    if clip_local_energy > 0.0:
+-      clipped_overlap, overlap_diff = clip_local_values(
+-          aux_data.s_ij,
+-          aux_data.mean_s_ij,
+-          clip_local_energy,
+-          clip_from_median,
+-          center_at_clipped_energy)
+-    else:
+-      clipped_overlap = aux_data.s_ij
+-      overlap_diff = clipped_overlap - aux_data.mean_s_ij
+-
+-    overlap_diff = 2 * jnp.sum(jnp.triu(
+-        clipped_overlap * overlap_diff.transpose((0, 2, 1)), 1), axis=1)
++    clipped_overlap, ratio_gradient_mask = _clip_overlap_ratios(
++        aux_data.s_ij,
++        overlap_clip_width,
++        overlap_clip_exclude_width)
++    overlap_diff = _masked_centered_overlap_diff(
++        clipped_overlap, ratio_gradient_mask)
++    ordering = aux_data.state_ordering.astype(jnp.int32)
++    scale = aux_data.overlap_gradient_scale
++    clipped_overlap = _permute_state_matrix(clipped_overlap, ordering)
++    overlap_diff = _permute_state_matrix(overlap_diff, ordering)
++    scale = _permute_state_matrix(scale, ordering)
++    pair_is_active = _permute_state_matrix(
++        _symmetrized_squared_overlap(aux_data.mean_s_ij) > 0.0, ordering)
++    scaled_pair_diff = (
++        clipped_overlap * overlap_diff.transpose((0, 2, 1)) * scale)
++    scaled_pair_diff = jnp.where(pair_is_active, scaled_pair_diff, 0.0)
++    overlap_diff = 2 * jnp.sum(jnp.triu(scaled_pair_diff, 1), axis=1)
++    overlap_diff = _unpermute_state_vector(overlap_diff, ordering)
+
+     # Due to the simultaneous requirements of KFAC (calling convention must be
+     # (params, rng, data)) and Laplacian calculation (only want to take
+@@ -609,3 +772,4 @@ def make_energy_overlap_loss(network: networks.LogFermiNetLike,
+     return primals_out, tangents_out
+
+   return total_energy_and_overlap
++
+diff --git a/ferminet/networks.py b/ferminet/networks.py
+index 315d932..7793ca8 100644
+--- a/ferminet/networks.py
++++ b/ferminet/networks.py
+@@ -56,6 +56,12 @@ class FermiNetData:
+     spins: spins of each walker, shape (nelectrons).
+     atoms: atomic positions, shape (natoms*ndim).
+     charges: atomic charges, shape (natoms).
++    overlap_scale_energy: optional running state-energy estimates for
++      penalty-based excited-state overlap scaling.
++    overlap_scale_std: optional running state-energy standard-deviation
++      estimates for penalty-based excited-state overlap scaling.
++    overlap_state_order_energy: optional running state energies used to order
++      lower-state-detached overlap tangents.
+   """
+
+   # We need to be able to construct instances of this with leaf nodes as jax
+@@ -67,6 +73,9 @@ class FermiNetData:
+   spins: Any
+   atoms: Any
+   charges: Any
++  overlap_scale_energy: Any = None
++  overlap_scale_std: Any = None
++  overlap_state_order_energy: Any = None
+
+
+ ## Interfaces (public) ##
+@@ -543,7 +552,9 @@ def construct_symmetric_features(
+   # Construct inputs to next layer
+   # h.size == 0 corresponds to unoccupied spin channels.
+   g_one = [jnp.mean(h, axis=0, keepdims=True) for h in h_ones if h.size > 0]
+-  g_one = [jnp.tile(g, [h_one.shape[0], 1]) for g in g_one]
++  g_one = [
++      jnp.broadcast_to(g, (h_one.shape[0], g.shape[-1])) for g in g_one
++  ]
+
+   g_two = [jnp.mean(h, axis=0) for h in h_twos if h.size > 0]
+
+diff --git a/ferminet/pretrain.py b/ferminet/pretrain.py
+index 7a35dff..e8c66e8 100644
+--- a/ferminet/pretrain.py
++++ b/ferminet/pretrain.py
+@@ -14,7 +14,8 @@
+
+ """Utilities for pretraining and importing PySCF models."""
+
+-from typing import Callable, Mapping, Sequence, Tuple, Union
++import time
++from typing import Any, Callable, Mapping, Sequence, Tuple, Union
+
+ from absl import logging
+ import chex
+@@ -31,6 +32,12 @@ import optax
+ import pyscf
+
+
++def _block_until_ready(tree):
++  jax.tree_util.tree_map(
++      lambda x: x.block_until_ready() if hasattr(x, 'block_until_ready') else x,
++      tree)
++
++
+ def get_hf(molecule: Sequence[system.Atom] | None = None,
+            nspins: Tuple[int, int] | None = None,
+            basis: str | None = 'sto-3g',
+@@ -75,6 +82,262 @@ def get_hf(molecule: Sequence[system.Atom] | None = None,
+   return scf_approx
+
+
++def get_pbc_hf(
++    molecule: Sequence[system.Atom],
++    nspins: Tuple[int, int],
++    lattice: np.ndarray,
++    basis: str = 'ccpvdz',
++    pseudo: str | Mapping[str, str] | None = None,
++    twist: Sequence[float] | None = None,
++    precision: float = 1e-8,
++    exp_to_discard: float = 0.1,
++    restricted: bool = True,
++    pyscf_cell: Any | None = None,
++    target_backend: str = 'pyscf_pbc',
++    jax_pbc_image_cutoff: int = 2,
++) -> 'PbcScf':
++  """Returns a periodic PySCF Hartree-Fock solution for PBC pretraining.
++
++  The molecular pretraining path uses a JAX-native GTO evaluator inside the
++  compiled pretraining step. PySCF PBC orbital evaluation is not JAX-native, so
++  the PBC route follows DeepSolid: evaluate the HF target matrices on the host
++  once per pretraining iteration and pass those fixed targets into the pmapped
++  update step.
++  """
++  scf_approx = PbcScf(
++      molecule=molecule,
++      nspins=nspins,
++      lattice=lattice,
++      basis=basis,
++      pseudo=pseudo,
++      twist=twist,
++      precision=precision,
++      exp_to_discard=exp_to_discard,
++      restricted=restricted,
++      pyscf_cell=pyscf_cell,
++  )
++  scf_approx.run()
++  target_backend = str(target_backend or 'pyscf_pbc')
++  if target_backend == 'pyscf_pbc':
++    return scf_approx
++  if target_backend == 'jax_pbc_gto':
++    from solidnes.backends import ferminet_pbc_hf_target  # pylint: disable=import-outside-toplevel
++    return ferminet_pbc_hf_target.JaxPbcGtoScfTarget.from_pbc_scf(
++        scf_approx, image_cutoff=jax_pbc_image_cutoff)
++  raise ValueError(f'Unsupported PBC HF target backend: {target_backend}')
++
++
++class PbcScf:
++  """Small PySCF PBC HF wrapper used as an orbital pretraining target."""
++
++  target_backend = 'pyscf_pbc'
++  device_side_eval = False
++
++  def __init__(
++      self,
++      molecule: Sequence[system.Atom],
++      nspins: Tuple[int, int],
++      lattice: np.ndarray,
++      basis: str = 'ccpvdz',
++      pseudo: str | Mapping[str, str] | None = None,
++      twist: Sequence[float] | None = None,
++      precision: float = 1e-8,
++      exp_to_discard: float = 0.1,
++      restricted: bool = True,
++      pyscf_cell: Any | None = None,
++  ):
++    from pyscf.pbc import gto as pbc_gto  # pylint: disable=import-outside-toplevel
++    from pyscf.pbc import scf as pbc_scf  # pylint: disable=import-outside-toplevel
++
++    self.nspins = tuple(int(x) for x in nspins)
++    self.restricted = restricted
++    self.ndim = 3
++    if pyscf_cell is None:
++      cell = pbc_gto.Cell()
++      cell.atom = [[atom.symbol, atom.coords] for atom in molecule]
++      # FermiNet PBC configs use lattice vectors as columns; PySCF stores them
++      # as rows.
++      cell.a = np.asarray(lattice, dtype=np.float64).T
++      cell.unit = 'B'
++      cell.basis = basis
++      if pseudo:
++        cell.pseudo = pseudo
++      cell.spin = self.nspins[0] - self.nspins[1]
++      cell.verbose = 0
++      cell.precision = float(precision)
++      cell.exp_to_discard = float(exp_to_discard)
++      cell.build()
++    else:
++      cell = pyscf_cell.copy()
++      cell.verbose = 0
++      if not cell._built:  # pylint: disable=protected-access
++        cell.build()
++    if cell.nelectron != sum(self.nspins):
++      raise RuntimeError(
++          'PySCF PBC cell is not consistent with QMC electron count: '
++          f'cell.nelectron={cell.nelectron}, nspins={self.nspins}'
++      )
++
++    self.cell = cell
++    twist = np.zeros(3) if twist is None else np.asarray(twist, dtype=np.float64)
++    if twist.shape != (3,):
++      raise ValueError(f'Expected a 3-vector twist, got shape {twist.shape}')
++    self.twist = np.mod(twist, 1.0)
++    self.kpts = np.asarray([self.twist @ self.cell.reciprocal_vectors()])
++
++    if restricted:
++      khf_cls = getattr(pbc_scf, 'KHF', pbc_scf.KRHF)
++      self.mean_field = khf_cls(self.cell, exxdiv='ewald', kpts=self.kpts)
++    else:
++      self.mean_field = pbc_scf.KUHF(
++          self.cell, exxdiv='ewald', kpts=self.kpts)
++    self.mean_field = self.mean_field.density_fit()
++    self.coeff_key = ('mo_coeff_alpha', 'mo_coeff_beta')
++    self.param_split = {}
++    self.parameters = {}
++    self.k_split = {}
++
++  def run(self):
++    """Run PySCF PBC HF and cache occupied MO coefficients."""
++    dm0 = self.mean_field.get_init_guess()
++    self.mean_field.kernel(dm0)
++    if not self.mean_field.converged:
++      logging.warning('PySCF PBC HF did not report convergence.')
++    self._init_orbital_coefficients()
++
++  def _init_orbital_coefficients(self):
++    """Collect occupied MO coefficients for each spin and k point."""
++    mo_coeff = self.mean_field.mo_coeff
++    mo_occ = self.mean_field.mo_occ
++    try:
++      unrestricted_coeff = len(mo_coeff[0][0].shape) == 2
++    except (IndexError, TypeError):
++      unrestricted_coeff = False
++
++    for spin, key in enumerate(self.coeff_key):
++      coeffs = []
++      k_counts = []
++      for k in range(len(self.kpts)):
++        if unrestricted_coeff:
++          occ = np.asarray(mo_occ[spin][k]) > 0.9
++          coeff = np.asarray(mo_coeff[spin][k])[:, occ]
++        else:
++          min_occ = (0.9, 1.1)[spin]
++          occ = np.asarray(mo_occ[k]) > min_occ
++          coeff = np.asarray(mo_coeff[k])[:, occ]
++        coeffs.append(coeff)
++        k_counts.append(coeff.shape[1])
++      total_orbitals = sum(k_counts)
++      if total_orbitals != self.nspins[spin]:
++        raise RuntimeError(
++            'PBC HF occupied-orbital count does not match spin count: '
++            f'spin={spin}, occupied={total_orbitals}, expected={self.nspins[spin]}'
++        )
++      self.param_split[key] = np.cumsum(k_counts)[:-1]
++      self.parameters[key] = np.concatenate(coeffs, axis=-1)
++      self.k_split[key] = np.asarray(k_counts)
++
++  def eval_orbitals_pbc(self, coord: np.ndarray) -> np.ndarray:
++    """Evaluate periodic atomic orbitals for all k points."""
++    batch, nelec, ndim = coord.shape
++    if ndim != self.ndim:
++      raise ValueError(f'Only ndim={self.ndim} is supported, got {ndim}')
++    wrapped, wrap = _np_enforce_pbc(self.cell.a, coord.reshape([-1, ndim]))
++    wrapped = wrapped.reshape([-1, ndim])
++    wrap = wrap.reshape([-1, ndim])
++    ao = self.cell.eval_gto('PBCGTOval_sph', wrapped, kpts=self.kpts)
++    if isinstance(ao, np.ndarray) and ao.ndim == 2:
++      ao_by_k = [ao]
++    elif isinstance(ao, np.ndarray):
++      ao_by_k = [ao[k] for k in range(ao.shape[0])]
++    else:
++      ao_by_k = list(ao)
++    translations = wrap @ self.cell.a
++    phase = np.exp(1j * np.einsum('kd,nd->kn', self.kpts, translations))
++    ao_by_k = [ao_k * phase[k][:, None] for k, ao_k in enumerate(ao_by_k)]
++    return np.stack(ao_by_k, axis=0).reshape(
++        [len(self.kpts), batch, nelec, -1])
++
++  def eval_mos_pbc(self, aos: np.ndarray, spin: int) -> np.ndarray:
++    """Project periodic atomic orbitals into occupied molecular orbitals."""
++    coeff_key = self.coeff_key[spin]
++    coeffs_by_k = np.split(
++        self.parameters[coeff_key], self.param_split[coeff_key], axis=-1)
++    mos = [
++        aos[k].dot(coeffs_by_k[k])
++        for k in range(len(self.kpts))
++        if coeffs_by_k[k].shape[-1] > 0
++    ]
++    return np.concatenate(mos, axis=-1)
++
++  def eval_orbitals(
++      self,
++      pos: Union[np.ndarray, jnp.ndarray],
++      nspins: Tuple[int, int],
++      target_chunk_size: int = 0,
++  ) -> Tuple[np.ndarray, np.ndarray]:
++    """Evaluate occupied PBC HF orbital matrices at electron positions."""
++    pos = np.asarray(pos, dtype=np.float64)
++    leading_dims = pos.shape[:-1]
++    nelec = sum(nspins)
++    coord = pos.reshape([-1, nelec, self.ndim])
++    target_chunk_size = int(target_chunk_size or 0)
++    if target_chunk_size < 0:
++      raise ValueError(
++          f'target_chunk_size must be non-negative, got {target_chunk_size}')
++    if target_chunk_size:
++      walker_chunk_size = max(1, target_chunk_size // nelec)
++    else:
++      walker_chunk_size = coord.shape[0]
++
++    result_by_spin = [[], []]
++    for chunk_start in range(0, coord.shape[0], walker_chunk_size):
++      chunk = coord[chunk_start:chunk_start + walker_chunk_size]
++      aos = self.eval_orbitals_pbc(chunk)
++      for spin in (0, 1):
++        ne = int(nspins[spin])
++        if ne == 0:
++          result_by_spin[spin].append(np.zeros((chunk.shape[0], 0, 0)))
++          continue
++        start = 0 if spin == 0 else int(nspins[0])
++        stop = start + ne
++        mo = self.eval_mos_pbc(aos[:, :, start:stop], spin)
++        result_by_spin[spin].append(mo.reshape((chunk.shape[0], ne, ne)))
++
++    result = []
++    for spin in (0, 1):
++      ne = int(nspins[spin])
++      spin_result = np.concatenate(result_by_spin[spin], axis=0)
++      result.append(spin_result.reshape(leading_dims + (ne, ne)))
++    return tuple(result)
++
++  def eval_slater(
++      self,
++      pos: Union[jnp.ndarray, np.ndarray],
++      nspins: Tuple[int, int],
++  ) -> Tuple[jnp.ndarray, jnp.ndarray]:
++    """Evaluate the PBC HF Slater determinant."""
++    matrices = self.eval_orbitals(pos, nspins)
++    sign = 1.0
++    log_abs = 0.0
++    for matrix in matrices:
++      if matrix.shape[-1] == 0:
++        continue
++      matrix_sign, matrix_log_abs = jnp.linalg.slogdet(matrix)
++      sign = sign * matrix_sign
++      log_abs = log_abs + matrix_log_abs
++    return sign, log_abs
++
++
++def _np_enforce_pbc(latvec: np.ndarray, epos: np.ndarray):
++  """Wrap Cartesian coordinates into the PySCF cell and return cell shifts."""
++  dim = latvec.shape[-1]
++  epos = epos.reshape([-1, dim])
++  fractional = np.einsum('ij,jk->ik', epos, np.linalg.inv(latvec))
++  wrap, wrapped_fractional = np.divmod(fractional, 1)
++  return np.matmul(wrapped_fractional, latvec).ravel(), wrap
++
++
+ def eval_orbitals(scf_approx: scf.Scf, pos: Union[np.ndarray, jnp.ndarray],
+                   nspins: Tuple[int, int]) -> Tuple[np.ndarray, np.ndarray]:
+   """Evaluates SCF orbitals from PySCF at a set of positions.
+@@ -258,6 +521,80 @@ def make_pretrain_step(
+   return pretrain_step
+
+
++def make_pbc_pretrain_step(
++    batch_orbitals: networks.OrbitalFnLike,
++    batch_network: networks.LogFermiNetLike,
++    optimizer_update: optax.TransformUpdateFn,
++    electrons: Tuple[int, int],
++    batch_size: int = 0,
++    full_det: bool = False,
++    ndim: int = 3,
++    mcmc_steps: int = 1,
++):
++  """Creates one PBC HF orbital-pretraining step.
++
++  Unlike molecular HF pretraining, PySCF PBC orbitals are evaluated on the host
++  and provided as a fixed target. The compiled step only differentiates the
++  network orbital MSE and refreshes walkers with the neural wavefunction.
++  """
++
++  del electrons  # Shape is carried by the target matrices.
++  mcmc_step = mcmc.make_mcmc_step(
++      batch_network, batch_per_device=batch_size, steps=mcmc_steps, ndim=ndim)
++
++  def loss_fn(
++      params: networks.ParamTree,
++      data: networks.FermiNetData,
++      target: Tuple[jnp.ndarray, jnp.ndarray],
++  ):
++    orbitals = batch_orbitals(
++        params, data.positions, data.spins, data.atoms, data.charges)
++    cnorm = lambda x, y: (x - y) * jnp.conj(x - y)
++    if full_det:
++      dims = target[0].shape[:-2]
++      na = target[0].shape[-2]
++      nb = target[1].shape[-2]
++      dtype = jnp.promote_types(target[0].dtype, target[1].dtype)
++      target_full = jnp.concatenate(
++          (
++              jnp.concatenate(
++                  (
++                      target[0].astype(dtype),
++                      jnp.zeros(dims + (na, nb), dtype=dtype),
++                  ),
++                  axis=-1,
++              ),
++              jnp.concatenate(
++                  (
++                      jnp.zeros(dims + (nb, na), dtype=dtype),
++                      target[1].astype(dtype),
++                  ),
++                  axis=-1,
++              ),
++          ),
++          axis=-2,
++      )
++      result = jnp.mean(cnorm(target_full[:, None, ...], orbitals[0])).real
++    else:
++      result = jnp.array([
++          jnp.mean(cnorm(t[:, None, ...], o)).real
++          for t, o in zip(target, orbitals)
++          if t.shape[-1] > 0
++      ]).sum()
++    return constants.pmean(result)
++
++  def pretrain_step(data, target, params, state, key):
++    val_and_grad = jax.value_and_grad(loss_fn, argnums=0)
++    loss_val, search_direction = val_and_grad(params, data, target)
++    search_direction = constants.pmean(search_direction)
++    updates, state = optimizer_update(search_direction, state, params)
++    params = optax.apply_updates(params, updates)
++    data, pmove = mcmc_step(params, data, key, width=0.02)
++    return data, params, state, loss_val, pmove
++
++  return pretrain_step
++
++
+ def pretrain_hartree_fock(
+     *,
+     params: networks.ParamTree,
+@@ -345,3 +682,114 @@ def pretrain_hartree_fock(
+     if logger:
+       logger(t, loss[0])
+   return params, data.positions
++
++
++def pretrain_hartree_fock_pbc(
++    *,
++    params: networks.ParamTree,
++    positions: jnp.ndarray,
++    spins: jnp.ndarray,
++    atoms: jnp.ndarray,
++    charges: jnp.ndarray,
++    batch_network: networks.FermiNetLike,
++    batch_orbitals: networks.OrbitalFnLike,
++    network_options: networks.BaseNetworkOptions,
++    sharded_key: chex.PRNGKey,
++    electrons: Tuple[int, int],
++    scf_approx: PbcScf,
++    iterations: int = 1000,
++    batch_size: int = 0,
++    logger: Callable[[int, float], None] | None = None,
++    learning_rate: float = 3.e-4,
++    mcmc_steps: int = 1,
++    target_chunk_size: int = 0,
++    log_every: int = 1,
++    stats_writer: Any | None = None,
++):
++  """Pretrains FermiNet PBC orbitals against a PySCF PBC HF target."""
++
++  target_chunk_size = int(target_chunk_size or 0)
++  log_every = int(log_every or 0)
++  if target_chunk_size < 0:
++    raise ValueError(
++        f'target_chunk_size must be non-negative, got {target_chunk_size}')
++  if log_every < 0:
++    raise ValueError(f'log_every must be non-negative, got {log_every}')
++
++  optimizer = optax.adam(learning_rate)
++  opt_state_pt = constants.pmap(optimizer.init)(params)
++
++  pretrain_step = make_pbc_pretrain_step(
++      batch_orbitals,
++      batch_network,
++      optimizer.update,
++      electrons=electrons,
++      batch_size=batch_size,
++      full_det=network_options.full_det,
++      ndim=network_options.ndim,
++      mcmc_steps=mcmc_steps,
++  )
++  pretrain_step = constants.pmap(pretrain_step)
++
++  batch_spins = jnp.tile(spins[None], [positions.shape[1], 1])
++  pmap_spins = kfac_jax.utils.replicate_all_local_devices(batch_spins)
++  data = networks.FermiNetData(
++      positions=positions, spins=pmap_spins, atoms=atoms, charges=charges
++  )
++
++  logging.info(
++      'Starting PBC HF pretraining: iterations=%d target_backend=%s '
++      'target_chunk_size=%d log_every=%d',
++      iterations, getattr(scf_approx, 'target_backend', 'pyscf_pbc'),
++      target_chunk_size, log_every)
++  for t in range(iterations):
++    step_start_time = time.perf_counter()
++    target_eval_start_time = time.perf_counter()
++    if getattr(scf_approx, 'device_side_eval', False):
++      target = scf_approx.eval_orbitals(
++          data.positions, electrons, target_chunk_size)
++      target = tuple(jnp.asarray(tar) for tar in target)
++      _block_until_ready(target)
++      target_eval_seconds = time.perf_counter() - target_eval_start_time
++      target_transfer_seconds = 0.0
++    else:
++      target = scf_approx.eval_orbitals(
++          np.asarray(data.positions), electrons, target_chunk_size)
++      target_eval_seconds = time.perf_counter() - target_eval_start_time
++
++      target_transfer_start_time = time.perf_counter()
++      target = tuple(jnp.asarray(tar) for tar in target)
++      _block_until_ready(target)
++      target_transfer_seconds = time.perf_counter() - target_transfer_start_time
++
++    sharded_key, subkeys = kfac_jax.utils.p_split(sharded_key)
++    jax_update_start_time = time.perf_counter()
++    data, params, opt_state_pt, loss, pmove = pretrain_step(
++        data, target, params, opt_state_pt, subkeys)
++    _block_until_ready((loss, pmove))
++    jax_update_seconds = time.perf_counter() - jax_update_start_time
++    step_seconds = time.perf_counter() - step_start_time
++
++    loss_scalar = float(loss[0])
++    pmove_scalar = float(pmove[0])
++    if log_every and (t % log_every == 0 or t == iterations - 1):
++      logging.info(
++          'PBC pretrain iter %05d: loss=%g pmove=%g '
++          'step_seconds=%.6f target_eval_seconds=%.6f '
++          'target_transfer_seconds=%.6f jax_update_seconds=%.6f',
++          t, loss_scalar, pmove_scalar, step_seconds, target_eval_seconds,
++          target_transfer_seconds, jax_update_seconds)
++    if stats_writer:
++      stats_writer.write(
++          t,
++          loss=loss_scalar,
++          pmove=pmove_scalar,
++          step_seconds=step_seconds,
++          target_eval_seconds=target_eval_seconds,
++          target_transfer_seconds=target_transfer_seconds,
++          jax_update_seconds=jax_update_seconds)
++      if log_every and (t % log_every == 0 or t == iterations - 1):
++        stats_writer.flush()
++    if logger:
++      logger(t, loss_scalar)
++  return params, data.positions
+diff --git a/ferminet/train.py b/ferminet/train.py
+index 41333af..ea15093 100644
+--- a/ferminet/train.py
++++ b/ferminet/train.py
+@@ -16,9 +16,10 @@
+
+ import functools
+ import importlib
++import math
+ import os
+ import time
+-from typing import Optional, Mapping, Sequence, Tuple, Union
++from typing import NamedTuple, Optional, Mapping, Sequence, Tuple, Union
+
+ from absl import logging
+ import chex
+@@ -389,6 +390,138 @@ def make_kfac_training_step(
+   return step
+
+
++def _with_overlap_scale_data(
++    data: networks.FermiNetData,
++    energy_ewm: jnp.ndarray | None,
++    std_ewm: jnp.ndarray | None,
++) -> networks.FermiNetData:
++  """Attach replicated excited-state overlap-scaling statistics to data."""
++
++  def replicate(value):
++    if value is None:
++      return None
++    return kfac_jax.utils.replicate_all_local_devices(
++        value, axis_name=constants.PMAP_AXIS_NAME)
++
++  return networks.FermiNetData(
++      positions=data.positions,
++      spins=data.spins,
++      atoms=data.atoms,
++      charges=data.charges,
++      overlap_scale_energy=replicate(energy_ewm),
++      overlap_scale_std=replicate(std_ewm),
++      overlap_state_order_energy=replicate(energy_ewm),
++  )
++
++
++def _first_device_array(value):
++  value = jnp.asarray(value)
++  if value.ndim >= 2:
++    return value[0]
++  return value
++
++
++class OverlapScaleEWMState(NamedTuple):
++  step: int
++  alpha: jnp.ndarray
++  energy_buffer: jnp.ndarray
++  std_buffer: jnp.ndarray
++  energy_mean: jnp.ndarray
++  std_mean: jnp.ndarray
++
++
++def _init_overlap_scale_ewm_state(
++    states: int,
++    *,
++    max_alpha: float,
++    decay_alpha: float,
++    window_size: int | None = None,
++    dtype=jnp.float32,
++) -> OverlapScaleEWMState:
++  """Initialise DeepQMC-style EWM buffers for overlap-gradient scaling."""
++
++  if window_size is None:
++    window_size = math.ceil(decay_alpha * (1.0 / (1.0 - max_alpha) - 2.0))
++  window_size = max(1, int(window_size))
++  return OverlapScaleEWMState(
++      step=0,
++      alpha=jnp.zeros((window_size,), dtype=dtype),
++      energy_buffer=jnp.zeros((window_size, states), dtype=dtype),
++      std_buffer=jnp.zeros((window_size, states), dtype=dtype),
++      energy_mean=jnp.full((states,), jnp.nan, dtype=dtype),
++      std_mean=jnp.full((states,), jnp.nan, dtype=dtype),
++  )
++
++
++def _deepqmc_ewm_update(
++    value: jnp.ndarray,
++    buffer: jnp.ndarray,
++    alpha: jnp.ndarray,
++    step: int,
++    *,
++    max_alpha: float,
++    decay_alpha: float,
++) -> tuple[jnp.ndarray, jnp.ndarray]:
++  """DeepQMC EWM update used for automatic overlap-gradient scaling."""
++
++  value = jnp.asarray(value, dtype=buffer.dtype)
++  buffer = jnp.concatenate([value[None], buffer[:-1]], axis=0)
++  new_alpha = jnp.maximum(
++      jnp.asarray(1.0 - max_alpha, dtype=buffer.dtype),
++      jnp.asarray(1.0 / (2.0 + step / decay_alpha), dtype=buffer.dtype))
++  if step + 1 < alpha.shape[0]:
++    alpha = jnp.concatenate([new_alpha[None], alpha[:-1]], axis=0)
++  beta = jnp.concatenate(
++      [jnp.ones((1,), dtype=alpha.dtype), jnp.cumprod(1.0 - alpha[:-1])],
++      axis=0)
++  weights = alpha * beta
++  mean = jnp.sum(weights[:, None] * buffer, axis=0)
++  return buffer, mean
++
++
++def _update_overlap_scale_ewm(
++    aux_data: qmc_loss_functions.AuxiliaryLossData,
++    state: OverlapScaleEWMState,
++    *,
++    max_alpha: float,
++    decay_alpha: float,
++) -> OverlapScaleEWMState:
++  """Update DeepQMC-style running energy/std estimates for overlap scaling."""
++
++  energy = _first_device_array(aux_data.energy.real)
++  variance = _first_device_array(aux_data.variance)
++  std = jnp.sqrt(jnp.maximum(jnp.nan_to_num(variance, nan=0.0), 0.0))
++  energy_buffer, energy_mean = _deepqmc_ewm_update(
++      energy,
++      state.energy_buffer,
++      state.alpha,
++      state.step,
++      max_alpha=max_alpha,
++      decay_alpha=decay_alpha)
++  std_buffer, std_mean = _deepqmc_ewm_update(
++      std,
++      state.std_buffer,
++      state.alpha,
++      state.step,
++      max_alpha=max_alpha,
++      decay_alpha=decay_alpha)
++  new_alpha = jnp.maximum(
++      jnp.asarray(1.0 - max_alpha, dtype=state.alpha.dtype),
++      jnp.asarray(1.0 / (2.0 + state.step / decay_alpha),
++                  dtype=state.alpha.dtype))
++  alpha = state.alpha
++  if state.step + 1 < alpha.shape[0]:
++    alpha = jnp.concatenate([new_alpha[None], alpha[:-1]], axis=0)
++  return OverlapScaleEWMState(
++      step=state.step + 1,
++      alpha=alpha,
++      energy_buffer=energy_buffer,
++      std_buffer=std_buffer,
++      energy_mean=energy_mean,
++      std_mean=std_mean,
++  )
++
++
+ def train(cfg: ml_collections.ConfigDict, writer_manager=None):
+   """Runs training loop for QMC.
+
+@@ -458,21 +591,48 @@ def train(cfg: ml_collections.ConfigDict, writer_manager=None):
+
+   # Create parameters, network, and vmaped/pmaped derivations
+
+-  if cfg.pretrain.method == 'hf' and cfg.pretrain.iterations > 0:
+-    hartree_fock = pretrain.get_hf(
+-        pyscf_mol=cfg.system.get('pyscf_mol'),
+-        molecule=cfg.system.molecule,
+-        nspins=nspins,
+-        restricted=False,
+-        basis=cfg.pretrain.basis,
+-        ecp=ecp,
+-        core_electrons=core_electrons,
+-        states=cfg.system.states,
+-        excitation_type=cfg.pretrain.get('excitation_type', 'ordered'))
+-    # broadcast the result of PySCF from host 0 to all other hosts
+-    hartree_fock.mean_field.mo_coeff = multihost_utils.broadcast_one_to_all(
+-        hartree_fock.mean_field.mo_coeff
+-    )
++  pretrain_method = cfg.pretrain.get('method')
++  pbc_hf_pretrain = (
++      cfg.pretrain.get('pbc', False) or pretrain_method == 'pbc_hf')
++  if pretrain_method in ('hf', 'pbc_hf') and cfg.pretrain.iterations > 0:
++    if pbc_hf_pretrain:
++      lattice = cfg.pretrain.get(
++          'lattice', cfg.system.make_local_energy_kwargs.get('lattice'))
++      if lattice is None:
++        raise ValueError('PBC HF pretraining requires a lattice.')
++      if cfg.pretrain.get('scf_fraction', 0.0):
++        logging.warning(
++            'Ignoring pretrain.scf_fraction for PBC HF pretraining; PySCF PBC '
++            'orbital evaluation is host-side, so walkers are sampled from the '
++            'neural network during pretraining.')
++      hartree_fock = pretrain.get_pbc_hf(
++          molecule=cfg.system.molecule,
++          nspins=nspins,
++          lattice=np.asarray(lattice),
++          basis=cfg.pretrain.basis,
++          pseudo=cfg.pretrain.get('pseudo'),
++          twist=cfg.pretrain.get('twist', (0.0, 0.0, 0.0)),
++          precision=cfg.pretrain.get('cell_precision', 1e-8),
++          exp_to_discard=cfg.pretrain.get('cell_exp_to_discard', 0.1),
++          restricted=cfg.pretrain.get('restricted', True),
++          pyscf_cell=cfg.pretrain.get('pyscf_cell'),
++          target_backend=cfg.pretrain.get('target_backend', 'pyscf_pbc'),
++          jax_pbc_image_cutoff=cfg.pretrain.get('jax_pbc_image_cutoff', 2))
++    else:
++      hartree_fock = pretrain.get_hf(
++          pyscf_mol=cfg.system.get('pyscf_mol'),
++          molecule=cfg.system.molecule,
++          nspins=nspins,
++          restricted=False,
++          basis=cfg.pretrain.basis,
++          ecp=ecp,
++          core_electrons=core_electrons,
++          states=cfg.system.states,
++          excitation_type=cfg.pretrain.get('excitation_type', 'ordered'))
++      # broadcast the result of PySCF from host 0 to all other hosts
++      hartree_fock.mean_field.mo_coeff = multihost_utils.broadcast_one_to_all(
++          hartree_fock.mean_field.mo_coeff
++      )
+
+   if cfg.network.make_feature_layer_fn:
+     feature_layer_module, feature_layer_fn = (
+@@ -650,6 +810,20 @@ def train(cfg: ml_collections.ConfigDict, writer_manager=None):
+   if cfg.system.states:
+     energy_matrix_file = open(
+         os.path.join(ckpt_save_path, 'energy_matrix.npy'), 'ab')
++    overlap_matrix_file = open(
++        os.path.join(ckpt_save_path, 'overlap_matrix.npy'), 'ab')
++    symmetric_overlap_matrix_file = open(
++        os.path.join(ckpt_save_path, 'overlap_symmetric_matrix.npy'), 'ab')
++    overlap_penalty_matrix_file = open(
++        os.path.join(ckpt_save_path, 'overlap_penalty_matrix.npy'), 'ab')
++    overlap_gradient_scale_file = open(
++        os.path.join(ckpt_save_path, 'overlap_gradient_scale.npy'), 'ab')
++    overlap_state_ordering_file = open(
++        os.path.join(ckpt_save_path, 'overlap_state_ordering.npy'), 'ab')
++    overlap_scale_energy_ewm_file = open(
++        os.path.join(ckpt_save_path, 'overlap_scale_energy_ewm.npy'), 'ab')
++    overlap_scale_std_ewm_file = open(
++        os.path.join(ckpt_save_path, 'overlap_scale_std_ewm.npy'), 'ab')
+
+   observable_fns = {}
+   observable_states = {}  # only relevant for density matrix
+@@ -703,7 +877,7 @@ def train(cfg: ml_collections.ConfigDict, writer_manager=None):
+
+   if (
+       t_init == 0
+-      and cfg.pretrain.method == 'hf'
++      and pretrain_method in ('hf', 'pbc_hf')
+       and cfg.pretrain.iterations > 0
+   ):
+     pretrain_spins = spins[0, 0]
+@@ -711,23 +885,59 @@ def train(cfg: ml_collections.ConfigDict, writer_manager=None):
+         network.orbitals, in_axes=(None, 0, 0, 0, 0), out_axes=0
+     )
+     sharded_key, subkeys = kfac_jax.utils.p_split(sharded_key)
+-    params, data.positions = pretrain.pretrain_hartree_fock(
+-        params=params,
+-        positions=data.positions,
+-        spins=pretrain_spins,
+-        atoms=data.atoms,
+-        charges=data.charges,
+-        batch_network=batch_network,
+-        batch_orbitals=batch_orbitals,
+-        network_options=network.options,
+-        sharded_key=subkeys,
+-        electrons=cfg.system.electrons,
+-        scf_approx=hartree_fock,
+-        iterations=cfg.pretrain.iterations,
+-        batch_size=device_batch_size,
+-        scf_fraction=cfg.pretrain.get('scf_fraction', 0.0),
+-        states=cfg.system.states,
+-    )
++    if pbc_hf_pretrain:
++      pretrain_schema = (
++          'loss',
++          'pmove',
++          'step_seconds',
++          'target_eval_seconds',
++          'target_transfer_seconds',
++          'jax_update_seconds',
++      )
++      with writers.Writer(
++          name='pretrain_stats',
++          schema=pretrain_schema,
++          directory=ckpt_save_path,
++          iteration_key='step',
++          log=False) as pretrain_writer:
++        params, data.positions = pretrain.pretrain_hartree_fock_pbc(
++            params=params,
++            positions=data.positions,
++            spins=pretrain_spins,
++            atoms=data.atoms,
++            charges=data.charges,
++            batch_network=batch_network,
++            batch_orbitals=batch_orbitals,
++            network_options=network.options,
++            sharded_key=subkeys,
++            electrons=cfg.system.electrons,
++            scf_approx=hartree_fock,
++            iterations=cfg.pretrain.iterations,
++            batch_size=device_batch_size,
++            learning_rate=cfg.pretrain.get('learning_rate', 3.e-4),
++            mcmc_steps=cfg.pretrain.get('mcmc_steps', 1),
++            target_chunk_size=cfg.pretrain.get('target_chunk_size', 0),
++            log_every=cfg.pretrain.get('log_every', 1),
++            stats_writer=pretrain_writer,
++        )
++    else:
++      params, data.positions = pretrain.pretrain_hartree_fock(
++          params=params,
++          positions=data.positions,
++          spins=pretrain_spins,
++          atoms=data.atoms,
++          charges=data.charges,
++          batch_network=batch_network,
++          batch_orbitals=batch_orbitals,
++          network_options=network.options,
++          sharded_key=subkeys,
++          electrons=cfg.system.electrons,
++          scf_approx=hartree_fock,
++          iterations=cfg.pretrain.iterations,
++          batch_size=device_batch_size,
++          scf_fraction=cfg.pretrain.get('scf_fraction', 0.0),
++          states=cfg.system.states,
++      )
+
+   # Main training
+
+@@ -827,6 +1037,13 @@ def train(cfg: ml_collections.ConfigDict, writer_manager=None):
+         center_at_clipped_energy=cfg.optim.center_at_clip,
+         overlap_penalty=cfg.optim.overlap.penalty,
+         overlap_weight=overlap_weight,
++        overlap_scale_by=cfg.optim.overlap.get('scale_by', None),
++        overlap_min_scale=cfg.optim.overlap.get('min_scale', 0.001),
++        overlap_max_scale=cfg.optim.overlap.get('max_scale', 5.0),
++        overlap_clip_width=cfg.optim.overlap.get('clip_width', 10.0),
++        overlap_clip_exclude_width=cfg.optim.overlap.get(
++            'clip_exclude_width', jnp.inf),
++        overlap_sort_states_by=cfg.optim.overlap.get('sort_states_by', None),
+         complex_output=cfg.network.get('complex', False),
+         max_vmap_batch_size=cfg.optim.get('max_vmap_batch_size', 0))
+   else:
+@@ -837,6 +1054,22 @@ def train(cfg: ml_collections.ConfigDict, writer_manager=None):
+     return cfg.optim.lr.rate * jnp.power(
+         (1.0 / (1.0 + (t_/cfg.optim.lr.delay))), cfg.optim.lr.decay)
+
++  use_overlap_ewm_scale = (
++      cfg.system.states and cfg.optim.objective == 'vmc_overlap' and
++      cfg.optim.overlap.get('use_ewm_scale', False))
++  overlap_ewm_max_alpha = cfg.optim.overlap.get('ewm_max_alpha', 0.999)
++  overlap_ewm_decay_alpha = cfg.optim.overlap.get('ewm_decay_alpha', 10.0)
++  overlap_scale_ewm_state = None
++  if use_overlap_ewm_scale:
++    overlap_scale_ewm_state = _init_overlap_scale_ewm_state(
++        cfg.system.states,
++        max_alpha=overlap_ewm_max_alpha,
++        decay_alpha=overlap_ewm_decay_alpha)
++    data = _with_overlap_scale_data(
++        data,
++        overlap_scale_ewm_state.energy_mean,
++        overlap_scale_ewm_state.std_mean)
++
+   # Construct and setup optimizer
+   if cfg.optim.optimizer == 'none':
+     optimizer = None
+@@ -973,6 +1206,11 @@ def train(cfg: ml_collections.ConfigDict, writer_manager=None):
+     # Main training loop
+     num_resets = 0  # used if reset_if_nan is true
+     for t in range(t_init, cfg.optim.iterations):
++      if use_overlap_ewm_scale:
++        data = _with_overlap_scale_data(
++            data,
++            overlap_scale_ewm_state.energy_mean,
++            overlap_scale_ewm_state.std_mean)
+       sharded_key, subkeys = kfac_jax.utils.p_split(sharded_key)
+       data, params, opt_state, loss, aux_data, pmove = step(
+           data,
+@@ -989,6 +1227,12 @@ def train(cfg: ml_collections.ConfigDict, writer_manager=None):
+       weighted_stats = statistics.exponentialy_weighted_stats(
+           alpha=0.1, observation=loss, previous_stats=weighted_stats)
+       pmove = pmove[0]
++      if use_overlap_ewm_scale:
++        overlap_scale_ewm_state = _update_overlap_scale_ewm(
++            aux_data,
++            overlap_scale_ewm_state,
++            max_alpha=overlap_ewm_max_alpha,
++            decay_alpha=overlap_ewm_decay_alpha)
+
+       # Update observables
+       observable_data = {
+@@ -1053,6 +1297,36 @@ def train(cfg: ml_collections.ConfigDict, writer_manager=None):
+         energy_matrix = aux_data.local_energy_mat
+         energy_matrix = np.nanmean(np.nanmean(energy_matrix, axis=0), axis=0)
+         np.save(energy_matrix_file, energy_matrix)
++        if aux_data.mean_s_ij is not None:
++          overlap_matrix = np.asarray(aux_data.mean_s_ij)
++          if overlap_matrix.ndim >= 3:
++            overlap_matrix = overlap_matrix[0]
++          np.save(overlap_matrix_file, overlap_matrix)
++        if aux_data.symmetric_s_ij is not None:
++          symmetric_overlap_matrix = np.asarray(aux_data.symmetric_s_ij)
++          if symmetric_overlap_matrix.ndim >= 3:
++            symmetric_overlap_matrix = symmetric_overlap_matrix[0]
++          np.save(symmetric_overlap_matrix_file, symmetric_overlap_matrix)
++        if aux_data.squared_s_ij is not None:
++          overlap_penalty_matrix = np.asarray(aux_data.squared_s_ij)
++          if overlap_penalty_matrix.ndim >= 3:
++            overlap_penalty_matrix = overlap_penalty_matrix[0]
++          np.save(overlap_penalty_matrix_file, overlap_penalty_matrix)
++        if aux_data.overlap_gradient_scale is not None:
++          overlap_gradient_scale = np.asarray(aux_data.overlap_gradient_scale)
++          if overlap_gradient_scale.ndim >= 3:
++            overlap_gradient_scale = overlap_gradient_scale[0]
++          np.save(overlap_gradient_scale_file, overlap_gradient_scale)
++        if aux_data.state_ordering is not None:
++          state_ordering = np.asarray(aux_data.state_ordering).astype(np.int64)
++          if state_ordering.ndim >= 2:
++            state_ordering = state_ordering[0]
++          np.save(overlap_state_ordering_file, state_ordering)
++        if overlap_scale_ewm_state is not None:
++          np.save(overlap_scale_energy_ewm_file,
++                  np.asarray(overlap_scale_ewm_state.energy_mean))
++          np.save(overlap_scale_std_ewm_file,
++                  np.asarray(overlap_scale_ewm_state.std_mean))
+         if cfg.observables.s2:
+           np.save(s2_matrix_file, observable_data['s2'])
+         if cfg.observables.dipole:
+@@ -1069,6 +1343,13 @@ def train(cfg: ml_collections.ConfigDict, writer_manager=None):
+     # Shut down logging at end
+     if cfg.system.states:
+       energy_matrix_file.close()
++      overlap_matrix_file.close()
++      symmetric_overlap_matrix_file.close()
++      overlap_penalty_matrix_file.close()
++      overlap_gradient_scale_file.close()
++      overlap_state_ordering_file.close()
++      overlap_scale_energy_ewm_file.close()
++      overlap_scale_std_ewm_file.close()
+       if cfg.observables.s2:
+         s2_matrix_file.close()
+       if cfg.observables.dipole:

@@ -21,6 +21,7 @@ from solidnes.excited_states.ferminet_pbc_scaffold import FermiNetPBCStateSample
 from solidnes.excited_states.ferminet_pbc_scaffold import broadcast_state_samples
 from solidnes.excited_states.ferminet_pbc_scaffold import evaluate_overlap_diagnostics
 from solidnes.excited_states.ferminet_pbc_scaffold import evaluate_state_energy_estimate
+from solidnes.excited_states.penalty import overlap_gradient_scale
 from solidnes.excited_states.penalty import penalty_vmc_terms
 
 
@@ -224,6 +225,14 @@ def evaluate_ferminet_pbc_penalty_terms(
     energy_weights: Any | None = None,
     collapse_threshold: float = 0.95,
     clip_upper: bool = False,
+    ratio_clip_width: float | None = None,
+    ratio_exclude_width: float = float("inf"),
+    max_logabs_ratio: float | None = None,
+    overlap_scale_by: str | None = None,
+    min_gap_scale_factor: float = 0.001,
+    max_scale_factor: float = 5.0,
+    overlap_scale_state_energy: Any | None = None,
+    overlap_scale_state_energy_std: Any | None = None,
 ) -> dict[str, Any]:
     """Evaluate real FermiNet PBC diagnostics and penalty objective terms.
 
@@ -240,16 +249,39 @@ def evaluate_ferminet_pbc_penalty_terms(
         samples,
         collapse_threshold=collapse_threshold,
         clip_upper=clip_upper,
+        ratio_clip_width=ratio_clip_width,
+        ratio_exclude_width=ratio_exclude_width,
+        max_logabs_ratio=max_logabs_ratio,
+    )
+    energy_std = adapter.modules.jnp.std(energy.local_energy, axis=-1)
+    scale_energy = (
+        energy.state_energy
+        if overlap_scale_state_energy is None
+        else adapter.modules.jnp.asarray(overlap_scale_state_energy)
+    )
+    scale_std = (
+        energy_std
+        if overlap_scale_state_energy_std is None
+        else adapter.modules.jnp.asarray(overlap_scale_state_energy_std)
+    )
+    scale = overlap_gradient_scale(
+        scale_energy,
+        scale_std,
+        scale_by=overlap_scale_by,
+        min_gap_scale_factor=min_gap_scale_factor,
+        max_scale_factor=max_scale_factor,
     )
     terms = penalty_vmc_terms(
         energy.state_energy,
         overlap["overlap_matrix"],
         penalty_alpha=penalty_alpha,
         energy_weights=energy_weights,
+        overlap_scale=scale,
     )
     return {
         "local_energy": energy.local_energy,
         "state_energy": energy.state_energy,
+        "state_energy_std": energy_std,
         **overlap,
         **terms,
     }
@@ -265,6 +297,14 @@ def ferminet_pbc_penalty_objective(
     energy_weights: Any | None = None,
     collapse_threshold: float = 0.95,
     clip_upper: bool = False,
+    ratio_clip_width: float | None = None,
+    ratio_exclude_width: float = float("inf"),
+    max_logabs_ratio: float | None = None,
+    overlap_scale_by: str | None = None,
+    min_gap_scale_factor: float = 0.001,
+    max_scale_factor: float = 5.0,
+    overlap_scale_state_energy: Any | None = None,
+    overlap_scale_state_energy_std: Any | None = None,
 ) -> Any:
     """Return the scalar FermiNet PBC external-state penalty objective."""
 
@@ -277,7 +317,96 @@ def ferminet_pbc_penalty_objective(
         energy_weights=energy_weights,
         collapse_threshold=collapse_threshold,
         clip_upper=clip_upper,
+        ratio_clip_width=ratio_clip_width,
+        ratio_exclude_width=ratio_exclude_width,
+        max_logabs_ratio=max_logabs_ratio,
+        overlap_scale_by=overlap_scale_by,
+        min_gap_scale_factor=min_gap_scale_factor,
+        max_scale_factor=max_scale_factor,
+        overlap_scale_state_energy=overlap_scale_state_energy,
+        overlap_scale_state_energy_std=overlap_scale_state_energy_std,
     )["penalty_objective"]
+
+
+def ferminet_pbc_penalty_training_objective(
+    adapter: FermiNetPBCExternalStateAdapter,
+    state_params: tuple[Any, ...],
+    samples: FermiNetPBCStateSamples,
+    *,
+    penalty_alpha: float,
+    local_energy: BatchedLocalEnergy | None = None,
+    energy_weights: Any | None = None,
+    collapse_threshold: float = 0.95,
+    clip_upper: bool = False,
+    ratio_clip_width: float | None = 10.0,
+    ratio_exclude_width: float = float("inf"),
+    max_logabs_ratio: float | None = 30.0,
+    local_energy_clip_width: float | None = 5.0,
+    local_energy_exclude_width: float = float("inf"),
+    overlap_scale_by: str | None = "max_gap_std",
+    min_gap_scale_factor: float = 0.001,
+    max_scale_factor: float = 5.0,
+    state_ordering: str = "index",
+    precomputed_terms: dict[str, Any] | None = None,
+    overlap_scale_state_energy: Any | None = None,
+    overlap_scale_state_energy_std: Any | None = None,
+) -> Any:
+    """Return a penalty objective with a paper-style optimization tangent.
+
+    The returned scalar has the diagnostic value of the penalty objective, while
+    its gradient avoids differentiating through the local-energy operator.  The
+    energy tangent uses a VMC score-function surrogate, and overlap gradients are
+    ordered so lower-index states are treated as fixed references.
+    """
+
+    if precomputed_terms is None:
+        terms = evaluate_ferminet_pbc_penalty_terms(
+            adapter,
+            state_params,
+            samples,
+            penalty_alpha=penalty_alpha,
+            local_energy=local_energy,
+            energy_weights=energy_weights,
+            collapse_threshold=collapse_threshold,
+            clip_upper=clip_upper,
+            ratio_clip_width=ratio_clip_width,
+            ratio_exclude_width=ratio_exclude_width,
+            max_logabs_ratio=max_logabs_ratio,
+            overlap_scale_by=overlap_scale_by,
+            min_gap_scale_factor=min_gap_scale_factor,
+            max_scale_factor=max_scale_factor,
+            overlap_scale_state_energy=overlap_scale_state_energy,
+            overlap_scale_state_energy_std=overlap_scale_state_energy_std,
+        )
+    else:
+        terms = precomputed_terms
+    true_objective = terms["penalty_objective"]
+    energy_surrogate = _state_energy_score_surrogate(
+        adapter,
+        state_params,
+        samples,
+        adapter.modules.jax.lax.stop_gradient(terms["local_energy"]),
+        energy_weights=energy_weights,
+        local_energy_clip_width=local_energy_clip_width,
+        local_energy_exclude_width=local_energy_exclude_width,
+    )
+    overlap_surrogate = _ordered_overlap_surrogate(
+        adapter,
+        state_params,
+        samples,
+        adapter.modules.jax.lax.stop_gradient(terms["overlap_gradient_scale"]),
+        clip_upper=clip_upper,
+        ratio_clip_width=ratio_clip_width,
+        ratio_exclude_width=ratio_exclude_width,
+        max_logabs_ratio=max_logabs_ratio,
+        state_ordering=state_ordering,
+    )
+    surrogate = energy_surrogate + penalty_alpha * overlap_surrogate
+    jax = adapter.modules.jax
+    return jax.lax.stop_gradient(true_objective) + _zero_primal_tangent(
+        adapter,
+        surrogate,
+    )
 
 
 def value_and_grad_ferminet_pbc_penalty_objective(
@@ -290,11 +419,47 @@ def value_and_grad_ferminet_pbc_penalty_objective(
     energy_weights: Any | None = None,
     collapse_threshold: float = 0.95,
     clip_upper: bool = False,
+    ratio_clip_width: float | None = 10.0,
+    ratio_exclude_width: float = float("inf"),
+    max_logabs_ratio: float | None = 30.0,
+    local_energy_clip_width: float | None = 5.0,
+    local_energy_exclude_width: float = float("inf"),
+    overlap_scale_by: str | None = "max_gap_std",
+    min_gap_scale_factor: float = 0.001,
+    max_scale_factor: float = 5.0,
+    state_ordering: str = "index",
+    gradient_mode: str = "paper_tangent",
+    precomputed_terms: dict[str, Any] | None = None,
+    overlap_scale_state_energy: Any | None = None,
+    overlap_scale_state_energy_std: Any | None = None,
 ) -> tuple[Any, Any]:
     """Evaluate the scalar penalty objective and gradients over state params."""
 
     def objective(params):
-        return ferminet_pbc_penalty_objective(
+        if gradient_mode == "direct":
+            if precomputed_terms is not None:
+                raise ValueError("precomputed_terms are only supported for paper_tangent")
+            return ferminet_pbc_penalty_objective(
+                adapter,
+                params,
+                samples,
+                penalty_alpha=penalty_alpha,
+                local_energy=local_energy,
+                energy_weights=energy_weights,
+                collapse_threshold=collapse_threshold,
+                clip_upper=clip_upper,
+                ratio_clip_width=ratio_clip_width,
+                ratio_exclude_width=ratio_exclude_width,
+                max_logabs_ratio=max_logabs_ratio,
+                overlap_scale_by=overlap_scale_by,
+                min_gap_scale_factor=min_gap_scale_factor,
+                max_scale_factor=max_scale_factor,
+                overlap_scale_state_energy=overlap_scale_state_energy,
+                overlap_scale_state_energy_std=overlap_scale_state_energy_std,
+            )
+        if gradient_mode != "paper_tangent":
+            raise ValueError(f"Unsupported gradient_mode: {gradient_mode}")
+        return ferminet_pbc_penalty_training_objective(
             adapter,
             params,
             samples,
@@ -303,6 +468,18 @@ def value_and_grad_ferminet_pbc_penalty_objective(
             energy_weights=energy_weights,
             collapse_threshold=collapse_threshold,
             clip_upper=clip_upper,
+            ratio_clip_width=ratio_clip_width,
+            ratio_exclude_width=ratio_exclude_width,
+            max_logabs_ratio=max_logabs_ratio,
+            local_energy_clip_width=local_energy_clip_width,
+            local_energy_exclude_width=local_energy_exclude_width,
+            overlap_scale_by=overlap_scale_by,
+            min_gap_scale_factor=min_gap_scale_factor,
+            max_scale_factor=max_scale_factor,
+            state_ordering=state_ordering,
+            precomputed_terms=precomputed_terms,
+            overlap_scale_state_energy=overlap_scale_state_energy,
+            overlap_scale_state_energy_std=overlap_scale_state_energy_std,
         )
 
     return adapter.modules.jax.value_and_grad(objective)(state_params)
@@ -323,6 +500,243 @@ def apply_external_state_sgd_step(
         lambda param, grad: param - lr * grad,
         state_params,
         grads,
+    )
+
+
+def _state_energy_score_surrogate(
+    adapter: FermiNetPBCExternalStateAdapter,
+    state_params: tuple[Any, ...],
+    samples: FermiNetPBCStateSamples,
+    local_energy_values: Any,
+    *,
+    energy_weights: Any | None,
+    local_energy_clip_width: float | None,
+    local_energy_exclude_width: float,
+) -> Any:
+    """Build a VMC score-function surrogate for state-energy gradients."""
+
+    jnp = adapter.modules.jnp
+    jax = adapter.modules.jax
+    contributions = []
+    for state_idx, params in enumerate(state_params):
+        positions, spins, atoms, charges = samples.for_sample_state(state_idx)
+        _, logabs = adapter.batched_signed_network(
+            params,
+            positions,
+            spins,
+            atoms,
+            charges,
+        )
+        local_energy, gradient_mask = _clip_local_energy_by_median(
+            adapter,
+            local_energy_values[state_idx],
+            clip_width=local_energy_clip_width,
+            exclude_width=local_energy_exclude_width,
+        )
+        mean_energy = _masked_mean(jnp, local_energy, gradient_mask)
+        centered_energy = jax.lax.stop_gradient(local_energy - mean_energy)
+        centered_logabs = logabs - jax.lax.stop_gradient(jnp.mean(logabs))
+        contributions.append(
+            _masked_mean(jnp, centered_energy * centered_logabs, gradient_mask)
+        )
+    per_state = jnp.stack(contributions, axis=0)
+    weights = _normalized_state_weights(adapter, energy_weights, len(state_params))
+    return jnp.sum(per_state * weights)
+
+
+def _ordered_overlap_surrogate(
+    adapter: FermiNetPBCExternalStateAdapter,
+    state_params: tuple[Any, ...],
+    samples: FermiNetPBCStateSamples,
+    overlap_scale: Any,
+    *,
+    clip_upper: bool,
+    ratio_clip_width: float | None,
+    ratio_exclude_width: float,
+    max_logabs_ratio: float | None,
+    state_ordering: str,
+) -> Any:
+    """Return ordered overlap loss with lower-state stop-gradient behavior."""
+
+    if state_ordering not in ("index", "natural"):
+        raise ValueError("Only index/natural state ordering is supported for now")
+    jnp = adapter.modules.jnp
+    total = jnp.asarray(0.0)
+    nstates = len(state_params)
+    stopped_params = tuple(_stop_gradient_tree(adapter, params) for params in state_params)
+    for low_idx in range(nstates):
+        for high_idx in range(low_idx + 1, nstates):
+            low_params = stopped_params[low_idx]
+            high_params = state_params[high_idx]
+            ratio_low_high = _pair_wavefunction_ratio(
+                adapter,
+                low_params,
+                high_params,
+                samples,
+                sample_state=high_idx,
+                max_logabs_ratio=max_logabs_ratio,
+            )
+            ratio_high_low = _pair_wavefunction_ratio(
+                adapter,
+                high_params,
+                low_params,
+                samples,
+                sample_state=low_idx,
+                max_logabs_ratio=max_logabs_ratio,
+            )
+            ratio_low_high = _clip_pair_ratio(
+                adapter,
+                ratio_low_high,
+                ratio_clip_width=ratio_clip_width,
+                ratio_exclude_width=ratio_exclude_width,
+            )
+            ratio_high_low = _clip_pair_ratio(
+                adapter,
+                ratio_high_low,
+                ratio_clip_width=ratio_clip_width,
+                ratio_exclude_width=ratio_exclude_width,
+            )
+            product = jnp.mean(ratio_low_high) * jnp.mean(ratio_high_low)
+            if clip_upper:
+                pair_penalty = jnp.clip(product, 0.0, 1.0)
+            else:
+                pair_penalty = jnp.maximum(product, 0.0)
+            scale = _pair_scale(adapter, overlap_scale, low_idx, high_idx)
+            total = total + scale * pair_penalty
+    return total
+
+
+def _pair_wavefunction_ratio(
+    adapter: FermiNetPBCExternalStateAdapter,
+    numerator_params: Any,
+    denominator_params: Any,
+    samples: FermiNetPBCStateSamples,
+    *,
+    sample_state: int,
+    max_logabs_ratio: float | None,
+) -> Any:
+    """Evaluate psi_num(r_sample_state) / psi_den(r_sample_state)."""
+
+    jnp = adapter.modules.jnp
+    positions, spins, atoms, charges = samples.for_sample_state(sample_state)
+    numerator_sign, numerator_logabs = adapter.batched_signed_network(
+        numerator_params,
+        positions,
+        spins,
+        atoms,
+        charges,
+    )
+    denominator_sign, denominator_logabs = adapter.batched_signed_network(
+        denominator_params,
+        positions,
+        spins,
+        atoms,
+        charges,
+    )
+    log_ratio = numerator_logabs - denominator_logabs
+    if max_logabs_ratio is not None:
+        log_ratio = jnp.clip(log_ratio, -max_logabs_ratio, max_logabs_ratio)
+    ratio = (numerator_sign / denominator_sign) * jnp.exp(log_ratio)
+    return jnp.real(ratio)
+
+
+def _clip_pair_ratio(
+    adapter: FermiNetPBCExternalStateAdapter,
+    ratio: Any,
+    *,
+    ratio_clip_width: float | None,
+    ratio_exclude_width: float,
+) -> Any:
+    if ratio_clip_width is None:
+        return ratio
+    jnp = adapter.modules.jnp
+    jax = adapter.modules.jax
+    center = jax.lax.stop_gradient(jnp.median(ratio, axis=-1, keepdims=True))
+    deviation = jnp.abs(ratio - center)
+    sigma = jax.lax.stop_gradient(jnp.median(deviation, axis=-1, keepdims=True))
+    clipped = jnp.clip(
+        ratio,
+        center - ratio_clip_width * sigma,
+        center + ratio_clip_width * sigma,
+    )
+    mask = deviation < ratio_exclude_width
+    return jnp.where(mask, clipped, jax.lax.stop_gradient(clipped))
+
+
+def _clip_local_energy_by_median(
+    adapter: FermiNetPBCExternalStateAdapter,
+    local_energy: Any,
+    *,
+    clip_width: float | None,
+    exclude_width: float,
+) -> tuple[Any, Any]:
+    jnp = adapter.modules.jnp
+    values = jnp.real(jnp.asarray(local_energy))
+    finite = jnp.isfinite(values)
+    safe = jnp.nan_to_num(values, nan=0.0, posinf=0.0, neginf=0.0)
+    if clip_width is None:
+        return safe, finite
+    center = jnp.median(safe, axis=-1, keepdims=True)
+    deviation = jnp.abs(safe - center)
+    mad = jnp.mean(deviation, axis=-1, keepdims=True)
+    clipped = jnp.clip(safe, center - clip_width * mad, center + clip_width * mad)
+    gradient_mask = finite & (deviation < exclude_width)
+    return clipped, gradient_mask
+
+
+def _zero_primal_tangent(adapter: FermiNetPBCExternalStateAdapter, value: Any) -> Any:
+    """Return a zero-valued tangent term with a finite primal value."""
+
+    jnp = adapter.modules.jnp
+    jax = adapter.modules.jax
+    finite_value = jnp.nan_to_num(
+        jnp.real(jnp.asarray(value)),
+        nan=0.0,
+        posinf=0.0,
+        neginf=0.0,
+    )
+    return finite_value - jax.lax.stop_gradient(finite_value)
+
+
+def _masked_mean(jnp: Any, value: Any, mask: Any) -> Any:
+    weighted = jnp.where(mask, value, 0.0)
+    denom = jnp.maximum(jnp.sum(mask), 1)
+    return jnp.sum(weighted) / denom
+
+
+def _normalized_state_weights(
+    adapter: FermiNetPBCExternalStateAdapter,
+    energy_weights: Any | None,
+    nstates: int,
+) -> Any:
+    jnp = adapter.modules.jnp
+    if energy_weights is None:
+        return jnp.ones((nstates,)) / nstates
+    weights = jnp.asarray(energy_weights)
+    if weights.shape != (nstates,):
+        raise ValueError("energy_weights must have shape [states]")
+    return weights / jnp.sum(weights)
+
+
+def _pair_scale(
+    adapter: FermiNetPBCExternalStateAdapter,
+    overlap_scale: Any,
+    low_idx: int,
+    high_idx: int,
+) -> Any:
+    jnp = adapter.modules.jnp
+    scale = jnp.asarray(overlap_scale)
+    if scale.ndim == 0:
+        value = scale
+    else:
+        value = scale[low_idx, high_idx]
+    return adapter.modules.jax.lax.stop_gradient(value)
+
+
+def _stop_gradient_tree(adapter: FermiNetPBCExternalStateAdapter, tree: Any) -> Any:
+    return adapter.modules.jax.tree_util.tree_map(
+        adapter.modules.jax.lax.stop_gradient,
+        tree,
     )
 
 
@@ -468,6 +882,7 @@ __all__ = [
     "configure_jax_platform",
     "evaluate_ferminet_pbc_penalty_terms",
     "ferminet_pbc_penalty_objective",
+    "ferminet_pbc_penalty_training_objective",
     "init_external_state_params",
     "load_ferminet_jax_modules",
     "make_network_from_config",

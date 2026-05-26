@@ -1,0 +1,122 @@
+project: solidnes
+experiment_name: diamond_c_ferminet_pbc_gamma_driver_kfac_multigpu_iter100_fullnode
+stage: excited_state_nesvmc
+phase: ferminet_pbc_driver_kfac_multigpu_iter100_fullnode
+
+backend:
+  name: ferminet
+  repository: https://github.com/google-deepmind/ferminet
+  inspected_commit: c4312c315dda1c5728994ba89629744f71c6eb66
+  mode: external_backend_with_local_patch
+
+system_config: ../system/diamond_c_primitive_gamma.yaml
+model_config: ../model/ferminet_pbc_small.yaml
+sampler_config: ../sampler/metropolis_ferminet_pbc_short.yaml
+train_config: ../train/ground_state_ferminet_pbc_adam_short100.yaml
+
+ferminet_config_template:
+  module: solidnes/backends/ferminet_configs/diamond_pbc_gamma.py
+
+runtime:
+  target_jax_version: 0.10.1
+  cuda_extra: cuda12
+  precision_profile: speed
+  x64_enabled: false
+  require_gpu: true
+  xla_python_client_preallocate: true
+  xla_python_client_mem_fraction: 0.90
+
+output:
+  log_dir: >-
+    tasks/excited_state_nesvmc/0073_ferminet_pbc_driver_kfac_multigpu_iter100_fullnode/logs/backend
+  checkpoint_dir: >-
+    tasks/excited_state_nesvmc/0073_ferminet_pbc_driver_kfac_multigpu_iter100_fullnode/results/checkpoints
+  validation_dir: >-
+    tasks/excited_state_nesvmc/0073_ferminet_pbc_driver_kfac_multigpu_iter100_fullnode/results/validation
+
+diagnostics:
+  import_ferminet: true
+  build_pbc_config: true
+  real_pbc_local_energy_driver_kfac_multigpu_iter100_fullnode: true
+  expected_external_states: 2
+  walkers_per_state: 8
+  iterations: 100
+  seed: 73
+  penalty_alpha: 1.0
+  gradient_mode: paper_tangent
+  local_energy_source: real_pbc
+  sampler:
+    burn_in: 1
+    steps_per_iteration: 2
+    proposal_width: 0.02
+    wrap_positions: true
+  optimizer:
+    name: kfac
+    learning_rate: 1.0e-4
+    kfac:
+      damping: 0.001
+      momentum: 0.0
+      norm_constraint: 0.001
+      l2_reg: 0.0
+      cov_ema_decay: 0.95
+      invert_every: 1
+      register_only_generic: false
+  parameter_sharing:
+    merge_keys:
+      - layers/streams
+  update_guards:
+    finite_gradient: true
+    finite_update: true
+    finite_candidate_terms: true
+    reject_nonfinite_update: true
+    max_grad_l2_norm: 1000.0
+    max_update_l2_norm: 0.001
+    candidate_check_period: 5
+  checkpoint:
+    interval: 10
+    expected_files:
+      - driver_iter_000010.pkl
+      - driver_iter_000020.pkl
+      - driver_iter_000030.pkl
+      - driver_iter_000040.pkl
+      - driver_iter_000050.pkl
+      - driver_iter_000060.pkl
+      - driver_iter_000070.pkl
+      - driver_iter_000080.pkl
+      - driver_iter_000090.pkl
+      - driver_iter_000100.pkl
+  clipping:
+    psi_ratio_clip_width: 10.0
+    max_logabs_ratio: 30.0
+    local_energy_clip_width: 5.0
+  overlap_scaling:
+    scale_by: max_gap_std
+    ewma_decay: 0.5
+    min_gap_scale_factor: 0.001
+    max_scale_factor: 5.0
+  expected_output:
+    - finite initial and final local-energy matrices with shape [2, 8]
+    - 100 finite sampler/update diagnostic rows
+    - finite sampler acceptance in [0, 1] for every driver iteration
+    - KFAC native state metadata reports multi_device true on four GPUs
+    - direct KFAC update norm clipped to at most 0.001
+    - shared stream parameter paths projected across external states
+    - guarded candidate checks every fifth iteration
+    - checkpoint files every 10 iterations
+
+notes:
+  status: ready_for_dry_run
+  purpose: >-
+    100-iteration sampler-integrated FermiNet PBC excited-state controlled
+    trajectory using direct multi-device KFAC, real PBC local-energy/Laplacian
+    diagnostics, shared stream parameters, EWMA overlap scaling, and a full
+    amdgpu40g node.
+  previous_success: tasks/excited_state_nesvmc/0071_ferminet_pbc_driver_kfac_real_local_energy_smoke
+  supersedes: tasks/excited_state_nesvmc/0072_ferminet_pbc_driver_kfac_real_local_energy_iter100_fullnode
+  resource_intent: >-
+    Request one full amdgpu40g node. Eight walkers per external state give each
+    of four local GPUs two walkers per state after walker-axis sharding, avoiding
+    the one-walker score-function degeneracy while exercising KFAC pmap.
+  local_patch:
+    file: external/ferminet/ferminet/networks.py
+    change: construct_symmetric_features uses broadcast_to instead of tile for spin-channel means

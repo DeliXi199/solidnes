@@ -50,6 +50,7 @@ def main() -> int:
         apply_external_state_sgd_step,
         assert_pbc_external_state_config,
         build_external_state_adapter,
+        evaluate_ferminet_pbc_penalty_terms,
         ferminet_pbc_penalty_objective,
         value_and_grad_ferminet_pbc_penalty_objective,
     )
@@ -69,6 +70,13 @@ def main() -> int:
         nstates=args.states,
         walkers=args.walkers,
     )
+    terms = evaluate_ferminet_pbc_penalty_terms(
+        adapter,
+        state_params,
+        samples,
+        penalty_alpha=args.penalty_alpha,
+        local_energy=cheap_local_energy,
+    )
 
     value, grads = value_and_grad_ferminet_pbc_penalty_objective(
         adapter,
@@ -76,6 +84,7 @@ def main() -> int:
         samples,
         penalty_alpha=args.penalty_alpha,
         local_energy=cheap_local_energy,
+        precomputed_terms=terms,
     )
     grad_norm = _tree_l2_norm(adapter, grads)
     updated_params = apply_external_state_sgd_step(

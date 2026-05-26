@@ -12,6 +12,7 @@ except ModuleNotFoundError:  # pragma: no cover - exercised on machines without 
     _jnp = _np
 
 from solidnes.excited_states.overlap import offdiag_squared_overlap
+from solidnes.excited_states.overlap import scaled_offdiag_squared_overlap
 
 
 ArrayLike = Any
@@ -93,21 +94,70 @@ def max_gap_std_scale(
     )
 
 
+def overlap_gradient_scale(
+    state_energies: ArrayLike,
+    state_energy_std: ArrayLike | None = None,
+    *,
+    scale_by: str | None = "max_gap_std",
+    min_gap_scale_factor: float = 0.001,
+    max_scale_factor: float = 5.0,
+) -> ArrayLike:
+    """Return pairwise overlap-gradient scaling factors."""
+
+    energies = _asarray(state_energies)
+    if scale_by is None or scale_by == "none":
+        return _jnp.ones(energies.shape[:-1] + (energies.shape[-1], energies.shape[-1]))
+    if scale_by == "energy_gap":
+        return energy_gap_scale(
+            energies,
+            min_gap_scale_factor=min_gap_scale_factor,
+            max_scale_factor=max_scale_factor,
+        )
+    if state_energy_std is None:
+        std = _jnp.zeros_like(energies)
+    else:
+        std = _asarray(state_energy_std)
+    if scale_by == "energy_std":
+        std_scale = energy_std_scale(
+            std,
+            min_gap_scale_factor=min_gap_scale_factor,
+            max_scale_factor=max_scale_factor,
+        )
+        return _jnp.broadcast_to(std_scale, energies.shape + energies.shape[-1:])
+    if scale_by == "max_gap_std":
+        return max_gap_std_scale(
+            energies,
+            std,
+            min_gap_scale_factor=min_gap_scale_factor,
+            max_scale_factor=max_scale_factor,
+        )
+    raise ValueError(f"Unsupported overlap scale_by: {scale_by}")
+
+
 def penalty_vmc_terms(
     state_energies: ArrayLike,
     overlap_matrix: ArrayLike,
     *,
     penalty_alpha: float,
     energy_weights: ArrayLike | None = None,
+    overlap_scale: ArrayLike | None = None,
 ) -> dict[str, ArrayLike]:
     """Return per-batch pieces of a penalty-based excited-state objective."""
 
     weighted_energy = weighted_state_energy(state_energies, energy_weights)
     overlap_penalty = offdiag_squared_overlap(overlap_matrix)
-    total = weighted_energy + penalty_alpha * overlap_penalty
+    if overlap_scale is None:
+        scaled_overlap_penalty = overlap_penalty
+        scale = _jnp.asarray(1.0)
+    else:
+        scale = _asarray(overlap_scale)
+        scaled_overlap_penalty = scaled_offdiag_squared_overlap(overlap_matrix, scale)
+    total = weighted_energy + penalty_alpha * scaled_overlap_penalty
     return {
         "weighted_state_energy": weighted_energy,
         "offdiag_squared_overlap": overlap_penalty,
+        "scaled_offdiag_squared_overlap": scaled_overlap_penalty,
+        "overlap_gradient_scale": scale,
         "penalty_alpha": _jnp.asarray(penalty_alpha),
         "penalty_objective": total,
     }

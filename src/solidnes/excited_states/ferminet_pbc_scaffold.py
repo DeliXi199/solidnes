@@ -18,6 +18,7 @@ except ModuleNotFoundError:  # pragma: no cover - exercised on machines without 
     _jnp = _np
 
 from solidnes.excited_states.overlap import estimate_overlap_from_ratios
+from solidnes.excited_states.overlap import clip_psi_ratios_by_median
 from solidnes.excited_states.overlap import overlap_diagnostics
 from solidnes.excited_states.penalty import penalty_vmc_terms
 
@@ -157,7 +158,11 @@ def evaluate_state_wavefunction_matrix(
     )
 
 
-def wavefunction_ratios_from_matrix(matrix: StateWavefunctionMatrix) -> ArrayLike:
+def wavefunction_ratios_from_matrix(
+    matrix: StateWavefunctionMatrix,
+    *,
+    max_logabs_ratio: float | None = None,
+) -> ArrayLike:
     """Return `psi_i(r_j) / psi_j(r_j)` for all states and samples."""
 
     sign = _jnp.asarray(matrix.sign)
@@ -169,7 +174,10 @@ def wavefunction_ratios_from_matrix(matrix: StateWavefunctionMatrix) -> ArrayLik
 
     diag_sign = _jnp.diagonal(sign, axis1=0, axis2=1).T
     diag_logabs = _jnp.diagonal(logabs, axis1=0, axis2=1).T
-    return (sign / diag_sign[None, :, :]) * _jnp.exp(logabs - diag_logabs[None, :, :])
+    log_ratio = logabs - diag_logabs[None, :, :]
+    if max_logabs_ratio is not None:
+        log_ratio = _jnp.clip(log_ratio, -max_logabs_ratio, max_logabs_ratio)
+    return (sign / diag_sign[None, :, :]) * _jnp.exp(log_ratio)
 
 
 def evaluate_overlap_diagnostics(
@@ -179,14 +187,31 @@ def evaluate_overlap_diagnostics(
     *,
     collapse_threshold: float = 0.95,
     clip_upper: bool = False,
+    ratio_clip_width: float | None = None,
+    ratio_exclude_width: float = _np.inf,
+    max_logabs_ratio: float | None = None,
 ) -> dict[str, ArrayLike]:
     """Evaluate overlap diagnostics from a batched FermiNet-like network."""
 
     matrix = evaluate_state_wavefunction_matrix(signed_network, state_params, samples)
-    ratios = wavefunction_ratios_from_matrix(matrix)
-    overlap = estimate_overlap_from_ratios(ratios, clip_upper=clip_upper)
+    ratios = wavefunction_ratios_from_matrix(
+        matrix,
+        max_logabs_ratio=max_logabs_ratio,
+    )
+    if ratio_clip_width is None:
+        overlap_ratios = ratios
+        ratio_mask = _jnp.ones_like(_jnp.asarray(ratios), dtype=bool)
+    else:
+        overlap_ratios, ratio_mask = clip_psi_ratios_by_median(
+            ratios,
+            clip_width=ratio_clip_width,
+            exclude_width=ratio_exclude_width,
+        )
+    overlap = estimate_overlap_from_ratios(overlap_ratios, clip_upper=clip_upper)
     return overlap_diagnostics(overlap, collapse_threshold=collapse_threshold) | {
         "psi_ratio": ratios,
+        "psi_ratio_for_overlap": overlap_ratios,
+        "psi_ratio_gradient_mask": ratio_mask,
     }
 
 

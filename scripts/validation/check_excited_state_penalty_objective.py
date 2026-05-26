@@ -11,10 +11,13 @@ from solidnes.excited_states import energy_gap_scale
 from solidnes.excited_states import energy_std_scale
 from solidnes.excited_states import estimate_overlap_from_ratios
 from solidnes.excited_states import max_gap_std_scale
+from solidnes.excited_states import overlap_gradient_scale
 from solidnes.excited_states import overlap_diagnostics
 from solidnes.excited_states import overlap_penalty_loss
 from solidnes.excited_states import penalty_vmc_loss
 from solidnes.excited_states import penalty_vmc_terms
+from solidnes.excited_states import scaled_offdiag_squared_overlap
+from solidnes.excited_states import clip_psi_ratios_by_median
 from solidnes.excited_states import symmetrize_overlap_with_clipped_geometric_mean
 
 
@@ -38,6 +41,10 @@ def main() -> None:
             [[0.1, 0.22], [1.0, 1.0]],
         ]
     )
+    clipped_ratios, ratio_mask = clip_psi_ratios_by_median(ratios, clip_width=1.0)
+    _assert_close(clipped_ratios[0, 1], [0.2, 0.3])
+    _assert_close(ratio_mask, np.ones_like(ratios, dtype=bool))
+
     overlap = estimate_overlap_from_ratios(ratios)
     expected_overlap_01 = math.sqrt(0.25 * 0.16)
     _assert_close(overlap, np.array([[1.0, expected_overlap_01], [expected_overlap_01, 1.0]]))
@@ -55,11 +62,33 @@ def main() -> None:
     _assert_close(terms["weighted_state_energy"], expected_weighted_energy)
     _assert_close(penalty_vmc_loss(state_energies, overlap, penalty_alpha=4.0), expected_loss)
 
+    scale = np.array([[0.1, 0.2], [0.3, 0.4]])
+    _assert_close(scaled_offdiag_squared_overlap(overlap, scale), 0.2 * expected_overlap_01**2)
+    scaled_terms = penalty_vmc_terms(
+        state_energies,
+        overlap,
+        penalty_alpha=4.0,
+        overlap_scale=scale,
+    )
+    _assert_close(
+        scaled_terms["penalty_objective"],
+        expected_weighted_energy + 4.0 * 0.2 * expected_overlap_01**2,
+    )
+
     energies = np.array([-75.0, -74.8])
     std = np.array([0.05, 0.3])
     _assert_close(energy_gap_scale(energies, min_gap_scale_factor=0.1), [[0.1, 0.2], [0.2, 0.1]])
     _assert_close(energy_std_scale(std, min_gap_scale_factor=0.1), [[0.1], [0.3]])
     _assert_close(max_gap_std_scale(energies, std, min_gap_scale_factor=0.1), [[0.1, 0.2], [0.3, 0.3]])
+    _assert_close(
+        overlap_gradient_scale(
+            energies,
+            std,
+            scale_by="max_gap_std",
+            min_gap_scale_factor=0.1,
+        ),
+        [[0.1, 0.2], [0.3, 0.3]],
+    )
 
     print("excited-state penalty objective synthetic checks passed")
 

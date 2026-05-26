@@ -1,0 +1,59 @@
+project: solidnes
+experiment_name: diamond_c_ferminet_pbc_gamma_native_vmc_overlap_kfac_smoke
+stage: excited_state_nesvmc
+phase: ferminet_native_vmc_overlap_kfac_smoke
+
+backend:
+  name: ferminet
+  repository: https://github.com/google-deepmind/ferminet
+  inspected_commit: c4312c315dda1c5728994ba89629744f71c6eb66
+  mode: native_ferminet_excited_state
+
+system_config: ../system/diamond_c_primitive_gamma.yaml
+model_config: ../model/ferminet_pbc_small.yaml
+sampler_config: ../sampler/metropolis_ferminet_pbc_short.yaml
+train_config: ../train/excited_state_ferminet_pbc_native_kfac_smoke.yaml
+
+ferminet_config_template:
+  module: solidnes/backends/ferminet_configs/diamond_pbc_gamma.py
+
+runtime:
+  target_jax_version: 0.10.1
+  cuda_extra: cuda12
+  precision_profile: speed
+  x64_enabled: false
+  require_gpu: true
+  xla_python_client_preallocate: true
+  xla_python_client_mem_fraction: 0.90
+
+output:
+  log_dir: tasks/excited_state_nesvmc/0074_ferminet_native_vmc_overlap_kfac_smoke/logs/backend
+  checkpoint_dir: tasks/excited_state_nesvmc/0074_ferminet_native_vmc_overlap_kfac_smoke/results/checkpoints
+  validation_dir: tasks/excited_state_nesvmc/0074_ferminet_native_vmc_overlap_kfac_smoke/results/validation
+
+diagnostics:
+  import_ferminet: true
+  build_pbc_config: true
+  native_ferminet_excited_state: true
+  expected_states: 2
+  objective: vmc_overlap
+  optimizer: kfac
+  iterations: 20
+  expected_outputs:
+    - train_stats.csv with 20 native FermiNet rows
+    - native FermiNet excited-state local_energy_mat diagnostics
+    - KFAC multi_device=True through upstream FermiNet train.py
+    - runtime comparable to ground-state short FermiNet smoke at the same scale
+
+notes:
+  status: ready_for_build_check
+  purpose: >-
+    First SolidNES-owned run through FermiNet's native excited-state
+    penalty-VMC architecture, replacing the slower external state-wrapper path
+    for performance alignment with ground-state FermiNet.
+  method_source: >-
+    Uses FermiNet's upstream vmc_overlap loss, which implements the
+    penalty-based excited-state objective with multi-state network outputs,
+    local-energy matrices, overlap estimates, custom JVP score-function
+    gradients, and KFAC registration.
+  supersedes_wrapper_task: tasks/excited_state_nesvmc/0073_ferminet_pbc_driver_kfac_multigpu_iter100_fullnode
