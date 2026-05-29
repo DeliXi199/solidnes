@@ -1,0 +1,35 @@
+{
+  "experiment": "configs/experiment/diamond_c_psiformer_pbc_gamma_attention_build_benchmark.yaml",
+  "heads_dim": 64,
+  "mlp_hidden_dims": [
+    256
+  ],
+  "network_type": "psiformer",
+  "num_heads": 4,
+  "num_layers": 3,
+  "psiformer_attention_implementation": "auto",
+  "results": [
+    {
+      "all_finite": true,
+      "implementation": "fused_qkv",
+      "logabs_shape": [
+        8
+      ],
+      "max_abs_logabs_delta_vs_first": 0.0,
+      "max_abs_sign_delta_vs_first": 0.0,
+      "max_seconds": 0.002859662286937237,
+      "mean_seconds": 0.002491363789886236,
+      "median_seconds": 0.002491363789886236,
+      "min_seconds": 0.0021230652928352356,
+      "platform": "cpu",
+      "repeats": 2,
+      "sign_shape": [
+        8
+      ],
+      "speedup_vs_first_mean": 1.0,
+      "speedup_vs_first_median": 1.0,
+      "walkers": 8,
+      "warmup": 1
+    }
+  ]
+}

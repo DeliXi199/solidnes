@@ -26,6 +26,9 @@ venv/
 # Large task artifacts
 tasks/**/results/checkpoints/
 tasks/**/logs/
+tasks/**/runs/
+tasks/**/outputs/config_checks/
+tasks/**/outputs/slurm_plans/plan_*.json
 *.ckpt
 *.pt
 *.pkl
@@ -36,6 +39,9 @@ tasks/**/logs/
 tasks/**/results/validation/*.svg
 tasks/**/results/validation/**/*.svg
 tasks/**/results/validation/*timeseries.csv
+tasks/**/results/validation/*timeseries*.csv
+tasks/**/results/validation/**/*timeseries.csv
+tasks/**/results/validation/**/*timeseries*.csv
 tasks/**/results/validation/*series.csv
 tasks/**/results/validation/*gap_trend.csv
 

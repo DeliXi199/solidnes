@@ -1,0 +1,598 @@
+{
+  "task_root": "tasks/psiformer/0095_psiformer_native_training_smoke",
+  "variants": [
+    {
+      "variant": "auto_smoke",
+      "run_root": "tasks/psiformer/0095_psiformer_native_training_smoke/runs/auto_smoke",
+      "status": "completed",
+      "rows": 2,
+      "final_energy": -26.851917,
+      "mean_pmove": 0.91503907,
+      "runtime": {
+        "experiment": "diamond_c_psiformer_pbc_gamma_native_training_smoke_auto",
+        "network_type": "psiformer",
+        "objective": "vmc_overlap",
+        "states": 2,
+        "iterations": 2,
+        "batch_size": 256,
+        "optimizer": "kfac",
+        "laplacian": "folx",
+        "psiformer_attention_configured": "auto",
+        "psiformer_attention_resolved": "fused_qkv",
+        "elapsed_seconds": 170.25212871236727,
+        "seconds_per_iteration": 85.12606435618363,
+        "jax_version": "0.10.1",
+        "jax_backend": "gpu",
+        "jax_devices": [
+          "cuda:0"
+        ]
+      },
+      "native_summary": {
+        "status": "ok",
+        "experiment": "configs/experiment/diamond_c_psiformer_pbc_gamma_native_training_smoke_auto.yaml",
+        "job_id": "131661",
+        "rows": 2,
+        "first_step": 0,
+        "final_step": 1,
+        "first_energy": -26.568987,
+        "final_energy": -26.851917,
+        "min_energy": -26.851917,
+        "max_energy": -26.568987,
+        "final_ewmean": -26.59728,
+        "final_ewvar": 0.0072044637,
+        "mean_pmove": 0.91503907,
+        "min_pmove": 0.91484374,
+        "max_pmove": 0.9152344,
+        "energy_matrix_frames": 2,
+        "final_state_energy": [
+          -26.141786575317383,
+          -28.27218246459961
+        ],
+        "final_training_state_energy": [
+          -26.141786575317383,
+          -28.27218246459961
+        ],
+        "final_training_gap_hartree": -2.1303958892822266,
+        "final_training_gap_ev": -57.97102540012375,
+        "bare_energy_matrix_frames": 0,
+        "final_bare_state_energy": [
+          -26.141786575317383,
+          -28.27218246459961
+        ],
+        "final_bare_gap_hartree": -2.1303958892822266,
+        "final_bare_gap_ev": -57.97102540012375,
+        "overlap_matrix_frames": 2,
+        "final_overlap_matrix": [
+          [
+            1.0,
+            -0.05096516013145447
+          ],
+          [
+            0.1348101794719696,
+            1.0
+          ]
+        ],
+        "symmetric_overlap_matrix_frames": 2,
+        "final_symmetric_overlap_matrix": [
+          [
+            1.0,
+            -0.0
+          ],
+          [
+            0.0,
+            1.0
+          ]
+        ],
+        "overlap_penalty_matrix_frames": 2,
+        "final_overlap_penalty_matrix": [
+          [
+            1.0,
+            0.0
+          ],
+          [
+            0.0,
+            1.0
+          ]
+        ],
+        "overlap_gradient_scale_frames": 2,
+        "final_overlap_gradient_scale": [
+          [
+            5.0,
+            5.0
+          ],
+          [
+            5.0,
+            5.0
+          ]
+        ],
+        "state_ordering_frames": 2,
+        "final_state_ordering": [
+          1,
+          0
+        ],
+        "overlap_scale_energy_ewm_frames": 2,
+        "final_overlap_scale_energy_ewm": [
+          -19.229045867919922,
+          -20.801294326782227
+        ],
+        "overlap_scale_std_ewm_frames": 2,
+        "final_overlap_scale_std_ewm": [
+          10.953568458557129,
+          7.58135461807251
+        ],
+        "s2_matrix_frames": 0,
+        "final_s2_matrix": null,
+        "final_s2_diagonal": null,
+        "final_s2_trace": null
+      },
+      "attention_configured": "auto",
+      "attention_resolved": "fused_qkv",
+      "batch_size": 256,
+      "iterations": 2,
+      "elapsed_seconds": 170.25212871236727,
+      "seconds_per_iteration": 85.12606435618363,
+      "summary_status": "ok",
+      "final_state_energy": [
+        -26.141786575317383,
+        -28.27218246459961
+      ],
+      "final_training_gap_ev": -57.97102540012375,
+      "final_symmetric_overlap_matrix": [
+        [
+          1.0,
+          -0.0
+        ],
+        [
+          0.0,
+          1.0
+        ]
+      ]
+    },
+    {
+      "variant": "ferminet_b512",
+      "run_root": "tasks/psiformer/0095_psiformer_native_training_smoke/runs/ferminet_b512",
+      "status": "completed",
+      "rows": 5,
+      "final_energy": -25.97826,
+      "mean_pmove": 0.916074242,
+      "runtime": {
+        "experiment": "diamond_c_psiformer_pbc_gamma_native_training_compare_ferminet",
+        "network_type": "psiformer",
+        "objective": "vmc_overlap",
+        "states": 2,
+        "iterations": 5,
+        "batch_size": 512,
+        "optimizer": "kfac",
+        "laplacian": "folx",
+        "psiformer_attention_configured": "ferminet",
+        "psiformer_attention_resolved": "ferminet",
+        "elapsed_seconds": 184.272654581815,
+        "seconds_per_iteration": 36.854530916363004,
+        "jax_version": "0.10.1",
+        "jax_backend": "gpu",
+        "jax_devices": [
+          "cuda:0"
+        ]
+      },
+      "native_summary": {
+        "status": "ok",
+        "experiment": "configs/experiment/diamond_c_psiformer_pbc_gamma_native_training_compare_ferminet.yaml",
+        "job_id": "131664",
+        "rows": 5,
+        "first_step": 0,
+        "final_step": 4,
+        "first_energy": -26.324541,
+        "final_energy": -25.97826,
+        "min_energy": -26.428185,
+        "max_energy": -25.97826,
+        "final_ewmean": -26.280083,
+        "final_ewvar": 0.012900585,
+        "mean_pmove": 0.916074242,
+        "min_pmove": 0.912793,
+        "max_pmove": 0.9183594,
+        "energy_matrix_frames": 5,
+        "final_state_energy": [
+          -25.27228355407715,
+          -27.435800552368164
+        ],
+        "final_training_state_energy": [
+          -25.27228355407715,
+          -27.435800552368164
+        ],
+        "final_training_gap_hartree": -2.1635169982910156,
+        "final_training_gap_ev": -58.872296690257386,
+        "bare_energy_matrix_frames": 0,
+        "final_bare_state_energy": [
+          -25.27228355407715,
+          -27.435800552368164
+        ],
+        "final_bare_gap_hartree": -2.1635169982910156,
+        "final_bare_gap_ev": -58.872296690257386,
+        "overlap_matrix_frames": 5,
+        "final_overlap_matrix": [
+          [
+            1.0,
+            0.13106535375118256
+          ],
+          [
+            0.02897992730140686,
+            1.0
+          ]
+        ],
+        "symmetric_overlap_matrix_frames": 5,
+        "final_symmetric_overlap_matrix": [
+          [
+            1.0,
+            0.06163005903363228
+          ],
+          [
+            0.06163005903363228,
+            1.0
+          ]
+        ],
+        "overlap_penalty_matrix_frames": 5,
+        "final_overlap_penalty_matrix": [
+          [
+            1.0,
+            0.00379826407879591
+          ],
+          [
+            0.00379826407879591,
+            1.0
+          ]
+        ],
+        "overlap_gradient_scale_frames": 5,
+        "final_overlap_gradient_scale": [
+          [
+            5.0,
+            5.0
+          ],
+          [
+            5.0,
+            5.0
+          ]
+        ],
+        "state_ordering_frames": 5,
+        "final_state_ordering": [
+          1,
+          0
+        ],
+        "overlap_scale_energy_ewm_frames": 5,
+        "final_overlap_scale_energy_ewm": [
+          -24.302330017089844,
+          -26.16872787475586
+        ],
+        "overlap_scale_std_ewm_frames": 5,
+        "final_overlap_scale_std_ewm": [
+          10.191000938415527,
+          10.37044620513916
+        ],
+        "s2_matrix_frames": 0,
+        "final_s2_matrix": null,
+        "final_s2_diagonal": null,
+        "final_s2_trace": null
+      },
+      "attention_configured": "ferminet",
+      "attention_resolved": "ferminet",
+      "batch_size": 512,
+      "iterations": 5,
+      "elapsed_seconds": 184.272654581815,
+      "seconds_per_iteration": 36.854530916363004,
+      "summary_status": "ok",
+      "final_state_energy": [
+        -25.27228355407715,
+        -27.435800552368164
+      ],
+      "final_training_gap_ev": -58.872296690257386,
+      "final_symmetric_overlap_matrix": [
+        [
+          1.0,
+          0.06163005903363228
+        ],
+        [
+          0.06163005903363228,
+          1.0
+        ]
+      ]
+    },
+    {
+      "variant": "fused_qkv_b512",
+      "run_root": "tasks/psiformer/0095_psiformer_native_training_smoke/runs/fused_qkv_b512",
+      "status": "completed",
+      "rows": 5,
+      "final_energy": -26.24522,
+      "mean_pmove": 0.9171093880000001,
+      "runtime": {
+        "experiment": "diamond_c_psiformer_pbc_gamma_native_training_compare_fused_qkv",
+        "network_type": "psiformer",
+        "objective": "vmc_overlap",
+        "states": 2,
+        "iterations": 5,
+        "batch_size": 512,
+        "optimizer": "kfac",
+        "laplacian": "folx",
+        "psiformer_attention_configured": "fused_qkv",
+        "psiformer_attention_resolved": "fused_qkv",
+        "elapsed_seconds": 185.37517307093367,
+        "seconds_per_iteration": 37.075034614186734,
+        "jax_version": "0.10.1",
+        "jax_backend": "gpu",
+        "jax_devices": [
+          "cuda:0"
+        ]
+      },
+      "native_summary": {
+        "status": "ok",
+        "experiment": "configs/experiment/diamond_c_psiformer_pbc_gamma_native_training_compare_fused_qkv.yaml",
+        "job_id": "131666",
+        "rows": 5,
+        "first_step": 0,
+        "final_step": 4,
+        "first_energy": -26.842916,
+        "final_energy": -26.24522,
+        "min_energy": -26.842916,
+        "max_energy": -26.24522,
+        "final_ewmean": -26.718489,
+        "final_ewvar": 0.038261224,
+        "mean_pmove": 0.9171093880000001,
+        "min_pmove": 0.91552734,
+        "max_pmove": 0.91875,
+        "energy_matrix_frames": 5,
+        "final_state_energy": [
+          -25.75894546508789,
+          -27.262968063354492
+        ],
+        "final_training_state_energy": [
+          -25.75894546508789,
+          -27.262968063354492
+        ],
+        "final_training_gap_hartree": -1.5040225982666016,
+        "final_training_gap_ev": -40.926539844126935,
+        "bare_energy_matrix_frames": 0,
+        "final_bare_state_energy": [
+          -25.75894546508789,
+          -27.262968063354492
+        ],
+        "final_bare_gap_hartree": -1.5040225982666016,
+        "final_bare_gap_ev": -40.926539844126935,
+        "overlap_matrix_frames": 5,
+        "final_overlap_matrix": [
+          [
+            1.0,
+            0.14322839677333832
+          ],
+          [
+            0.026315998286008835,
+            1.0
+          ]
+        ],
+        "symmetric_overlap_matrix_frames": 5,
+        "final_symmetric_overlap_matrix": [
+          [
+            1.0,
+            0.06139379367232323
+          ],
+          [
+            0.06139379367232323,
+            1.0
+          ]
+        ],
+        "overlap_penalty_matrix_frames": 5,
+        "final_overlap_penalty_matrix": [
+          [
+            1.0,
+            0.003769197966903448
+          ],
+          [
+            0.003769197966903448,
+            1.0
+          ]
+        ],
+        "overlap_gradient_scale_frames": 5,
+        "final_overlap_gradient_scale": [
+          [
+            5.0,
+            5.0
+          ],
+          [
+            5.0,
+            5.0
+          ]
+        ],
+        "state_ordering_frames": 5,
+        "final_state_ordering": [
+          1,
+          0
+        ],
+        "overlap_scale_energy_ewm_frames": 5,
+        "final_overlap_scale_energy_ewm": [
+          -24.827587127685547,
+          -25.97674560546875
+        ],
+        "overlap_scale_std_ewm_frames": 5,
+        "final_overlap_scale_std_ewm": [
+          10.090312004089355,
+          9.421609878540039
+        ],
+        "s2_matrix_frames": 0,
+        "final_s2_matrix": null,
+        "final_s2_diagonal": null,
+        "final_s2_trace": null
+      },
+      "attention_configured": "fused_qkv",
+      "attention_resolved": "fused_qkv",
+      "batch_size": 512,
+      "iterations": 5,
+      "elapsed_seconds": 185.37517307093367,
+      "seconds_per_iteration": 37.075034614186734,
+      "summary_status": "ok",
+      "final_state_energy": [
+        -25.75894546508789,
+        -27.262968063354492
+      ],
+      "final_training_gap_ev": -40.926539844126935,
+      "final_symmetric_overlap_matrix": [
+        [
+          1.0,
+          0.06139379367232323
+        ],
+        [
+          0.06139379367232323,
+          1.0
+        ]
+      ]
+    },
+    {
+      "variant": "fused_qkv_b1024",
+      "run_root": "tasks/psiformer/0095_psiformer_native_training_smoke/runs/fused_qkv_b1024",
+      "status": "completed",
+      "rows": 5,
+      "final_energy": -26.274906,
+      "mean_pmove": 0.914921898,
+      "runtime": {
+        "experiment": "diamond_c_psiformer_pbc_gamma_native_training_benchmark_fused_qkv_b1024",
+        "network_type": "psiformer",
+        "objective": "vmc_overlap",
+        "states": 2,
+        "iterations": 5,
+        "batch_size": 1024,
+        "optimizer": "kfac",
+        "laplacian": "folx",
+        "psiformer_attention_configured": "fused_qkv",
+        "psiformer_attention_resolved": "fused_qkv",
+        "elapsed_seconds": 209.2311848658137,
+        "seconds_per_iteration": 41.84623697316274,
+        "jax_version": "0.10.1",
+        "jax_backend": "gpu",
+        "jax_devices": [
+          "cuda:0"
+        ]
+      },
+      "native_summary": {
+        "status": "ok",
+        "experiment": "configs/experiment/diamond_c_psiformer_pbc_gamma_native_training_benchmark_fused_qkv_b1024.yaml",
+        "job_id": "131667",
+        "rows": 5,
+        "first_step": 0,
+        "final_step": 4,
+        "first_energy": -26.615835,
+        "final_energy": -26.274906,
+        "min_energy": -26.615835,
+        "max_energy": -26.274906,
+        "final_ewmean": -26.556335,
+        "final_ewvar": 0.01091129,
+        "mean_pmove": 0.914921898,
+        "min_pmove": 0.9134766,
+        "max_pmove": 0.91616213,
+        "energy_matrix_frames": 5,
+        "final_state_energy": [
+          -25.799297332763672,
+          -27.235830307006836
+        ],
+        "final_training_state_energy": [
+          -25.799297332763672,
+          -27.235830307006836
+        ],
+        "final_training_gap_hartree": -1.436532974243164,
+        "final_training_gap_ev": -39.09005361722867,
+        "bare_energy_matrix_frames": 0,
+        "final_bare_state_energy": [
+          -25.799297332763672,
+          -27.235830307006836
+        ],
+        "final_bare_gap_hartree": -1.436532974243164,
+        "final_bare_gap_ev": -39.09005361722867,
+        "overlap_matrix_frames": 5,
+        "final_overlap_matrix": [
+          [
+            1.0,
+            -0.09387106448411942
+          ],
+          [
+            -0.008620942011475563,
+            1.0
+          ]
+        ],
+        "symmetric_overlap_matrix_frames": 5,
+        "final_symmetric_overlap_matrix": [
+          [
+            1.0,
+            -0.02844744175672531
+          ],
+          [
+            -0.02844744175672531,
+            1.0
+          ]
+        ],
+        "overlap_penalty_matrix_frames": 5,
+        "final_overlap_penalty_matrix": [
+          [
+            1.0,
+            0.0008092569187283516
+          ],
+          [
+            0.0008092569187283516,
+            1.0
+          ]
+        ],
+        "overlap_gradient_scale_frames": 5,
+        "final_overlap_gradient_scale": [
+          [
+            5.0,
+            5.0
+          ],
+          [
+            5.0,
+            5.0
+          ]
+        ],
+        "state_ordering_frames": 5,
+        "final_state_ordering": [
+          1,
+          0
+        ],
+        "overlap_scale_energy_ewm_frames": 5,
+        "final_overlap_scale_energy_ewm": [
+          -24.724166870117188,
+          -26.051313400268555
+        ],
+        "overlap_scale_std_ewm_frames": 5,
+        "final_overlap_scale_std_ewm": [
+          9.52996826171875,
+          10.364437103271484
+        ],
+        "s2_matrix_frames": 0,
+        "final_s2_matrix": null,
+        "final_s2_diagonal": null,
+        "final_s2_trace": null
+      },
+      "attention_configured": "fused_qkv",
+      "attention_resolved": "fused_qkv",
+      "batch_size": 1024,
+      "iterations": 5,
+      "elapsed_seconds": 209.2311848658137,
+      "seconds_per_iteration": 41.84623697316274,
+      "summary_status": "ok",
+      "final_state_energy": [
+        -25.799297332763672,
+        -27.235830307006836
+      ],
+      "final_training_gap_ev": -39.09005361722867,
+      "final_symmetric_overlap_matrix": [
+        [
+          1.0,
+          -0.02844744175672531
+        ],
+        [
+          -0.02844744175672531,
+          1.0
+        ]
+      ]
+    }
+  ],
+  "comparisons": {
+    "b512_seconds_per_iteration_speedup": 0.9940525019027399,
+    "b512_elapsed_speedup": 0.9940525019027397,
+    "fused_b512_to_b1024_seconds_per_iteration_ratio": 1.1286904357238363
+  }
+}

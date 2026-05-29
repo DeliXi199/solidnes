@@ -1,0 +1,82 @@
+[
+  {
+    "variant": "upstream/FermiNet",
+    "frames": 10000,
+    "first_step": 0,
+    "final_step": 9999,
+    "first_raw_state0": -27.1644229888916,
+    "first_raw_state1": -27.675260543823242,
+    "final_raw_state0": -75.32037353515625,
+    "final_raw_state1": -75.02313232421875,
+    "first_ground_energy": -27.675260543823242,
+    "first_excited_energy": -27.1644229888916,
+    "final_ground_energy": -75.32037353515625,
+    "final_excited_energy": -75.02313232421875,
+    "first_gap_hartree": 0.5108375549316406,
+    "first_gap_ev": 13.900598016200984,
+    "final_gap_hartree": 0.2972412109375,
+    "final_gap_ev": 8.088345399045505,
+    "min_gap_hartree": 9.918212890625e-05,
+    "min_gap_ev": 0.00269888321836734,
+    "max_gap_hartree": 9.122320175170898,
+    "max_gap_ev": 248.23097774614422,
+    "tail100_gap_hartree_mean": 0.19758758544921876,
+    "tail100_gap_ev_mean": 5.37663210507085,
+    "tail1000_gap_hartree_mean": 0.19599905395507813,
+    "tail1000_gap_ev_mean": 5.3334059610198725,
+    "rolling_window": 100,
+    "final_rolling_gap_hartree": 0.2483522033691406,
+    "final_rolling_gap_ev": 6.758007730919847,
+    "state_ordering_first": [
+      0,
+      1
+    ],
+    "state_ordering_final": [
+      0,
+      1
+    ],
+    "state_ordering_swap_count": 8,
+    "state_ordering_first_swap_step": 1,
+    "state_ordering_last_swap_step": 8
+  },
+  {
+    "variant": "fused-QKV",
+    "frames": 10000,
+    "first_step": 0,
+    "final_step": 9999,
+    "first_raw_state0": -27.45309829711914,
+    "first_raw_state1": -27.497282028198242,
+    "final_raw_state0": -75.03904724121094,
+    "final_raw_state1": -75.21121215820312,
+    "first_ground_energy": -27.497282028198242,
+    "first_excited_energy": -27.45309829711914,
+    "final_ground_energy": -75.21121215820312,
+    "final_excited_energy": -75.03904724121094,
+    "first_gap_hartree": 0.04418373107910156,
+    "first_gap_ev": 1.2023005721822968,
+    "final_gap_hartree": 0.1721649169921875,
+    "final_gap_ev": 4.684846054282876,
+    "min_gap_hartree": 4.57763671875e-05,
+    "min_gap_ev": 0.001245638408477234,
+    "max_gap_hartree": 9.556175231933594,
+    "max_gap_ev": 260.036775270489,
+    "tail100_gap_hartree_mean": 0.23601997375488282,
+    "tail100_gap_ev_mean": 6.4224306676120655,
+    "tail1000_gap_hartree_mean": 0.2914979248046875,
+    "tail1000_gap_ev_mean": 7.932062621764318,
+    "rolling_window": 100,
+    "final_rolling_gap_hartree": 0.17909461975097657,
+    "final_rolling_gap_ev": 4.873412872622174,
+    "state_ordering_first": [
+      0,
+      1
+    ],
+    "state_ordering_final": [
+      1,
+      0
+    ],
+    "state_ordering_swap_count": 9131,
+    "state_ordering_first_swap_step": 1,
+    "state_ordering_last_swap_step": 9999
+  }
+]

@@ -1,0 +1,57 @@
+{
+  "experiment": "configs/experiment/diamond_c_psiformer_pbc_gamma_attention_build_benchmark.yaml",
+  "heads_dim": 64,
+  "mlp_hidden_dims": [
+    256
+  ],
+  "network_type": "psiformer",
+  "num_heads": 4,
+  "num_layers": 3,
+  "psiformer_attention_implementation": "auto",
+  "results": [
+    {
+      "all_finite": true,
+      "implementation": "ferminet",
+      "logabs_shape": [
+        256
+      ],
+      "max_abs_logabs_delta_vs_first": 0.0,
+      "max_abs_sign_delta_vs_first": 0.0,
+      "max_seconds": 0.00047482363879680634,
+      "mean_seconds": 0.0004538659122772515,
+      "median_seconds": 0.0004535568878054619,
+      "min_seconds": 0.00044531282037496567,
+      "platform": "gpu",
+      "repeats": 20,
+      "sign_shape": [
+        256
+      ],
+      "speedup_vs_first_mean": 1.0,
+      "speedup_vs_first_median": 1.0,
+      "walkers": 256,
+      "warmup": 5
+    },
+    {
+      "all_finite": true,
+      "implementation": "fused_qkv",
+      "logabs_shape": [
+        256
+      ],
+      "max_abs_logabs_delta_vs_first": 0.0,
+      "max_abs_sign_delta_vs_first": 0.0,
+      "max_seconds": 0.00043809833005070686,
+      "mean_seconds": 0.00043157636537216604,
+      "median_seconds": 0.0004315362311899662,
+      "min_seconds": 0.00042785005643963814,
+      "platform": "gpu",
+      "repeats": 20,
+      "sign_shape": [
+        256
+      ],
+      "speedup_vs_first_mean": 1.05164682010764,
+      "speedup_vs_first_median": 1.0510285232708583,
+      "walkers": 256,
+      "warmup": 5
+    }
+  ]
+}
