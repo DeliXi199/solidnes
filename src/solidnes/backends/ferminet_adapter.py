@@ -15,6 +15,7 @@ from solidnes.backends.deepsolid_adapter import resolve_config_path
 from solidnes.backends.ferminet_psiformer_attention import (
     psiformer_attention_implementation,
 )
+from solidnes.excited_state_mainline import classify_excited_state_mainline
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
@@ -48,6 +49,9 @@ class FermiNetAdapterSummary:
     optimizer: str
     objective: str
     method_profile: str | None
+    excited_state_route: str | None
+    excited_state_route_role: str | None
+    excited_state_route_is_mainline: bool
     states: int
     overlap_penalty: float
     overlap_weights: tuple[float, ...] | None
@@ -114,6 +118,9 @@ class FermiNetAdapterSummary:
             "optimizer": self.optimizer,
             "objective": self.objective,
             "method_profile": self.method_profile,
+            "excited_state_route": self.excited_state_route,
+            "excited_state_route_role": self.excited_state_route_role,
+            "excited_state_route_is_mainline": self.excited_state_route_is_mainline,
             "states": self.states,
             "overlap_penalty": self.overlap_penalty,
             "overlap_weights": self.overlap_weights,
@@ -207,6 +214,19 @@ class FermiNetAdapterBundle:
         )
         runtime = self.experiment.get("runtime", {})
         fixed_ground = self.cfg.optim.get("fixed_ground", {})
+        psiformer_attention = psiformer_attention_implementation(self.cfg)
+        route = classify_excited_state_mainline(
+            objective=str(self.cfg.optim.objective),
+            states=int(self.cfg.system.get("states", 0)),
+            network_type=str(self.cfg.network.network_type),
+            attention_implementation=psiformer_attention,
+            attention_kernel_gpu=(
+                self.cfg.network.get("psiformer_attention_kernel_gpu")
+                if self.cfg.network.network_type == "psiformer"
+                else None
+            ),
+            method_profile=self.cfg.optim.get("method_profile"),
+        )
         return FermiNetAdapterSummary(
             experiment_name=self.experiment["experiment_name"],
             backend=self.experiment["backend"]["name"],
@@ -220,6 +240,9 @@ class FermiNetAdapterBundle:
             optimizer=self.cfg.optim.optimizer,
             objective=str(self.cfg.optim.objective),
             method_profile=self.cfg.optim.get("method_profile"),
+            excited_state_route=route.method,
+            excited_state_route_role=route.role,
+            excited_state_route_is_mainline=route.is_mainline,
             states=int(self.cfg.system.get("states", 0)),
             overlap_penalty=float(self.cfg.optim.overlap.penalty),
             overlap_weights=None
@@ -320,9 +343,7 @@ class FermiNetAdapterBundle:
                 if self.cfg.network.network_type == "psiformer"
                 else None
             ),
-            psiformer_attention_implementation=psiformer_attention_implementation(
-                self.cfg
-            ),
+            psiformer_attention_implementation=psiformer_attention,
             psiformer_attention_kernel_gpu=(
                 self.cfg.network.get("psiformer_attention_kernel_gpu")
                 if self.cfg.network.network_type == "psiformer"
@@ -406,6 +427,9 @@ def format_summary(summary: FermiNetAdapterSummary) -> str:
         f"optimizer: {summary.optimizer}",
         f"objective: {summary.objective}",
         f"method_profile: {summary.method_profile}",
+        f"excited_state_route: {summary.excited_state_route}",
+        f"excited_state_route_role: {summary.excited_state_route_role}",
+        f"excited_state_route_is_mainline: {summary.excited_state_route_is_mainline}",
         f"states: {summary.states}",
         f"overlap_penalty: {summary.overlap_penalty}",
         f"overlap_weights: {summary.overlap_weights}",

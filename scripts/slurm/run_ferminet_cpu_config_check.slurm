@@ -46,7 +46,13 @@ echo "Working directory: $(pwd)"
 
 SOLIDNES_PYTHON="${SOLIDNES_PYTHON:-python}"
 SOLIDNES_BACKEND_SCRIPT="${SOLIDNES_BACKEND_SCRIPT:-scripts/backends/check_ferminet_environment.py}"
-SOLIDNES_EXPERIMENT="${SOLIDNES_EXPERIMENT:-configs/experiment/diamond_c_ferminet_pbc_gamma_smoke.yaml}"
+SOLIDNES_EXCITED_STATE_MAINLINE="${SOLIDNES_EXCITED_STATE_MAINLINE:-0}"
+SOLIDNES_MAINLINE_EXCITED_STATE_EXPERIMENT="${SOLIDNES_MAINLINE_EXCITED_STATE_EXPERIMENT:-configs/experiment/diamond_c_psiformer_pbc_gamma_attention_paper_fullnode_anygpu_fused_qkv_x64_attnfix_b4096_iter10000_levmap128_jaxattn.yaml}"
+if [ "${SOLIDNES_EXCITED_STATE_MAINLINE}" = "1" ] || [ "${SOLIDNES_EXCITED_STATE_MAINLINE}" = "true" ]; then
+  SOLIDNES_EXPERIMENT="${SOLIDNES_EXPERIMENT:-${SOLIDNES_MAINLINE_EXCITED_STATE_EXPERIMENT}}"
+else
+  SOLIDNES_EXPERIMENT="${SOLIDNES_EXPERIMENT:-configs/experiment/diamond_c_ferminet_pbc_gamma_smoke.yaml}"
+fi
 SOLIDNES_FERMINET_ROOT="${SOLIDNES_FERMINET_ROOT:-external/ferminet}"
 export SOLIDNES_REQUIRE_JAX_GPU="${SOLIDNES_REQUIRE_JAX_GPU:-0}"
 export PYTHONPATH="${SOLIDNES_FERMINET_ROOT}:src${PYTHONPATH:+:${PYTHONPATH}}"

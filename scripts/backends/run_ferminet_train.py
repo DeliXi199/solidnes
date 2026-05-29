@@ -31,6 +31,10 @@ from solidnes.backends.ferminet_psiformer_attention import (
     install_psiformer_attention_implementation,
     resolved_psiformer_attention_kernel_gpu,
 )
+from solidnes.excited_state_mainline import MAINLINE_EXCITED_STATE_REFERENCE_EXPERIMENT
+
+
+DEFAULT_EXPERIMENT = "configs/experiment/diamond_c_ferminet_pbc_gamma_smoke.yaml"
 
 
 def main() -> int:
@@ -38,8 +42,16 @@ def main() -> int:
     parser.add_argument(
         "experiment",
         nargs="?",
-        default="configs/experiment/diamond_c_ferminet_pbc_gamma_smoke.yaml",
+        default=None,
         help="Path to a SolidNES experiment YAML, relative to project root.",
+    )
+    parser.add_argument(
+        "--mainline-excited-state",
+        action="store_true",
+        help=(
+            "Run the current source-code mainline excited-state route "
+            "(0096 PsiFormer vmc_overlap fused-QKV) when no experiment is given."
+        ),
     )
     parser.add_argument(
         "--build-only",
@@ -53,7 +65,8 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    experiment_path = (PROJECT_ROOT / args.experiment).resolve()
+    experiment = _select_experiment(args.experiment, args.mainline_excited_state)
+    experiment_path = (PROJECT_ROOT / experiment).resolve()
     _apply_runtime_defaults(
         experiment_path,
         force_cpu=args.allow_cpu or args.build_only,
@@ -117,6 +130,16 @@ def _apply_runtime_defaults(experiment_path: Path, *, force_cpu: bool = False) -
     os.environ.setdefault("XLA_PYTHON_CLIENT_MEM_FRACTION", "0.90")
     if force_cpu:
         os.environ.setdefault("JAX_PLATFORMS", "cpu")
+
+
+def _select_experiment(experiment: str | None, mainline_excited_state: bool) -> str:
+    if experiment is not None and mainline_excited_state:
+        raise SystemExit(
+            "Pass either an explicit experiment or --mainline-excited-state, not both."
+        )
+    if mainline_excited_state:
+        return MAINLINE_EXCITED_STATE_REFERENCE_EXPERIMENT
+    return experiment or DEFAULT_EXPERIMENT
 
 
 def _write_runtime_metadata(

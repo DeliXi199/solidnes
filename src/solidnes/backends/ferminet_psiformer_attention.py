@@ -11,6 +11,9 @@ from __future__ import annotations
 import os
 from typing import Any
 
+from solidnes.excited_state_mainline import MAINLINE_EXCITED_STATE_ATTENTION
+from solidnes.excited_state_mainline import resolve_mainline_attention
+
 
 PSIFORMER_KWARG_KEYS = (
     "num_layers",
@@ -36,6 +39,12 @@ def psiformer_attention_implementation(cfg: Any) -> str | None:
     if cfg.network.network_type != "psiformer":
         return None
     return str(cfg.network.get("psiformer_attention_implementation", "auto"))
+
+
+def resolve_psiformer_attention_implementation(implementation: str | None) -> str | None:
+    """Resolve a configured PsiFormer attention selector to its concrete backend."""
+
+    return resolve_mainline_attention(implementation)
 
 
 def resolved_psiformer_attention_kernel_gpu() -> str:
@@ -68,13 +77,12 @@ def install_psiformer_attention_implementation(cfg: Any) -> str | None:
         setattr(psiformer, original_name, psiformer.make_multi_head_attention)
     original = getattr(psiformer, original_name)
 
-    if implementation == "auto":
-        implementation = "fused_qkv"
+    implementation = resolve_psiformer_attention_implementation(implementation)
     _set_attention_kernel_options(cfg)
 
     if implementation in {"ferminet", "upstream", "default"}:
         psiformer.make_multi_head_attention = make_folx_aware_multi_head_attention
-    elif implementation == "fused_qkv":
+    elif implementation == MAINLINE_EXCITED_STATE_ATTENTION:
         psiformer.make_multi_head_attention = make_fused_qkv_multi_head_attention
     else:
         raise ValueError(
