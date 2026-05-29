@@ -83,21 +83,26 @@ def _excited_pbc_local_energy(
     def _state_specific_folx_kinetic(params, data):
         positions = jnp.reshape(data.positions, [states, -1])
         spins = jnp.reshape(data.spins, [states, -1])
-        f_closure = lambda x: f(params, x, spins[0], data.atoms, data.charges)
-        f_wrapped = folx.forward_laplacian(f_closure, sparsity_threshold=6)
-        sign_out, log_out = folx.batched_vmap(f_wrapped, 1)(positions)
-        kinetic = -(
-            log_out.laplacian
-            + jnp.sum(log_out.jacobian.dense_array**2, axis=-2)
-        ) / 2
-        if complex_output:
-            kinetic -= 0.5j * sign_out.laplacian
-            kinetic += 0.5 * jnp.sum(sign_out.jacobian.dense_array**2, axis=-2)
-            kinetic -= 1.0j * jnp.sum(
-                sign_out.jacobian.dense_array * log_out.jacobian.dense_array,
-                axis=-2,
-            )
-        return jnp.diag(kinetic)
+
+        def one_state_kinetic(state_index: int):
+            def state_log_psi(x):
+                sign, logabs = f(params, x, spins[0], data.atoms, data.charges)
+                return sign[state_index], logabs[state_index]
+
+            sign_out, log_out = folx.forward_laplacian(
+                state_log_psi,
+                sparsity_threshold=6,
+            )(positions[state_index])
+            log_jac = log_out.jacobian.dense_array
+            kinetic = -(log_out.laplacian + jnp.sum(log_jac * log_jac)) / 2
+            if complex_output:
+                sign_jac = sign_out.jacobian.dense_array
+                kinetic -= 0.5j * sign_out.laplacian
+                kinetic += 0.5 * jnp.sum(sign_jac * sign_jac)
+                kinetic -= 1.0j * jnp.sum(sign_jac * log_jac)
+            return kinetic
+
+        return jnp.stack([one_state_kinetic(state) for state in range(states)])
 
     def _e_l(params, key, data: networks.FermiNetData):
         del key

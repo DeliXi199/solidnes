@@ -1,6 +1,6 @@
 # Progress
 
-Last updated: 2026-05-26
+Last updated: 2026-05-28
 
 ## Current State
 
@@ -26,14 +26,73 @@ provides the no-spin-penalty reference, but confirms that excited-state spin is
 not controlled without an explicit fix: final `S^2` diagonal/trace is
 `[1.4585, 81.4612] / 82.9197`, and the last 10000 finite frames include
 139 frames with `|S^2 trace| > 10`.
-Task `0089` is now submitted as the fixed-ground follow-up requested after the
-0088 ground-state comparison. It trains one paper-size x64 FermiNet state for
-20000 beta=0/no-spin KFAC/FOLX iterations while computing the overlap penalty
-against fixed ground-state checkpoint 0044 `qmcjax_ckpt_018349.npz`. The first
-`intelgpu80g`-only queued job `129584` was cancelled because it remained
-queued. Replacement Slurm job `129670` is queued across
-`h200,amdgpu80g,amdgpu40g,h20` with `gpu:2`, 32 CPU cores, exclusive
-allocation, and initial state `PD (Resources)`.
+Task `0089`, the fixed-ground follow-up requested after the 0088 ground-state
+comparison, completed but was not production-ready. It trained one paper-size
+x64 FermiNet state for 20000 beta=0/no-spin KFAC/FOLX iterations against the
+fixed 0044 ground-state checkpoint. Job `129670` completed, but the final
+physical energy fell below the fixed ground-state reference, giving an
+unphysical negative gap.
+
+Task `0094` is the new PsiFormer/self-attention implementation and benchmark
+bundle under `tasks/psiformer/`. SolidNES now supports a configurable
+PsiFormer attention implementation with `auto`, `ferminet`, and `fused_qkv`
+options. The default PBC PsiFormer config uses `auto`, which now resolves
+directly to a LapNet-style fused-QKV projection for GPU production runs. Local
+CPU build-only and forward benchmarks passed; upstream and fused-QKV outputs
+were identical on the test batch, but CPU timing is no longer used to choose
+the default because subsequent PsiFormer calculations are GPU-only. The
+corrected CUDA benchmark passed on the `test` GPU partition as
+Slurm job `131644` after normalizing `gpu` to `cuda` for JAX platform
+selection and fixing the scheduler planner so explicit `test` GPU submissions
+can override the default blocked partition list. On 256 walkers,
+fused-QKV matched upstream FermiNet outputs exactly and improved median forward
+time from 0.000454 s to 0.000432 s, a 1.051x median speedup on `test001`/RTX
+4090.
+
+Task `0095`, the native PsiFormer training-path smoke and attention comparison,
+also completed under `tasks/psiformer/`. Jobs `131661`, `131664`, `131666`,
+and `131667` all completed on `test/test001`. The `auto` GPU smoke resolved
+to `fused_qkv`; the matched batch512 full-training comparison was effectively
+tied and slightly slower for fused-QKV (`36.855` vs `37.075` s/iter,
+`0.994x`); and the fused-QKV batch1024 probe completed at `41.846` s/iter.
+The conclusion is that the short native training loop is bottlenecked outside
+the attention projection, while `auto -> fused_qkv` remains the production
+default from the exact GPU forward benchmark.
+
+Post-0095 policy update: because future PsiFormer calculations are GPU-only,
+`model.attention.implementation: auto` now resolves directly to `fused_qkv`.
+The explicit `ferminet` implementation remains available for controls, but CPU
+timing no longer influences the default path.
+
+Task `0096` is the active no-pretrain paper-scale PsiFormer attention
+full-stack validation. It is allocated under
+`tasks/psiformer/0096_psiformer_attention_full_stack/`, with paper-size
+`auto`, explicit `ferminet`, and explicit `fused_qkv` configs prepared for
+build-only checks, GPU forward exactness, and a short native KFAC smoke.
+The full training-speed comparison completed as batch4096/iter10000 jobs with
+Slurm `--partition amdgpu40g,amdgpu80g`. Jobs `131735` and `131736` both ran
+on `amdgpu40g/gpu006`, each requested 4 GPUs and 64 CPU cores, and both exited
+`0:0`; spin penalty and S2 observables were disabled. The upstream/FermiNet
+attention job took 0.514879 s/iteration, while fused-QKV took 0.518262
+s/iteration, so fused-QKV was about 0.657% slower end-to-end in the current
+native KFAC/FOLX training path. The earlier fixed-partition submissions
+`131692`--`131695` were redundant, and the first combined-partition 2000-step
+submissions `131697`--`131698` were replaced by the 10000-step pair.
+Per-step state-energy/gap diagnostics were added from `energy_matrix.npy`:
+final gaps are 8.088 eV upstream and 4.685 eV fused-QKV, while last-1000 mean
+gaps are 5.333 eV upstream and 7.932 eV fused-QKV.
+Because those first 10000-step jobs used the speed precision profile, matching
+fp64/no-TF32 reruns were added and submitted on 2026-05-28: job `131952`
+upstream/FermiNet attention and job `131953` fused-QKV attention. The reruns use
+`runtime.precision_profile=fp64`, `runtime.x64_enabled=true`,
+`JAX_ENABLE_X64=1`, `psiformer.tf32=false`, the same batch4096/iter10000
+training setup, and the same 4-GPU/64-CPU combined `amdgpu40g,amdgpu80g`
+queue policy.
+The first x64 attempt was replaced after upstream job `131952` exposed a FOLX
+x64 sparse-mask warning at the PsiFormer spin-feature concatenate. SolidNES now
+patches that input concatenate with a value-preserving zero-derivative spin
+feature, and clean `x64_folxfix` jobs `131974` fused-QKV and `131975` upstream
+were submitted with the same training and scheduler parameters.
 
 ## Active Step
 
@@ -41,11 +100,19 @@ See `ACTIVE_TASK.md` for the exact state and next command.
 
 Short version:
 
-- Active task: Excited-state penalty-VMC method reproduction.
-- State: task `0089` replacement job `129670` is queued across the automatic
-  GPU partition set `h200,amdgpu80g,amdgpu40g,h20` with reason `(Resources)`.
-- Latest result: local checks for the fixed-ground-overlap implementation and
-  config passed; the run is waiting for its full-node allocation.
+- Active task: PsiFormer attention full-stack validation without pretraining.
+- State: fp64 FOLX-fix rerun submitted after completing the formal speed-profile
+  10000-step attention comparison.
+- Latest result: task `0096` is allocated under
+  `tasks/psiformer/0096_psiformer_attention_full_stack/`; `test` flow checks
+  passed and the full-node speed jobs `131735` and `131736` completed on
+  `amdgpu40g/gpu006` with batch4096, 10000 iterations, 4 GPUs, 64 CPU cores,
+  no spin penalty, and no S2 observables. Fused-QKV was 0.657% slower
+  end-to-end. The first corrected fp64/no-TF32 attempt `131952`/`131953` was
+  replaced after the FOLX spin-feature concatenate warning; clean FOLX-fix
+  reruns are jobs `131974` fused-QKV and `131975` upstream. State/gap plots
+  currently cover the completed speed-profile runs and need regeneration after
+  the fp64 FOLX-fix jobs finish.
 - Evidence: GPU target/backend probes `0047--0050`, training integration and
   matched controls `0053--0062`.
 - Completed in this step: cloned ignored `external/deepqmc/` at revision

@@ -1,0 +1,32 @@
+model:
+  ansatz: psiformer
+  backend: ferminet
+  network_type: psiformer
+  size: paper
+  determinants: 16
+  full_det: true
+  complex: false
+  use_periodic_features: true
+  psiformer:
+    num_layers: 4
+    num_heads: 4
+    heads_dim: 64
+    mlp_hidden_dims: [256]
+    use_layer_norm: true
+    tf32: true
+  attention:
+    implementation: auto
+    kernel_gpu: jax
+
+notes:
+  status: attention_full_stack_ready
+  purpose: >-
+    Paper-scale PsiFormer attention configuration for GPU-only fused-QKV
+    validation before adding pretraining.
+  reference_alignment:
+    - FermiNet excited-state PsiFormer preset uses 4 layers, 16 determinants,
+      layer norm, and simple electron-electron Jastrow.
+    - SolidNES auto attention resolves directly to fused_qkv for GPU production.
+    - The default GPU attention core is pure JAX for x64 KFAC/FOLX stability.
+  out_of_scope:
+    - PBC-HF pretraining is intentionally disabled in the attention-only stage.

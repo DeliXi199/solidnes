@@ -1,0 +1,26 @@
+model:
+  ansatz: psiformer
+  backend: ferminet
+  network_type: psiformer
+  size: paper
+  determinants: 16
+  full_det: true
+  complex: false
+  use_periodic_features: true
+  psiformer:
+    num_layers: 4
+    num_heads: 4
+    heads_dim: 64
+    mlp_hidden_dims: [256]
+    use_layer_norm: true
+    tf32: false
+  attention:
+    implementation: fused_qkv
+    kernel_gpu: jax
+
+notes:
+  status: attention_fused_x64_jax_kernel_probe
+  purpose: >-
+    Fused-QKV x64 PsiFormer with a pure-JAX attention core. This avoids Pallas
+    custom-call reverse-mode issues in KFAC and is paired with local-energy
+    batch chunking to keep FOLX compile size bounded.

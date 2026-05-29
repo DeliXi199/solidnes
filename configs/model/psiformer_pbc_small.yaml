@@ -14,11 +14,15 @@ model:
     mlp_hidden_dims: [256]
     use_layer_norm: true
     tf32: true
+  attention:
+    implementation: auto
+    kernel_gpu: jax
 
 notes:
-  status: scaffold_ready
+  status: config_build_ready
   purpose: second-stage PsiFormer comparison after the FermiNet PBC baseline
   acceleration_defaults:
+    - auto attention uses fused_qkv by default for GPU production runs
+    - pure-JAX attention core is the default for x64 KFAC/FOLX stability
     - PsiFormer TF32 matmuls enabled
     - folx_forward_laplacian should remain enabled in the train config
-

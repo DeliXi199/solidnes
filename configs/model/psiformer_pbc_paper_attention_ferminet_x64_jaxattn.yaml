@@ -1,0 +1,25 @@
+model:
+  ansatz: psiformer
+  backend: ferminet
+  network_type: psiformer
+  size: paper
+  determinants: 16
+  full_det: true
+  complex: false
+  use_periodic_features: true
+  psiformer:
+    num_layers: 4
+    num_heads: 4
+    heads_dim: 64
+    mlp_hidden_dims: [256]
+    use_layer_norm: true
+    tf32: false
+  attention:
+    implementation: ferminet
+    kernel_gpu: jax
+
+notes:
+  status: attention_ferminet_x64_jax_kernel_ready
+  purpose: >-
+    Upstream-shaped Q/K/V PsiFormer attention with a pure-JAX attention core for
+    x64 KFAC/FOLX runs.

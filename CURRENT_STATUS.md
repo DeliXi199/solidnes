@@ -1,6 +1,6 @@
 # SolidNES Current Status
 
-Last updated: 2026-05-26, Asia/Shanghai
+Last updated: 2026-05-28, Asia/Shanghai
 
 ## Current Conclusion
 
@@ -169,16 +169,61 @@ default.
 
 ## Current Task State
 
-Task `0089` is the current excited-state step. It is the fixed-ground follow-up
-requested after the 0088 analysis: train one paper-size x64 FermiNet state for
-20000 beta=0/no-spin KFAC/FOLX iterations while computing the overlap penalty
-against the fixed 0044 ground-state checkpoint `qmcjax_ckpt_018349.npz`.
-Local checks passed: Python compile, adapter build-only, fixed-ground
-checkpoint shape compatibility, fixed-ground custom-JVP forward/backward
-smoke, and `git diff --check`. The initial `intelgpu80g`-only queued job
-`129584` was cancelled by request and replaced with Slurm job `129670`, queued
-across `h200,amdgpu80g,amdgpu40g,h20` with `gpu:2`, 32 CPU cores, exclusive
-allocation, and 12:00:00 walltime; initial queue state is `PD (Resources)`.
+Task `0096` completed the formal PsiFormer attention speed comparison. It kept
+pretraining out of scope and ran the paper-scale native training comparison
+under `tasks/psiformer/0096_psiformer_attention_full_stack/`. Full-node jobs
+`131735` upstream/FermiNet attention and `131736` fused-QKV attention both ran
+on `amdgpu40g/gpu006` with 4 GPUs, 64 CPU cores, batch4096, 10000 iterations,
+and exit `0:0`; both disabled spin penalty and S2 observables. Runtime
+metadata reports 0.514879 s/iteration for upstream attention and 0.518262
+s/iteration for fused-QKV, so fused-QKV was 0.657% slower end-to-end in the
+current native KFAC/FOLX training path. Earlier fixed-partition submissions
+`131692`--`131695` were redundant, and the 2000-step combined submissions
+`131697`--`131698` were replaced by the completed 10000-step pair.
+Per-step state-energy/gap plots were reconstructed from `energy_matrix.npy`.
+The final single-step gap is 8.088 eV for upstream and 4.685 eV for fused-QKV,
+while the last-1000 mean gap is 5.333 eV for upstream and 7.932 eV for
+fused-QKV; fused-QKV swaps state ordering for most late steps, so the report
+uses tail and rolling statistics alongside the final row.
+
+Those first 10000-step comparison jobs used the speed precision profile. On
+2026-05-28, matching fp64/no-TF32 reruns were added and submitted with
+`runtime.precision_profile=fp64`, `runtime.x64_enabled=true`,
+`JAX_ENABLE_X64=1`, and `psiformer.tf32=false`. Job `131952` is the upstream
+attention fp64 rerun and job `131953` is the fused-QKV fp64 rerun; both keep
+batch4096, 10000 iterations, 4 GPUs, 64 CPU cores, no spin penalty, and no S2
+observables. Upstream job `131952` reached FOLX graph construction and showed a
+PsiFormer spin-feature concatenate sparse-mask warning, so the first x64 attempt
+`131952`/`131953` was cancelled/replaced. SolidNES now patches the PsiFormer
+input layer so the fixed spin channel is added through a zero-derivative
+coordinate-dependent term before concatenation, preserving values while avoiding
+that FOLX x64 fallback in the minimal repro. Clean FOLX-fix jobs are `131974`
+fused-QKV attention and `131975` upstream/FermiNet attention.
+
+Task `0095` is the latest completed PsiFormer native training smoke. It
+validates the native training path after task `0094` added
+`model.attention.implementation: auto | ferminet | fused_qkv`. Task `0095`
+ran build/config checks, a tiny `auto` GPU smoke, a matched batch512
+upstream-vs-fused-QKV training comparison, and a fused-QKV batch1024 timing
+probe under `tasks/psiformer/0095_psiformer_native_training_smoke/`.
+Jobs `131661`, `131664`, `131666`, and `131667` all completed on
+`test/test001` with exit `0:0`. The GPU `auto` policy resolved to
+`fused_qkv`, and KFAC registration confirmed the fused `qkv_w` block.
+
+The short full-training b512 comparison was effectively tied and slightly
+slower for fused-QKV: upstream FermiNet attention took 36.855 s/iteration and
+fused-QKV took 37.075 s/iteration (`0.994x`). This means the five-step native
+training smoke is dominated by KFAC/local-energy/MCMC/JIT overhead rather than
+attention projection launch count. The task `0094` forward-only CUDA benchmark
+still supports the GPU default: for 256 walkers on `test001`/RTX 4090,
+upstream median forward time was 0.000454 s and fused-QKV was 0.000432 s, a
+1.051x median speedup with exact output agreement. Since future PsiFormer
+calculations are GPU-only, `auto` now resolves directly to `fused_qkv`;
+`ferminet` remains only as an explicit ablation/control option.
+
+The next concrete action is to wait for the fp64 FOLX-fix reruns to complete,
+then regenerate the attention speed and state-gap comparison from the x64
+outputs.
 
 Task `0088` completed the previous excited-state step. It is the requested
 long beta=0 native FermiNet PBC two-state `vmc_overlap` baseline with 100000

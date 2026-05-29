@@ -1,0 +1,22 @@
+model:
+  ansatz: psiformer
+  backend: ferminet
+  network_type: psiformer
+  size: paper
+  determinants: 16
+  full_det: true
+  complex: false
+  use_periodic_features: true
+  psiformer:
+    num_layers: 4
+    num_heads: 4
+    heads_dim: 64
+    mlp_hidden_dims: [256]
+    use_layer_norm: true
+    tf32: true
+  attention:
+    implementation: ferminet
+
+notes:
+  status: attention_control_ready
+  purpose: explicit upstream FermiNet attention control for paper-scale PsiFormer.

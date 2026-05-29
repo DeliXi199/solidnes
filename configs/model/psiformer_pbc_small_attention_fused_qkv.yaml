@@ -1,0 +1,22 @@
+model:
+  ansatz: psiformer
+  backend: ferminet
+  network_type: psiformer
+  size: small
+  determinants: 8
+  full_det: true
+  complex: false
+  use_periodic_features: true
+  psiformer:
+    num_layers: 3
+    num_heads: 4
+    heads_dim: 64
+    mlp_hidden_dims: [256]
+    use_layer_norm: true
+    tf32: true
+  attention:
+    implementation: fused_qkv
+
+notes:
+  status: training_path_candidate
+  purpose: LapNet-style fused-QKV PsiFormer attention candidate for task 0095.

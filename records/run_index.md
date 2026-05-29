@@ -1,13 +1,13 @@
 # SolidNES Run Index
 
-Last updated: 2026-05-26, Asia/Shanghai
+Last updated: 2026-05-28, Asia/Shanghai
 
 This file is the canonical ledger for numbered task bundles after the global artifact migration.
 
 ## Next Available Run Number
 
 ```text
-0091
+0097
 ```
 
 ## Numbered Runs
@@ -103,6 +103,9 @@ This file is the canonical ledger for numbered task bundles after the global art
 | 0091 | completed_nonfinite | 2026-05-26 | `solidnes/tasks/excited_state_nesvmc/0091_ferminet_native_vmc_overlap_kfac_paper_aligned_iter10000_route_check/` | `tasks/excited_state_nesvmc/0091_ferminet_native_vmc_overlap_kfac_paper_aligned_iter10000_route_check/results/` | 1 | 2 |
 | 0092 | cancelled_slow_debug | 2026-05-26 | `solidnes/tasks/excited_state_nesvmc/0092_ferminet_native_vmc_overlap_kfac_paper_aligned_iter10000_reset_route_check/` | `tasks/excited_state_nesvmc/0092_ferminet_native_vmc_overlap_kfac_paper_aligned_iter10000_reset_route_check/results/` | 1 | 2 |
 | 0093 | completed | 2026-05-26 | `solidnes/tasks/excited_state_nesvmc/0093_ferminet_native_vmc_overlap_kfac_paper_aligned_iter10000_fast_nan_guard/` | `tasks/excited_state_nesvmc/0093_ferminet_native_vmc_overlap_kfac_paper_aligned_iter10000_fast_nan_guard/results/` | 1 | 2 |
+| 0094 | completed | 2026-05-27 | `solidnes/tasks/psiformer/0094_psiformer_attention_build_benchmark/` | `tasks/psiformer/0094_psiformer_attention_build_benchmark/results/` | 4 | 4 |
+| 0095 | completed | 2026-05-27 | `solidnes/tasks/psiformer/0095_psiformer_native_training_smoke/` | `tasks/psiformer/0095_psiformer_native_training_smoke/results/` | 8 | 8 |
+| 0096 | fp64_folxfix_rerun_submitted | 2026-05-27 | `solidnes/tasks/psiformer/0096_psiformer_attention_full_stack/` | `tasks/psiformer/0096_psiformer_attention_full_stack/results/` | 29 | 14 |
 
 ## Cleanup Notes
 

@@ -23,6 +23,12 @@ from solidnes.excited_states.ferminet_pbc_scaffold import evaluate_overlap_diagn
 from solidnes.excited_states.ferminet_pbc_scaffold import evaluate_state_energy_estimate
 from solidnes.excited_states.penalty import overlap_gradient_scale
 from solidnes.excited_states.penalty import penalty_vmc_terms
+from solidnes.backends.ferminet_psiformer_attention import (
+    install_psiformer_attention_implementation,
+)
+from solidnes.backends.ferminet_psiformer_attention import (
+    psiformer_kwargs_from_config,
+)
 
 
 @dataclass(frozen=True)
@@ -206,11 +212,12 @@ def make_network_from_config(cfg: Any, charges: Any) -> Any:
             **cfg.network.ferminet,
         )
     if cfg.network.network_type == "psiformer":
+        install_psiformer_attention_implementation(cfg)
         return psiformer.make_fermi_net(
             cfg.system.electrons,
             charges,
             **common_kwargs,
-            **cfg.network.psiformer,
+            **psiformer_kwargs_from_config(cfg.network.psiformer),
         )
     raise ValueError(f"Unsupported FermiNet network_type: {cfg.network.network_type}")
 

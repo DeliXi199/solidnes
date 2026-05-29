@@ -1,6 +1,6 @@
 # SolidNES Active Task
 
-Last updated: 2026-05-26, Asia/Shanghai
+Last updated: 2026-05-28, Asia/Shanghai
 
 ## Purpose
 
@@ -22,10 +22,10 @@ work belongs in `records/progress/`.
 ## Current Small Step
 
 ```text
-Step name: Fixed-ground excited-state penalty-VMC follow-up
-State: submitted/queued
-Current action: task 0089 was modified from the `intelgpu80g`-only submission to an automatic GPU queue. Old pending job `129584` was cancelled; replacement Slurm job `129670` is pending across `h200,amdgpu80g,amdgpu40g,h20` with reason `(Resources)`.
-Current blocker: waiting for any eligible 2-GPU allocation in the automatic GPU queue to start and complete.
+Step name: PsiFormer attention full-stack validation without pretraining
+State: x64 FOLX-fix rerun submitted
+Current action: the same two full-node no-pretrain PsiFormer attention comparisons were resubmitted with `runtime.precision_profile=fp64`, `runtime.x64_enabled=true`, `JAX_ENABLE_X64=1`, and `psiformer.tf32=false`. The first x64 attempt (`131952`/`131953`) was cancelled after `131952` exposed a FOLX x64 sparse-mask warning at the PsiFormer spin-feature concatenate. SolidNES now patches that concatenate with a value-preserving zero-derivative spin feature. Clean replacement jobs are `131974` fused-QKV attention running on `amdgpu40g/gpu006` and `131975` upstream/FermiNet attention pending in the combined `amdgpu40g,amdgpu80g` queue. Both request 4 GPUs, 64 CPU cores, batch4096, 10000 iterations, KFAC, FOLX, no spin penalty, and no S2 observables.
+Current blocker: waiting for the two fp64 FOLX-fix reruns to finish before regenerating the speed and gap comparison plots.
 Backend: FermiNet
 System: carbon diamond primitive cell first, then selected material tests
 Goal: reproduce the Szabo and Noe JCTC 2024 penalty-based excited-state VMC
@@ -37,6 +37,48 @@ Goal: reproduce the Szabo and Noe JCTC 2024 penalty-based excited-state VMC
 
 ```text
 Benchmark reproduction is complete for both DeepSolid and FermiNet.
+Task 0096 is now active for the no-pretrain paper-scale PsiFormer attention
+full-stack validation. It lives under
+`tasks/psiformer/0096_psiformer_attention_full_stack/`. Test-partition flow
+checks passed: GPU forward exactness job `131685` completed, and native KFAC
+smoke job `131686` completed with `auto -> fused_qkv`. Full-node 10000-step
+speed jobs `131735` and `131736` completed on `amdgpu40g/gpu006` with exit
+`0:0`; fused-QKV was about 0.657% slower end-to-end than upstream attention.
+Those first 10000-step jobs used the speed precision profile, so fp64/no-TF32
+reruns were submitted as jobs `131952` upstream attention and `131953`
+fused-QKV attention with the same training size and scheduler request.
+Job `131952` exposed a FOLX x64 sparse-mask warning in the PsiFormer spin-feature
+concatenate, so that runtime patch was fixed and clean `x64_folxfix` jobs
+`131974` fused-QKV and `131975` upstream were submitted.
+Per-step state-gap plots were added from `energy_matrix.npy`: the final
+single-step gap is smaller for fused-QKV, but the last-1000 mean gap is larger
+for fused-QKV, so tail/rolling statistics are more informative than the final
+row alone.
+Task 0095 completed the PsiFormer native training-path validation step. It
+lives under `tasks/psiformer/0095_psiformer_native_training_smoke/` and holds
+variant subruns for `auto_smoke`, `ferminet_b512`, `fused_qkv_b512`, and
+`fused_qkv_b1024`. Jobs `131661`, `131664`, `131666`, and `131667` completed
+on `test/test001`. The GPU `auto` policy resolved to `fused_qkv`; b512
+full-training timing was effectively tied and slightly slower for fused-QKV
+(`36.855` vs `37.075` s/iter, `0.994x`), so short native training is dominated
+outside the attention projection. The next available run number is 0097.
+Task 0094 is the completed PsiFormer/self-attention implementation step. It lives
+under `tasks/psiformer/0094_psiformer_attention_build_benchmark/`, per the
+requested task organization. Build-only config passed with
+`network_type=psiformer`, `objective=vmc_overlap`, `states=2`, and
+`psiformer_attention_implementation=auto`. Local CPU forward benchmarking
+confirmed exact output agreement between upstream FermiNet attention and the
+LapNet-style fused-QKV implementation on the tested batch. The default `auto`
+policy now selects fused-QKV directly because future PsiFormer calculations are
+GPU-only; the upstream FermiNet implementation remains available only through
+the explicit `ferminet` control setting. The first GPU benchmark job
+`131634` failed before model execution due to an invalid JAX platform flag
+(`gpu` instead of `cuda`). After platform normalization and a scheduler planner
+fix allowing explicit `test` GPU submissions, job `131644` ran on
+`test/test001` with one RTX 4090, 8 CPU cores, and 15 minutes. It completed in
+about 24 seconds. For 256 walkers, upstream median forward time was
+0.000454 s and fused-QKV median was 0.000432 s, a 1.051x median speedup with
+`max_abs_logabs_delta=0.0` and `max_abs_sign_delta=0.0`.
 Task 0086 completed the 12 beta values
 `0.000,0.001,0.002,0.005,0.008,0.010,0.012,0.015,0.018,0.020,0.025,0.030`
 as full-node `amdgpu80g` jobs, batch4096, 2000 iterations. Jobs 129314 and
@@ -67,7 +109,12 @@ variants under `runs/<variant>/`. Labels 0083--0085 were consumed as Slurm job
 names before the consolidation and should not be reused. Numbered task bundle
 0086 contains the completed 2000-step, 12-point beta sweep. 0087 contains the
 completed beta=10 pressure test. 0088 contains the completed and analyzed
-beta=0 100000-step baseline; the next available run number is 0089.
+beta=0 100000-step baseline. Tasks 0089--0093 contain the fixed-ground and
+native-route follow-ups. Task 0094 is the completed PsiFormer/self-attention
+bundle. Task 0095 is the completed PsiFormer native training smoke/comparison
+bundle. Task 0096 is the active no-pretrain PsiFormer attention full-stack
+bundle with the fp64 FOLX-fix rerun now queued/running; the next available run
+number is 0097.
 Native FermiNet spin penalty is now wired through SolidNES configs:
 `spin_penalty` maps to `cfg.optim.spin_energy`, `observables_s2` writes
 `s2_matrix.npy`, and spin-penalized runs write `bare_energy_matrix.npy` for
@@ -89,24 +136,10 @@ diagonal/trace is `[1.4585, 81.4612] / 82.9197`, full-run `S^2` diagnostics
 contain 35 non-finite frames, and the last 10000 finite frames include
 139 frames with `|S^2 trace| > 10`. Analysis and plots are under
 `tasks/excited_state_nesvmc/0088_ferminet_native_vmc_overlap_kfac_paper_aligned_spin_beta0000_iter100000/results/validation/`.
-Task 0089 is allocated for the fixed-ground follow-up requested after the 0088
-ground-state comparison: instead of co-optimizing a ground and excited state,
-it trains one FermiNet state with `objective=fixed_ground_overlap`, computes
-the overlap penalty against the fixed 0044 ground-state checkpoint
-`qmcjax_ckpt_018349.npz`, disables spin terms (`spin_penalty=0.0`,
-`observables_s2=false`), and writes both scalar objective energy and
-`physical_energy` to `train_stats.csv`.
-Local checks passed before submission: Python compile, adapter build-only,
-fixed-ground checkpoint shape compatibility, fixed-ground custom-JVP
-forward/backward smoke, and `git diff --check`. The dry-run plan is
-`tasks/excited_state_nesvmc/0089_ferminet_fixed_ground_overlap_beta0_iter20000/outputs/slurm_plans/plan.json`
-and requests `intelgpu80g`, `gpu:2`, 96 CPU cores, `--exclusive`, and
-06:00:00 walltime.
-Per user request, the `intelgpu80g`-only pending job `129584` was cancelled
-and replaced by automatic GPU submission job `129670`. The replacement plan is
-`tasks/excited_state_nesvmc/0089_ferminet_fixed_ground_overlap_beta0_iter20000/outputs/slurm_plans/plan_auto_gpu_requeue.json`
-and queues on `h200,amdgpu80g,amdgpu40g,h20` with `gpu:2`, 32 CPU cores,
-`--exclusive`, and 12:00:00 walltime. Initial queue state is `PD (Resources)`.
+Task 0089 was the fixed-ground follow-up requested after the 0088 ground-state
+comparison. It completed as job `129670`, but the route is not production-ready
+because the final physical energy was below the fixed ground-state reference,
+giving an unphysical negative excitation gap.
 The direct real-local-energy `value_and_grad` SGD path has been replaced with a
 paper-tangent penalty-VMC update path for the fixed-sample helper.
 DeepQMC was cloned for source inspection under ignored `external/deepqmc/`.

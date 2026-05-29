@@ -31,6 +31,7 @@ echo "SLURM_JOB_NODELIST=${SLURM_JOB_NODELIST:-localhost}"
 echo "CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES:-none}"
 echo "SOLIDNES_EFFECTIVE_CPUS=${SOLIDNES_EFFECTIVE_CPUS}"
 echo "JAX_ENABLE_X64=${JAX_ENABLE_X64}"
+echo "XLA_FLAGS=${XLA_FLAGS:-none}"
 echo "XLA_PYTHON_CLIENT_PREALLOCATE=${XLA_PYTHON_CLIENT_PREALLOCATE}"
 echo "XLA_PYTHON_CLIENT_MEM_FRACTION=${XLA_PYTHON_CLIENT_MEM_FRACTION}"
 
@@ -54,6 +55,20 @@ if [ -n "${SOLIDNES_VENV_DIR:-}" ]; then
   echo "Activating venv: ${SOLIDNES_VENV_DIR}"
   # shellcheck disable=SC1091
   source "${SOLIDNES_VENV_DIR}/bin/activate"
+  SOLIDNES_NVIDIA_LIB_DIRS="$(
+    find "${SOLIDNES_VENV_DIR}/lib" -type d -path '*/site-packages/nvidia/*/lib' 2>/dev/null | sort | paste -sd:
+  )"
+  if [ -n "${SOLIDNES_NVIDIA_LIB_DIRS}" ]; then
+    export LD_LIBRARY_PATH="${SOLIDNES_NVIDIA_LIB_DIRS}${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
+    echo "SOLIDNES_NVIDIA_LIB_DIRS=${SOLIDNES_NVIDIA_LIB_DIRS}"
+  fi
+  SOLIDNES_NVIDIA_BIN_DIRS="$(
+    find "${SOLIDNES_VENV_DIR}/lib" -type d -path '*/site-packages/nvidia/*/bin' 2>/dev/null | sort | paste -sd:
+  )"
+  if [ -n "${SOLIDNES_NVIDIA_BIN_DIRS}" ]; then
+    export PATH="${SOLIDNES_NVIDIA_BIN_DIRS}:${PATH}"
+    echo "SOLIDNES_NVIDIA_BIN_DIRS=${SOLIDNES_NVIDIA_BIN_DIRS}"
+  fi
 elif [ -n "${SOLIDNES_CONDA_ENV:-}" ]; then
   echo "Activating conda environment: ${SOLIDNES_CONDA_ENV}"
   set +u

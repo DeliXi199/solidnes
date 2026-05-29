@@ -69,6 +69,25 @@ conda run -n solidnes-ferminet-jax0101-cuda12 \
   python scripts/validation/check_ferminet_native_overlap_loss_alignment.py
 ```
 
+PsiFormer attention implementation benchmark:
+
+```bash
+conda run -n solidnes-ferminet-jax0101-cuda12 \
+  env JAX_PLATFORMS=cpu PYTHONPATH=external/ferminet:src \
+  python scripts/validation/benchmark_psiformer_attention.py \
+  --walkers 64 --warmup 2 --repeats 8
+```
+
+Use `--platform cuda` for scheduled GPU timing checks in the CUDA FermiNet
+environment.
+
+PsiFormer full-node comparison plots after 0096 jobs finish:
+
+```bash
+python scripts/validation/plot_psiformer_fullnode_attention_iterations.py
+python scripts/validation/plot_psiformer_fullnode_state_gap.py
+```
+
 FermiNet/JAX scheduled real PBC local-energy smoke:
 
 ```bash

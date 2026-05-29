@@ -1,0 +1,75 @@
+project: solidnes
+experiment_name: diamond_c_psiformer_pbc_gamma_attention_paper_fullnode_anygpu_fused_qkv_x64_attnfix_b4096_iter2_xlapar64lib
+stage: psiformer
+phase: psiformer_attention_full_stack
+
+backend:
+  name: ferminet
+  repository: https://github.com/google-deepmind/ferminet
+  inspected_commit: c4312c315dda1c5728994ba89629744f71c6eb66
+  mode: native_ferminet_psiformer_training
+
+system_config: ../system/diamond_c_primitive_gamma.yaml
+model_config: ../model/psiformer_pbc_paper_attention_fused_qkv_x64.yaml
+sampler_config: ../sampler/metropolis_ferminet_pbc_short.yaml
+train_config: ../train/excited_state_psiformer_pbc_native_kfac_attention_paper_benchmark_batch4096_iter2.yaml
+
+ferminet_config_template:
+  module: solidnes/backends/ferminet_configs/diamond_pbc_gamma.py
+
+runtime:
+  target_jax_version: 0.10.1
+  cuda_extra: cuda12
+  precision_profile: fp64
+  x64_enabled: true
+  require_gpu: true
+  xla_python_client_preallocate: true
+  xla_python_client_mem_fraction: 0.90
+  xla_gpu_force_compilation_parallelism: 64
+  prefer_venv_nvidia_libraries: true
+
+output:
+  log_dir: tasks/psiformer/0096_psiformer_attention_full_stack/runs/fullnode_anygpu_fused_qkv_x64_attnfix_b4096_i2_xlapar64lib/logs/backend
+  checkpoint_dir: tasks/psiformer/0096_psiformer_attention_full_stack/runs/fullnode_anygpu_fused_qkv_x64_attnfix_b4096_i2_xlapar64lib/results/checkpoints
+  validation_dir: tasks/psiformer/0096_psiformer_attention_full_stack/runs/fullnode_anygpu_fused_qkv_x64_attnfix_b4096_i2_xlapar64lib/results/validation
+
+diagnostics:
+  import_ferminet: true
+  build_pbc_config: true
+  native_ferminet_excited_state: true
+  expected_states: 2
+  objective: vmc_overlap
+  method_profile: szabo_noe_2024_penalty
+  optimizer: kfac
+  batch_size: 4096
+  iterations: 2
+  max_vmap_batch_size: 0
+  overlap_penalty: 4.0
+  overlap_scale_by: max_gap_std
+  overlap_clip_width: 10.0
+  overlap_sort_states_by: energy
+  spin_penalty: 0.0
+  observables_s2: false
+  model: psiformer
+  model_size: paper
+  attention_implementation: fused_qkv
+  attention_kernel_gpu: pallas
+  xla_gpu_force_compilation_parallelism: 64
+  prefer_venv_nvidia_libraries: true
+  precision_profile: fp64
+  x64_enabled: true
+  psiformer_tf32: false
+  folx_spin_concat_fix: true
+  scheduler_partitions: [amdgpu40g, amdgpu80g]
+  scheduler_gpus: 4
+  scheduler_cpus: 64
+  expected_outputs:
+    - train_stats.csv
+    - runtime metadata with resolved fused_qkv attention
+
+notes:
+  status: ready_fullnode_attention_x64_attnfix_compile_probe_xlapar64lib
+  purpose: >-
+    Two-step x64 compile probe that keeps the KFAC training graph unchanged,
+    prepends venv NVIDIA 12.9 libraries, and raises XLA GPU compile
+    parallelism to the 64 CPU cores allocated with the 4-GPU job.

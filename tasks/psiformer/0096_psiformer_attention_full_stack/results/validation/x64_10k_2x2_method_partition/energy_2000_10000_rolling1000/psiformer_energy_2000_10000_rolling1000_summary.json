@@ -1,0 +1,72 @@
+{
+  "source": "tasks/psiformer/0096_psiformer_attention_full_stack/results/validation/x64_10k_2x2_method_partition/psiformer_x64_10k_2x2_timeseries.csv",
+  "requested_window": "2000-10000",
+  "actual_window": "2000-9999",
+  "rolling_definition": "trailing rolling mean over the current and previous 999 logged steps; computed on the full run, then displayed for steps 2000-9999",
+  "variants": [
+    {
+      "variant": "FermiNet Q/K/V / 40G",
+      "method": "FermiNet Q/K/V",
+      "partition": "40G",
+      "node": "gpu005",
+      "job": 132575,
+      "points": 8000,
+      "actual_window": "2000-9999",
+      "rolling_window": 1000,
+      "ground_ha_last": -75.37384466908824,
+      "excited_ha_last": -75.0670266380467,
+      "ewmean_last": -75.26022663656188,
+      "gap_ev_last": 8.348943949905022,
+      "gap_ev_mean_over_display": 7.7386195871438375,
+      "gap_ev_std_over_display": 0.8516558182258479
+    },
+    {
+      "variant": "FermiNet Q/K/V / 80G",
+      "method": "FermiNet Q/K/V",
+      "partition": "80G",
+      "node": "gpu002",
+      "job": 132947,
+      "points": 8000,
+      "actual_window": "2000-9999",
+      "rolling_window": 1000,
+      "ground_ha_last": -75.37643384882249,
+      "excited_ha_last": -75.10695584643295,
+      "ewmean_last": -75.28377901945876,
+      "gap_ev_last": 7.332870007818804,
+      "gap_ev_mean_over_display": 6.922197307467534,
+      "gap_ev_std_over_display": 1.4750785153707613
+    },
+    {
+      "variant": "fused-QKV / 40G",
+      "method": "fused-QKV",
+      "partition": "40G",
+      "node": "gpu005",
+      "job": 132948,
+      "points": 8000,
+      "actual_window": "2000-9999",
+      "rolling_window": 1000,
+      "ground_ha_last": -75.38324150457167,
+      "excited_ha_last": -75.1405077007565,
+      "ewmean_last": -75.30117691428596,
+      "gap_ev_last": 6.605123290572536,
+      "gap_ev_mean_over_display": 7.818012315958612,
+      "gap_ev_std_over_display": 1.154976818330598
+    },
+    {
+      "variant": "fused-QKV / 80G",
+      "method": "fused-QKV",
+      "partition": "80G",
+      "node": "gpu002",
+      "job": 132574,
+      "points": 8000,
+      "actual_window": "2000-9999",
+      "rolling_window": 1000,
+      "ground_ha_last": -75.38138979554343,
+      "excited_ha_last": -75.12851203746341,
+      "ewmean_last": -75.29593892698507,
+      "gap_ev_last": 6.881154348134945,
+      "gap_ev_mean_over_display": 8.160215331694168,
+      "gap_ev_std_over_display": 1.4614284368224115
+    }
+  ]
+}

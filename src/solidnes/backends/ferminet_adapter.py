@@ -12,6 +12,9 @@ import ml_collections
 
 from solidnes.backends.deepsolid_adapter import load_yaml
 from solidnes.backends.deepsolid_adapter import resolve_config_path
+from solidnes.backends.ferminet_psiformer_attention import (
+    psiformer_attention_implementation,
+)
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
@@ -89,6 +92,8 @@ class FermiNetAdapterSummary:
     laplacian: str
     forward_laplacian_enabled: bool
     psiformer_tf32: bool | None
+    psiformer_attention_implementation: str | None
+    psiformer_attention_kernel_gpu: str | None
     target_jax_version: str
     precision_profile: str
     x64_enabled: bool
@@ -161,6 +166,10 @@ class FermiNetAdapterSummary:
             "laplacian": self.laplacian,
             "forward_laplacian_enabled": self.forward_laplacian_enabled,
             "psiformer_tf32": self.psiformer_tf32,
+            "psiformer_attention_implementation": (
+                self.psiformer_attention_implementation
+            ),
+            "psiformer_attention_kernel_gpu": self.psiformer_attention_kernel_gpu,
             "target_jax_version": self.target_jax_version,
             "precision_profile": self.precision_profile,
             "x64_enabled": self.x64_enabled,
@@ -311,6 +320,14 @@ class FermiNetAdapterBundle:
                 if self.cfg.network.network_type == "psiformer"
                 else None
             ),
+            psiformer_attention_implementation=psiformer_attention_implementation(
+                self.cfg
+            ),
+            psiformer_attention_kernel_gpu=(
+                self.cfg.network.get("psiformer_attention_kernel_gpu")
+                if self.cfg.network.network_type == "psiformer"
+                else None
+            ),
             target_jax_version=str(runtime.get("target_jax_version", "latest")),
             precision_profile=str(runtime.get("precision_profile", "speed")),
             x64_enabled=bool(runtime.get("x64_enabled", False)),
@@ -451,6 +468,11 @@ def format_summary(summary: FermiNetAdapterSummary) -> str:
         f"precision_profile: {summary.precision_profile}",
         f"x64_enabled: {summary.x64_enabled}",
         f"psiformer_tf32: {summary.psiformer_tf32}",
+        (
+            "psiformer_attention_implementation: "
+            f"{summary.psiformer_attention_implementation}"
+        ),
+        f"psiformer_attention_kernel_gpu: {summary.psiformer_attention_kernel_gpu}",
         "",
         f"save_path: {summary.save_path}",
         f"restore_path: {summary.restore_path}",
@@ -513,6 +535,18 @@ def _build_ferminet_config(
         )
         cfg.network.psiformer.use_layer_norm = bool(psiformer_cfg["use_layer_norm"])
         cfg.network.psiformer.tf32 = bool(psiformer_cfg.get("tf32", True))
+        cfg.network.psiformer_attention_implementation = str(
+            model_cfg.get("attention", {}).get(
+                "implementation",
+                psiformer_cfg.get("attention_implementation", "auto"),
+            )
+        )
+        cfg.network.psiformer_attention_kernel_gpu = str(
+            model_cfg.get("attention", {}).get(
+                "kernel_gpu",
+                psiformer_cfg.get("attention_kernel_gpu", "jax"),
+            )
+        )
     else:
         raise ValueError(f"Unsupported FermiNet network_type: {cfg.network.network_type}")
 
@@ -687,6 +721,12 @@ def _build_ferminet_config(
         cfg.optim.fixed_ground = ml_collections.ConfigDict()
     cfg.optim.laplacian = str(train_cfg.get("laplacian", "folx"))
     cfg.optim.max_vmap_batch_size = int(train_cfg.get("max_vmap_batch_size", 0))
+    cfg.optim.max_local_energy_vmap_batch_size = int(
+        train_cfg.get(
+            "max_local_energy_vmap_batch_size",
+            cfg.optim.max_vmap_batch_size,
+        )
+    )
     cfg.optim.clip_local_energy = float(train_cfg.get("clip_local_energy", 5.0))
     cfg.optim.clip_median = bool(train_cfg.get("clip_median", False))
     cfg.optim.center_at_clip = bool(train_cfg.get("center_at_clip", True))

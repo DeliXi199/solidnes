@@ -126,6 +126,15 @@ Use this area for reproducing the Szabo and Noe JCTC 2024 penalty-based
 excited-state VMC method in code, then testing the resulting workflow on
 specific periodic materials.
 
+PsiFormer/self-attention implementation and benchmark tasks are grouped under:
+
+```text
+tasks/psiformer/NNNN_short_slug/
+```
+
+Use this area for self-attention model build checks, speed probes, and
+PsiFormer-vs-FermiNet comparison artifacts.
+
 Do not create a numbered task bundle for pure source audits, literature review,
 external-code inspection, or design notes. Keep those under `docs/` or
 `records/progress/`.

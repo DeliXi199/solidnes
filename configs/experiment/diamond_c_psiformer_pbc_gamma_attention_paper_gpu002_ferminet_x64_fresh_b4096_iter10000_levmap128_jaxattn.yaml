@@ -1,0 +1,79 @@
+project: solidnes
+experiment_name: diamond_c_psiformer_pbc_gamma_attention_paper_gpu002_ferminet_x64_fresh_b4096_iter10000_levmap128_jaxattn
+stage: psiformer
+phase: psiformer_attention_full_stack
+
+backend:
+  name: ferminet
+  repository: https://github.com/google-deepmind/ferminet
+  inspected_commit: c4312c315dda1c5728994ba89629744f71c6eb66
+  mode: native_ferminet_psiformer_training
+
+system_config: ../system/diamond_c_primitive_gamma.yaml
+model_config: ../model/psiformer_pbc_paper_attention_ferminet_x64_jaxattn.yaml
+sampler_config: ../sampler/metropolis_ferminet_pbc_short.yaml
+train_config: ../train/excited_state_psiformer_pbc_native_kfac_attention_paper_benchmark_batch4096_iter10000_levmap128.yaml
+
+ferminet_config_template:
+  module: solidnes/backends/ferminet_configs/diamond_pbc_gamma.py
+
+runtime:
+  target_jax_version: 0.10.1
+  cuda_extra: cuda12
+  precision_profile: fp64
+  x64_enabled: true
+  require_gpu: true
+  xla_python_client_preallocate: true
+  xla_python_client_mem_fraction: 0.90
+
+output:
+  log_dir: tasks/psiformer/0096_psiformer_attention_full_stack/runs/gpu002_ferminet_x64_fresh_b4096_i10000_levmap128_jaxattn/logs/backend
+  checkpoint_dir: tasks/psiformer/0096_psiformer_attention_full_stack/runs/gpu002_ferminet_x64_fresh_b4096_i10000_levmap128_jaxattn/results/checkpoints
+  validation_dir: tasks/psiformer/0096_psiformer_attention_full_stack/runs/gpu002_ferminet_x64_fresh_b4096_i10000_levmap128_jaxattn/results/validation
+
+diagnostics:
+  import_ferminet: true
+  build_pbc_config: true
+  native_ferminet_excited_state: true
+  expected_states: 2
+  objective: vmc_overlap
+  method_profile: szabo_noe_2024_penalty
+  optimizer: kfac
+  batch_size: 4096
+  iterations: 10000
+  max_vmap_batch_size: 0
+  max_local_energy_vmap_batch_size: 128
+  overlap_penalty: 4.0
+  overlap_scale_by: max_gap_std
+  overlap_clip_width: 10.0
+  overlap_sort_states_by: energy
+  spin_penalty: 0.0
+  observables_s2: false
+  model: psiformer
+  model_size: paper
+  attention_implementation: ferminet
+  attention_kernel_gpu: jax
+  precision_profile: fp64
+  x64_enabled: true
+  psiformer_tf32: false
+  scheduler_partitions: [amdgpu80g]
+  scheduler_node: gpu002
+  scheduler_gpus: 4
+  scheduler_cpus: 64
+  expected_outputs:
+    - train_stats.csv
+    - energy_matrix.npy
+    - overlap_matrix.npy
+    - overlap_symmetric_matrix.npy
+    - overlap_penalty_matrix.npy
+    - overlap_gradient_scale.npy
+    - overlap_state_ordering.npy
+    - overlap_scale_energy_ewm.npy
+    - overlap_scale_std_ewm.npy
+    - runtime metadata with resolved ferminet attention
+
+notes:
+  status: submitted_fresh_node_swap
+  purpose: >-
+    Fresh 10000-step x64 FermiNet-shaped Q/K/V PsiFormer run fixed to gpu002
+    for node/method comparison against fused-QKV fresh and previous 10k runs.

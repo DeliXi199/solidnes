@@ -51,7 +51,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
     gpu = parser.add_argument_group("GPU policy")
     gpu.add_argument("--partition", action="append", default=[])
-    gpu.add_argument("--blocked-partition", action="append", default=list(GPU_BLOCKED_PARTITIONS_DEFAULT))
+    gpu.add_argument("--blocked-partition", action="append", default=None)
     gpu.add_argument("--allowed-gpu-count", action="append", default=[])
     gpu.add_argument("--min-gpus", type=int, default=1)
     gpu.add_argument("--target-gpus", type=int, default=0)
@@ -122,7 +122,7 @@ def _build_plan(args: argparse.Namespace) -> dict[str, Any]:
     nodes = _load_gpu_nodes(args)
     config = GpuSchedulingConfig(
         allowed_partitions=normalize_partitions(args.partition),
-        blocked_partitions=normalize_partitions(args.blocked_partition),
+        blocked_partitions=normalize_partitions(args.blocked_partition or GPU_BLOCKED_PARTITIONS_DEFAULT),
         allowed_gpu_counts=tuple(args.allowed_gpu_count),
         min_gpus=args.min_gpus,
         target_gpus=args.target_gpus,
