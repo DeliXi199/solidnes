@@ -70,6 +70,14 @@ SOLIDNES_TASK_ROOT=tasks/phase1_diamond_c/sto3g/smoke/NNNN_deepsolid_adapter_pro
 This folder contains backend-specific run notes and thin wrapper scripts. Add
 production launchers only after the backend environment has been confirmed.
 
+For FermiNet/PsiFormer runs launched through `run_ferminet_train.py`,
+SolidNES enforces the project long-run checkpoint rule: if
+`optim.iterations >= 1000`, the final training step is checkpointed and the
+runner fails if the expected final `qmcjax_ckpt_{N-1}.npz` file is missing.
+DeepSolid configs built through the adapter set step-based checkpointing for
+the same long-run rule when the training config does not override
+`checkpoint_every_steps`.
+
 ## FermiNet Excited-State Driver
 
 Run the sampler-integrated PBC excited-state driver locally with a cheap

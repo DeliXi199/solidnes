@@ -520,6 +520,13 @@ def _build_deepsolid_config(
     cfg.log.stats_frequency = int(train_cfg["log_every"])
     if "checkpoint_every_minutes" in train_cfg:
         cfg.log.save_frequency = float(train_cfg["checkpoint_every_minutes"])
+    if "checkpoint_every_steps" in train_cfg:
+        cfg.log.save_frequency_in_step = int(train_cfg["checkpoint_every_steps"])
+    elif int(cfg.optim.iterations) >= 1000:
+        # DeepSolid supports step-based checkpointing directly. For long
+        # SolidNES jobs, save the final training iteration even if the
+        # wall-clock checkpoint timer has not fired.
+        cfg.log.save_frequency_in_step = max(1, int(cfg.optim.iterations) - 1)
 
     output = experiment["output"]
     cfg.log.save_path = str((project_root / output["checkpoint_dir"]).resolve())

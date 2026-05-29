@@ -107,6 +107,11 @@ tables and plots in the parent task's `results/validation/`. Do not allocate a
 new top-level run number for each variant unless the variants are independent
 scientific tasks.
 
+Any iterative training or evaluation job with `iterations >= 1000` must save a
+checkpoint for its final training step. For `qmcjax` checkpoint naming, an
+`N`-iteration run must produce `qmcjax_ckpt_{N-1}.npz`; intermediate
+time-based checkpoints alone are not sufficient for a completed long task.
+
 ## Decision Rule
 
 No Phase 2 system should be started until Phase 1 has produced either:

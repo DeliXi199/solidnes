@@ -22,6 +22,10 @@ from solidnes.backends.deepsolid_adapter import load_yaml
 from solidnes.backends.ferminet_adapter import build_ferminet_adapter
 from solidnes.backends.ferminet_adapter import create_output_dirs
 from solidnes.backends.ferminet_adapter import format_summary
+from solidnes.backends.ferminet_checkpoint_policy import (
+    assert_final_checkpoint_written,
+    enforce_ferminet_final_checkpoint,
+)
 from solidnes.backends.ferminet_jax_compat import apply_modern_jax_shims
 from solidnes.backends.ferminet_psiformer_attention import (
     install_psiformer_attention_implementation,
@@ -83,7 +87,11 @@ def main() -> int:
     from ferminet import train  # pylint: disable=import-outside-toplevel
 
     start = time.perf_counter()
-    train.train(bundle.cfg)
+    with enforce_ferminet_final_checkpoint(train, bundle.cfg) as final_checkpoint:
+        if final_checkpoint.required:
+            print(f"final_checkpoint_required: {final_checkpoint.checkpoint_path}")
+        train.train(bundle.cfg)
+    assert_final_checkpoint_written(final_checkpoint)
     elapsed_seconds = time.perf_counter() - start
     _write_runtime_metadata(
         bundle,
@@ -92,6 +100,7 @@ def main() -> int:
         jax_version=jax.__version__,
         jax_backend=jax.default_backend(),
         jax_devices=[str(device) for device in jax.devices()],
+        final_checkpoint=final_checkpoint.to_json(),
     )
     return 0
 
@@ -118,6 +127,7 @@ def _write_runtime_metadata(
     jax_version: str,
     jax_backend: str,
     jax_devices: list[str],
+    final_checkpoint: dict[str, object],
 ) -> None:
     output = bundle.experiment.get("output", {})
     validation_dir = output.get("validation_dir")
@@ -153,6 +163,7 @@ def _write_runtime_metadata(
         "jax_version": jax_version,
         "jax_backend": jax_backend,
         "jax_devices": jax_devices,
+        "final_checkpoint": final_checkpoint,
     }
     path = validation_path / "ferminet_train_runtime.json"
     path.write_text(json.dumps(metadata, indent=2) + "\n", encoding="utf-8")

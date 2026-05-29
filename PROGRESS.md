@@ -1,8 +1,14 @@
 # Progress
 
-Last updated: 2026-05-28
+Last updated: 2026-05-29
 
 ## Current State
+
+Project policy now requires every iterative training or evaluation task with
+`iterations >= 1000` to save the final-step checkpoint. FermiNet/PsiFormer
+runs launched through `run_ferminet_train.py` enforce this at runtime; DeepSolid
+configs built through the adapter use step-based checkpointing for the same
+rule unless explicitly overridden.
 
 Carbon-diamond benchmark reproduction is complete through both DeepSolid and
 FermiNet. The FermiNet PBC-HF pretraining implementation and diamond-Gamma

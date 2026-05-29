@@ -189,6 +189,10 @@ GPU:
 ## Safety Rules
 
 - Always dry-run a new job shape first.
+- Any iterative training or evaluation job with `iterations >= 1000` must write
+  a checkpoint for the final training step. For FermiNet-style `qmcjax`
+  checkpoints, an `N`-iteration run is complete only when
+  `qmcjax_ckpt_{N-1}.npz` exists under that run's checkpoint directory.
 - New plans and logs must use the task-bundle layout from
   `docs/00_project_guidance/result_output_numbering.md`.
 - Dry-run planning passed on 2026-05-21 for both CPU and GPU smoke wrappers.
