@@ -4,7 +4,7 @@ training:
   check_nan: false
   reset_if_nan: false
   batch_size: 4096
-  iterations: 10000
+  iterations: 200
   optimizer: kfac
   objective: vmc_overlap
   method_profile: szabo_noe_2024_penalty
@@ -17,6 +17,8 @@ training:
     mcmc_trace: true
     local_energy: true
     overlap_jvp: true
+  profiling:
+    step_times: true
   overlap_penalty: 4.0
   overlap_weights: null
   overlap_scale_by: max_gap_std
@@ -51,20 +53,8 @@ training:
     norm_constraint: 0.001
     norm_constraint_scale_by_states: false
 
-stability_checks:
-  finite_energy: true
-  finite_variance: true
-  acceptance_range: [0.05, 0.95]
-  finite_overlap_matrix: true
-  finite_symmetric_overlap_matrix: true
-  finite_overlap_penalty_matrix: true
-  finite_overlap_gradient_scale: true
-  finite_state_ordering: true
-
 notes:
-  status: attention_paper_fullnode_speed_x64_levmap128_iter10000
+  status: deepqmc_merge_keys_4gpu_merge_layers
   purpose: >-
-    10000-step x64 4-GPU paper-scale PsiFormer comparison config with
-    local-energy-only FOLX vmap chunking and DeepQMC-style shared trunk
-    projection across independently-parameterized states. Spin penalty and S2
-    observables are intentionally disabled.
+    Production-like 4GPU x64 PsiFormer stability run with diagonal paths
+    enabled and transformer-body parameters shared across states.

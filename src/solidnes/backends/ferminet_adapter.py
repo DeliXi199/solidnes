@@ -54,6 +54,12 @@ class FermiNetAdapterSummary:
     excited_state_route_is_mainline: bool
     states: int
     independent_state_params: bool
+    independent_state_merge_keys: tuple[str, ...]
+    diagonal_mcmc_trace: bool
+    diagonal_local_energy: bool
+    diagonal_overlap_jvp: bool
+    profile_step_times: bool
+    profile_loss_components: bool
     overlap_penalty: float
     overlap_weights: tuple[float, ...] | None
     overlap_scale_by: str | None
@@ -124,6 +130,12 @@ class FermiNetAdapterSummary:
             "excited_state_route_is_mainline": self.excited_state_route_is_mainline,
             "states": self.states,
             "independent_state_params": self.independent_state_params,
+            "independent_state_merge_keys": self.independent_state_merge_keys,
+            "diagonal_mcmc_trace": self.diagonal_mcmc_trace,
+            "diagonal_local_energy": self.diagonal_local_energy,
+            "diagonal_overlap_jvp": self.diagonal_overlap_jvp,
+            "profile_step_times": self.profile_step_times,
+            "profile_loss_components": self.profile_loss_components,
             "overlap_penalty": self.overlap_penalty,
             "overlap_weights": self.overlap_weights,
             "overlap_scale_by": self.overlap_scale_by,
@@ -217,6 +229,10 @@ class FermiNetAdapterBundle:
         runtime = self.experiment.get("runtime", {})
         fixed_ground = self.cfg.optim.get("fixed_ground", {})
         psiformer_attention = psiformer_attention_implementation(self.cfg)
+        independent_states = bool(self.cfg.network.get("independent_states", False))
+        auto_diagonal_paths = (
+            independent_states and str(self.cfg.optim.objective) == "vmc_overlap"
+        )
         route = classify_excited_state_mainline(
             objective=str(self.cfg.optim.objective),
             states=int(self.cfg.system.get("states", 0)),
@@ -228,9 +244,7 @@ class FermiNetAdapterBundle:
                 else None
             ),
             method_profile=self.cfg.optim.get("method_profile"),
-            independent_state_params=bool(
-                self.cfg.network.get("independent_states", False)
-            ),
+            independent_state_params=independent_states,
         )
         return FermiNetAdapterSummary(
             experiment_name=self.experiment["experiment_name"],
@@ -249,8 +263,26 @@ class FermiNetAdapterBundle:
             excited_state_route_role=route.role,
             excited_state_route_is_mainline=route.is_mainline,
             states=int(self.cfg.system.get("states", 0)),
-            independent_state_params=bool(
-                self.cfg.network.get("independent_states", False)
+            independent_state_params=independent_states,
+            independent_state_merge_keys=tuple(
+                str(key)
+                for key in self.cfg.network.get("independent_state_merge_keys", ())
+            ),
+            diagonal_mcmc_trace=_resolve_auto_bool(
+                self.cfg.optim.get("diagonal_mcmc_trace", None),
+                auto_diagonal_paths,
+            ),
+            diagonal_local_energy=_resolve_auto_bool(
+                self.cfg.optim.get("diagonal_local_energy", None),
+                auto_diagonal_paths,
+            ),
+            diagonal_overlap_jvp=_resolve_auto_bool(
+                self.cfg.optim.get("diagonal_overlap_jvp", None),
+                auto_diagonal_paths,
+            ),
+            profile_step_times=bool(self.cfg.log.get("profile_step_times", False)),
+            profile_loss_components=bool(
+                self.cfg.log.get("profile_loss_components", False)
             ),
             overlap_penalty=float(self.cfg.optim.overlap.penalty),
             overlap_weights=None
@@ -440,6 +472,12 @@ def format_summary(summary: FermiNetAdapterSummary) -> str:
         f"excited_state_route_is_mainline: {summary.excited_state_route_is_mainline}",
         f"states: {summary.states}",
         f"independent_state_params: {summary.independent_state_params}",
+        f"independent_state_merge_keys: {summary.independent_state_merge_keys}",
+        f"diagonal_mcmc_trace: {summary.diagonal_mcmc_trace}",
+        f"diagonal_local_energy: {summary.diagonal_local_energy}",
+        f"diagonal_overlap_jvp: {summary.diagonal_overlap_jvp}",
+        f"profile_step_times: {summary.profile_step_times}",
+        f"profile_loss_components: {summary.profile_loss_components}",
         f"overlap_penalty: {summary.overlap_penalty}",
         f"overlap_weights: {summary.overlap_weights}",
         f"overlap_scale_by: {summary.overlap_scale_by}",
@@ -612,6 +650,32 @@ def _build_ferminet_config(
                 "independent_states",
                 profile_defaults.get("independent_state_params", False),
             ),
+        )
+    )
+    parameter_sharing = dict(train_cfg.get("parameter_sharing", {}))
+    cfg.network.independent_state_merge_keys = _as_tuple_strings(
+        train_cfg.get(
+            "independent_state_merge_keys",
+            parameter_sharing.get("merge_keys", ()),
+        )
+    )
+    diagonal_paths = dict(train_cfg.get("diagonal_paths", {}))
+    cfg.optim.diagonal_mcmc_trace = _as_optional_bool(
+        train_cfg.get("diagonal_mcmc_trace", diagonal_paths.get("mcmc_trace"))
+    )
+    cfg.optim.diagonal_local_energy = _as_optional_bool(
+        train_cfg.get("diagonal_local_energy", diagonal_paths.get("local_energy"))
+    )
+    cfg.optim.diagonal_overlap_jvp = _as_optional_bool(
+        train_cfg.get("diagonal_overlap_jvp", diagonal_paths.get("overlap_jvp"))
+    )
+    profiling = dict(train_cfg.get("profiling", {}))
+    cfg.log.profile_step_times = bool(
+        train_cfg.get("profile_step_times", profiling.get("step_times", False))
+    )
+    cfg.log.profile_loss_components = bool(
+        train_cfg.get(
+            "profile_loss_components", profiling.get("loss_components", False)
         )
     )
     if cfg.optim.objective == "vmc_overlap" and cfg.system.states <= 0:
@@ -943,6 +1007,24 @@ def _as_tuple_layers(hidden_dims: list[list[int]]) -> tuple[tuple[int, int], ...
             raise ValueError(f"Expected [one_body, two_body] layer, got {layer}")
         layers.append((int(layer[0]), int(layer[1])))
     return tuple(layers)
+
+
+def _as_tuple_strings(value: Any) -> tuple[str, ...]:
+    if value is None:
+        return ()
+    if isinstance(value, str):
+        value = (value,)
+    return tuple(str(item).strip() for item in value if str(item).strip())
+
+
+def _as_optional_bool(value: Any) -> bool | None:
+    if value is None:
+        return None
+    return bool(value)
+
+
+def _resolve_auto_bool(value: Any, default: bool) -> bool:
+    return default if value is None else bool(value)
 
 
 def _ensure_import_paths(project_root: Path, ferminet_root: Path) -> None:

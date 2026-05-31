@@ -1,0 +1,62 @@
+project: solidnes
+experiment_name: diamond_c_psiformer_pbc_gamma_deepqmc_alignment_gpu_smoke_batch512_iter2
+stage: psiformer
+phase: deepqmc_alignment_gpu_smoke
+
+backend:
+  name: ferminet
+  repository: https://github.com/google-deepmind/ferminet
+  inspected_commit: c4312c315dda1c5728994ba89629744f71c6eb66
+  mode: native_ferminet_psiformer_training
+
+system_config: ../system/diamond_c_primitive_gamma.yaml
+model_config: ../model/psiformer_pbc_paper.yaml
+sampler_config: ../sampler/metropolis_ferminet_pbc_short.yaml
+train_config: ../train/excited_state_psiformer_pbc_native_kfac_deepqmc_alignment_smoke_batch512_iter2.yaml
+
+ferminet_config_template:
+  module: solidnes/backends/ferminet_configs/diamond_pbc_gamma.py
+
+runtime:
+  target_jax_version: 0.10.1
+  cuda_extra: cuda12
+  precision_profile: speed
+  x64_enabled: false
+  require_gpu: true
+  xla_python_client_preallocate: true
+  xla_python_client_mem_fraction: 0.90
+
+output:
+  log_dir: tasks/psiformer/0098_deepqmc_alignment_gpu_smoke/runs/psiformer/logs/backend
+  checkpoint_dir: tasks/psiformer/0098_deepqmc_alignment_gpu_smoke/runs/psiformer/results/checkpoints
+  validation_dir: tasks/psiformer/0098_deepqmc_alignment_gpu_smoke/runs/psiformer/results/validation
+
+diagnostics:
+  import_ferminet: true
+  build_pbc_config: true
+  native_ferminet_excited_state: true
+  expected_states: 2
+  independent_state_params: true
+  independent_state_merge_keys: [layers]
+  objective: vmc_overlap
+  method_profile: szabo_noe_2024_penalty
+  optimizer: kfac
+  batch_size: 512
+  iterations: 2
+  model: psiformer
+  attention_implementation: auto
+  expected_outputs:
+    - train_stats.csv
+    - energy_matrix.npy
+    - overlap_matrix.npy
+    - overlap_symmetric_matrix.npy
+    - overlap_penalty_matrix.npy
+    - overlap_gradient_scale.npy
+    - overlap_state_ordering.npy
+    - runtime metadata with resolved fused_qkv attention
+
+notes:
+  status: ready_for_gpu_smoke
+  purpose: >-
+    Fast GPU validation of the source-level DeepQMC alignment changes for the
+    PsiFormer excited-state route.

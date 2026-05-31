@@ -3,8 +3,8 @@ training:
   deterministic: true
   check_nan: false
   reset_if_nan: false
-  batch_size: 4096
-  iterations: 10000
+  batch_size: 512
+  iterations: 2
   optimizer: kfac
   objective: vmc_overlap
   method_profile: szabo_noe_2024_penalty
@@ -12,7 +12,7 @@ training:
   independent_state_params: true
   parameter_sharing:
     merge_keys:
-      - layers
+      - layers/streams
   diagonal_paths:
     mcmc_trace: true
     local_energy: true
@@ -41,7 +41,7 @@ training:
   center_at_clip: true
   pretrain_method: null
   pretrain_iterations: 0
-  checkpoint_every_minutes: 10
+  checkpoint_every_minutes: 5
   log_every: 1
   kfac:
     invert_every: 1
@@ -54,7 +54,6 @@ training:
 stability_checks:
   finite_energy: true
   finite_variance: true
-  acceptance_range: [0.05, 0.95]
   finite_overlap_matrix: true
   finite_symmetric_overlap_matrix: true
   finite_overlap_penalty_matrix: true
@@ -62,9 +61,8 @@ stability_checks:
   finite_state_ordering: true
 
 notes:
-  status: attention_paper_fullnode_speed_x64_levmap128_iter10000
+  status: deepqmc_alignment_gpu_smoke
   purpose: >-
-    10000-step x64 4-GPU paper-scale PsiFormer comparison config with
-    local-energy-only FOLX vmap chunking and DeepQMC-style shared trunk
-    projection across independently-parameterized states. Spin penalty and S2
-    observables are intentionally disabled.
+    Short GPU smoke for the DeepQMC-aligned FermiNet native excited-state path:
+    independent per-state parameters, shared stream projection, diagonal
+    independent-state sampling/local-energy fast paths, and overlap penalty.

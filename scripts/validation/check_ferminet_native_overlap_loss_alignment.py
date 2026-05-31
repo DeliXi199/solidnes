@@ -19,6 +19,7 @@ import kfac_jax
 import numpy as np
 
 from ferminet import curvature_tags_and_blocks
+from ferminet import hamiltonian
 from ferminet import loss as ferminet_loss
 from ferminet import networks
 from ferminet import train as ferminet_train
@@ -39,7 +40,10 @@ def main() -> int:
     _check_deepqmc_overlap_tangent_prefactor()
     _check_custom_jvp_smoke()
     _check_independent_state_network_wrapper()
+    _check_independent_state_merge_keys()
+    _check_independent_state_diagonal_local_energy()
     _check_independent_state_kfac_step_smoke()
+    _check_kfac_registration_keeps_state_axis()
     _check_loss_consumes_ewm_scale_fields()
     _check_method_profile_adapter_defaults()
     _check_spin_penalty_adapter_plumbing()
@@ -436,6 +440,9 @@ def _check_independent_state_network_wrapper() -> None:
     sign, log_psi = network.apply(params, pos, spins, atoms, charges)
     if sign.shape != (2,) or log_psi.shape != (2,):
         raise AssertionError("independent wrapper must return one output per state")
+    state0_sign, state0_log = network.apply_state(params, 0, pos, spins, atoms, charges)
+    np.testing.assert_allclose(np.asarray(state0_sign), np.asarray(sign[0]), rtol=1e-6)
+    np.testing.assert_allclose(np.asarray(state0_log), np.asarray(log_psi[0]), rtol=1e-6)
     stacked_params = {
         "state_params": jax.tree_util.tree_map(lambda *xs: jnp.stack(xs, axis=0), *state_params)
     }
@@ -444,6 +451,20 @@ def _check_independent_state_network_wrapper() -> None:
         raise AssertionError("independent wrapper must read legacy stacked params")
 
     state_matrix = networks.make_state_matrix(network.apply, 2)
+    trace_reference = networks.make_state_trace(network.apply, 2)
+    trace_pos = jnp.concatenate([pos, pos + 0.05])
+    trace_spins = jnp.concatenate([spins, spins])
+    sign_mat, log_mat = state_matrix(params, trace_pos, trace_spins, atoms, charges)
+    diag_sign, diag_log = network.state_diagonal(
+        params, trace_pos, trace_spins, atoms, charges
+    )
+    np.testing.assert_allclose(np.asarray(diag_sign), np.asarray(jnp.diag(sign_mat)), rtol=1e-6)
+    np.testing.assert_allclose(np.asarray(diag_log), np.asarray(jnp.diag(log_mat)), rtol=1e-6)
+    np.testing.assert_allclose(
+        np.asarray(network.state_trace(params, trace_pos, trace_spins, atoms, charges)),
+        np.asarray(trace_reference(params, trace_pos, trace_spins, atoms, charges)),
+        rtol=1e-6,
+    )
 
     def local_energy(params, key, data):  # noqa: ARG001
         del params, key, data
@@ -458,6 +479,7 @@ def _check_independent_state_network_wrapper() -> None:
     loss_fn = ferminet_loss.make_energy_overlap_loss(
         state_matrix,
         local_energy,
+        diagonal_network=network.state_diagonal,
         overlap_weight=(0.5, 0.5),
         overlap_penalty=4.0,
     )
@@ -466,6 +488,83 @@ def _check_independent_state_network_wrapper() -> None:
         raise AssertionError("independent-state overlap loss must be finite")
     if aux.mean_s_ij.shape != (2, 2):
         raise AssertionError("independent-state overlap aux must be a 2x2 matrix")
+
+
+def _check_independent_state_merge_keys() -> None:
+    params = {
+        "state_params": (
+            {
+                "shared": {"w": jnp.array([1.0, 3.0], dtype=jnp.float32)},
+                "private": {"w": jnp.array([10.0], dtype=jnp.float32)},
+            },
+            {
+                "shared": {"w": jnp.array([5.0, 7.0], dtype=jnp.float32)},
+                "private": {"w": jnp.array([20.0], dtype=jnp.float32)},
+            },
+        )
+    }
+    paths = networks.independent_state_merge_key_paths(params, ("shared",))
+    if "shared/w" not in paths:
+        raise AssertionError("merge key path discovery did not find shared/w")
+    merged = networks.merge_independent_state_params(params, ("shared",))
+    expected = np.array([3.0, 5.0], dtype=np.float32)
+    for state_params in merged["state_params"]:
+        np.testing.assert_allclose(np.asarray(state_params["shared"]["w"]), expected)
+    np.testing.assert_allclose(
+        np.asarray(merged["state_params"][0]["private"]["w"]),
+        np.array([10.0], dtype=np.float32),
+    )
+    np.testing.assert_allclose(
+        np.asarray(merged["state_params"][1]["private"]["w"]),
+        np.array([20.0], dtype=np.float32),
+    )
+
+
+def _check_independent_state_diagonal_local_energy() -> None:
+    base_network = networks.make_fermi_net(
+        nspins=(1, 1),
+        charges=jnp.array([2.0], dtype=jnp.float32),
+        determinants=1,
+        states=0,
+        hidden_dims=((4, 2),),
+    )
+    network = networks.make_independent_state_network(base_network, states=2)
+    params = network.init(jax_random_key())
+    pos = jnp.array([0.1, 0.0, 0.0, -0.2, 0.1, 0.0], dtype=jnp.float32)
+    spins = jnp.array([1.0, -1.0], dtype=jnp.float32)
+    atoms = jnp.zeros((1, 3), dtype=jnp.float32)
+    charges = jnp.array([2.0], dtype=jnp.float32)
+    data = networks.FermiNetData(
+        positions=jnp.concatenate([pos, pos + 0.05]),
+        spins=jnp.concatenate([spins, spins]),
+        atoms=atoms,
+        charges=charges,
+    )
+    full_local_energy = hamiltonian.local_energy(
+        network.apply,
+        charges,
+        nspins=(1, 1),
+        laplacian_method="folx",
+        states=2,
+        state_specific=True,
+    )
+    diagonal_local_energy = hamiltonian.local_energy(
+        network.apply,
+        charges,
+        nspins=(1, 1),
+        laplacian_method="folx",
+        states=2,
+        state_specific=True,
+        state_specific_network=network.apply_state,
+    )
+    full_energy, _ = full_local_energy(params, jax_random_key(), data)
+    diagonal_energy, _ = diagonal_local_energy(params, jax_random_key(), data)
+    np.testing.assert_allclose(
+        np.asarray(diagonal_energy),
+        np.asarray(full_energy),
+        rtol=1e-4,
+        atol=1e-4,
+    )
 
 
 def _check_independent_state_kfac_step_smoke() -> None:
@@ -535,6 +634,70 @@ def _check_independent_state_kfac_step_smoke() -> None:
         raise AssertionError("independent-state KFAC smoke loss must be finite")
 
 
+def _check_kfac_registration_keeps_state_axis() -> None:
+    base_network = networks.make_fermi_net(
+        nspins=(1, 1),
+        charges=jnp.array([2.0], dtype=jnp.float32),
+        determinants=1,
+        states=0,
+        hidden_dims=((4, 2),),
+    )
+    network = networks.make_independent_state_network(base_network, states=2)
+    state_matrix = networks.make_state_matrix(network.apply, 2)
+    params = network.init(jax_random_key())
+
+    def local_energy(params, key, data):  # noqa: ARG001
+        del params, key, data
+        return jnp.array([1.0, 1.5], dtype=jnp.float32), None
+
+    loss_fn = ferminet_loss.make_energy_overlap_loss(
+        state_matrix,
+        local_energy,
+        diagonal_network=network.state_diagonal,
+        overlap_weight=(0.5, 0.5),
+        overlap_penalty=4.0,
+    )
+    pos = jnp.array([0.1, 0.0, 0.0, -0.2, 0.1, 0.0], dtype=jnp.float32)
+    spins = jnp.array([1.0, -1.0], dtype=jnp.float32)
+    atoms = jnp.zeros((1, 3), dtype=jnp.float32)
+    charges = jnp.array([2.0], dtype=jnp.float32)
+    data = networks.FermiNetData(
+        positions=jnp.tile(jnp.concatenate([pos, pos + 0.05])[None, :], (4, 1)),
+        spins=jnp.tile(jnp.concatenate([spins, spins])[None, :], (4, 1)),
+        atoms=jnp.tile(atoms[None, :, :], (4, 1, 1)),
+        charges=jnp.tile(charges[None, :], (4, 1)),
+    )
+
+    captured_shapes = []
+    original_register = kfac_jax.register_normal_predictive_distribution
+
+    def capture_register(value, *args, **kwargs):
+        captured_shapes.append(tuple(value.shape))
+        return original_register(value, *args, **kwargs)
+
+    kfac_jax.register_normal_predictive_distribution = capture_register
+    try:
+        tangent_params = jax.tree_util.tree_map(jnp.zeros_like, params)
+        tangent_data = jax.tree_util.tree_map(jnp.zeros_like, data)
+        jax.jvp(
+            lambda p, d: loss_fn(p, jax.random.PRNGKey(4), d)[0],
+            (params, data),
+            (tangent_params, tangent_data),
+        )
+    finally:
+        kfac_jax.register_normal_predictive_distribution = original_register
+
+    if (4, 2) not in captured_shapes:
+        raise AssertionError(
+            "KFAC overlap JVP registration must preserve (batch, states); "
+            f"captured shapes: {captured_shapes}"
+        )
+    if any(shape == (8, 1) or shape == (8,) for shape in captured_shapes):
+        raise AssertionError(
+            "KFAC overlap JVP registration appears to flatten states into batch"
+        )
+
+
 def jax_random_key():
     return jax.random.PRNGKey(0)
 
@@ -556,6 +719,16 @@ def _check_method_profile_adapter_defaults() -> None:
     np.testing.assert_allclose(summary.overlap_weights, (0.5, 0.5))
     if not summary.independent_state_params:
         raise AssertionError("DeepQMC-aligned profile must use per-state params")
+    if summary.independent_state_merge_keys != ("layers/streams",):
+        raise AssertionError("FermiNet native profile must share stream parameters")
+    if not summary.diagonal_mcmc_trace:
+        raise AssertionError("DeepQMC-aligned profile must use diagonal MCMC trace")
+    if not summary.diagonal_local_energy:
+        raise AssertionError("DeepQMC-aligned profile must use diagonal local energy")
+    if not summary.diagonal_overlap_jvp:
+        raise AssertionError("DeepQMC-aligned profile must use diagonal overlap JVP")
+    if summary.profile_loss_components:
+        raise AssertionError("loss-component profiling should be opt-in")
     if summary.overlap_sort_states_by is not None:
         raise AssertionError("DeepQMC-aligned profile must keep index state ordering")
     np.testing.assert_allclose(summary.kfac_norm_constraint, 0.001)

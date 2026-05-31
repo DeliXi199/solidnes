@@ -64,18 +64,22 @@ def main() -> int:
         help="Do not fail when JAX reports only CPU devices.",
     )
     args = parser.parse_args()
+    env_build_only = _env_flag("SOLIDNES_BUILD_ONLY")
+    env_allow_cpu = _env_flag("SOLIDNES_ALLOW_CPU")
+    build_only = args.build_only or env_build_only
+    allow_cpu = args.allow_cpu or env_allow_cpu
 
     experiment = _select_experiment(args.experiment, args.mainline_excited_state)
     experiment_path = (PROJECT_ROOT / experiment).resolve()
     _apply_runtime_defaults(
         experiment_path,
-        force_cpu=args.allow_cpu or args.build_only,
+        force_cpu=allow_cpu or build_only,
     )
     bundle = build_ferminet_adapter(experiment_path)
     create_output_dirs(bundle)
     print(format_summary(bundle.summary))
 
-    if args.build_only:
+    if build_only:
         return 0
 
     import jax  # pylint: disable=import-outside-toplevel
@@ -84,7 +88,7 @@ def main() -> int:
     print(f"jax={jax.__version__}")
     print(f"jax_default_backend={jax.default_backend()}")
     print(f"jax_devices={jax.devices()}")
-    if not args.allow_cpu and not any(device.platform == "gpu" for device in jax.devices()):
+    if not allow_cpu and not any(device.platform == "gpu" for device in jax.devices()):
         raise SystemExit("JAX did not report a GPU device; pass --allow-cpu only for local debugging")
 
     from absl import logging as absl_logging  # pylint: disable=import-outside-toplevel
@@ -116,6 +120,11 @@ def main() -> int:
         final_checkpoint=final_checkpoint.to_json(),
     )
     return 0
+
+
+def _env_flag(name: str) -> bool:
+    value = os.environ.get(name, "")
+    return value.strip().lower() in {"1", "true", "yes", "on"}
 
 
 def _apply_runtime_defaults(experiment_path: Path, *, force_cpu: bool = False) -> None:
@@ -163,6 +172,13 @@ def _write_runtime_metadata(
         "network_type": bundle.summary.network_type,
         "objective": bundle.summary.objective,
         "states": bundle.summary.states,
+        "independent_state_params": bundle.summary.independent_state_params,
+        "independent_state_merge_keys": bundle.summary.independent_state_merge_keys,
+        "diagonal_mcmc_trace": bundle.summary.diagonal_mcmc_trace,
+        "diagonal_local_energy": bundle.summary.diagonal_local_energy,
+        "diagonal_overlap_jvp": bundle.summary.diagonal_overlap_jvp,
+        "profile_step_times": bundle.summary.profile_step_times,
+        "profile_loss_components": bundle.summary.profile_loss_components,
         "iterations": bundle.summary.iterations,
         "batch_size": bundle.summary.batch_size,
         "optimizer": bundle.summary.optimizer,

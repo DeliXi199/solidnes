@@ -126,6 +126,11 @@ def _assert_mainline_summary(summary) -> None:
 def _assert_deepqmc_alignment_defaults(summary) -> None:
     _assert_equal(summary.overlap_weights, (0.5, 0.5), "overlap weights")
     _assert_equal(summary.independent_state_params, True, "independent per-state params")
+    _assert_equal(summary.independent_state_merge_keys, ("layers",), "merge keys")
+    _assert_equal(summary.diagonal_mcmc_trace, True, "diagonal MCMC trace")
+    _assert_equal(summary.diagonal_local_energy, True, "diagonal local energy")
+    _assert_equal(summary.diagonal_overlap_jvp, True, "diagonal overlap JVP")
+    _assert_equal(summary.profile_loss_components, False, "loss-component profiling")
     _assert_equal(summary.overlap_sort_states_by, None, "state ordering")
     _assert_equal(
         summary.kfac_norm_constraint_scale_by_states,

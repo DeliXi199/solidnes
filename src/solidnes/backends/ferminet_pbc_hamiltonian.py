@@ -23,10 +23,15 @@ def local_energy(*args: Any, ndim: int | None = None, **kwargs: Any):
     """
 
     del ndim
+    state_specific_network = kwargs.pop("state_specific_network", None)
     states = int(kwargs.get("states", 0) or 0)
     state_specific = bool(kwargs.get("state_specific", False))
     if states > 0 or state_specific:
-        return _excited_pbc_local_energy(*args, **kwargs)
+        return _excited_pbc_local_energy(
+            *args,
+            state_specific_network=state_specific_network,
+            **kwargs,
+        )
     return pbc_hamiltonian.local_energy(*args, **kwargs)
 
 
@@ -39,6 +44,7 @@ def _excited_pbc_local_energy(
     laplacian_method: str = "default",
     states: int = 0,
     state_specific: bool = False,
+    state_specific_network=None,
     pp_type: str = "ccecp",
     pp_symbols=None,
     lattice: jnp.ndarray | None = None,
@@ -86,6 +92,15 @@ def _excited_pbc_local_energy(
 
         def one_state_kinetic(state_index: int):
             def state_log_psi(x):
+                if state_specific_network is not None:
+                    return state_specific_network(
+                        params,
+                        state_index,
+                        x,
+                        spins[state_index],
+                        data.atoms,
+                        data.charges,
+                    )
                 sign, logabs = f(params, x, spins[0], data.atoms, data.charges)
                 return sign[state_index], logabs[state_index]
 

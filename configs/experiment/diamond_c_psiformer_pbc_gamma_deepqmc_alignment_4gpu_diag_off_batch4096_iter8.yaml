@@ -1,0 +1,53 @@
+project: solidnes
+experiment_name: diamond_c_psiformer_pbc_gamma_deepqmc_alignment_4gpu_diag_off_batch4096_iter8
+stage: psiformer
+phase: deepqmc_alignment_4gpu_speed_profile
+
+backend:
+  name: ferminet
+  repository: https://github.com/google-deepmind/ferminet
+  inspected_commit: c4312c315dda1c5728994ba89629744f71c6eb66
+  mode: native_ferminet_psiformer_training
+
+system_config: ../system/diamond_c_primitive_gamma.yaml
+model_config: ../model/psiformer_pbc_paper_attention_fused_qkv_x64_jaxattn.yaml
+sampler_config: ../sampler/metropolis_ferminet_pbc_short.yaml
+train_config: ../train/excited_state_psiformer_pbc_native_kfac_deepqmc_alignment_4gpu_diag_off_batch4096_iter8.yaml
+
+ferminet_config_template:
+  module: solidnes/backends/ferminet_configs/diamond_pbc_gamma.py
+
+runtime:
+  target_jax_version: 0.10.1
+  cuda_extra: cuda12
+  precision_profile: fp64
+  x64_enabled: true
+  require_gpu: true
+  xla_python_client_preallocate: true
+  xla_python_client_mem_fraction: 0.90
+
+output:
+  log_dir: tasks/psiformer/0100_deepqmc_alignment_4gpu_speed_benchmark/runs/diag_off/logs/backend
+  checkpoint_dir: tasks/psiformer/0100_deepqmc_alignment_4gpu_speed_benchmark/runs/diag_off/results/checkpoints
+  validation_dir: tasks/psiformer/0100_deepqmc_alignment_4gpu_speed_benchmark/runs/diag_off/results/validation
+
+diagnostics:
+  native_ferminet_excited_state: true
+  expected_states: 2
+  independent_state_params: true
+  independent_state_merge_keys: [layers]
+  diagonal_paths: {mcmc_trace: false, local_energy: false, overlap_jvp: false}
+  profile_step_times: true
+  profile_loss_components: true
+  objective: vmc_overlap
+  method_profile: szabo_noe_2024_penalty
+  optimizer: kfac
+  batch_size: 4096
+  iterations: 8
+  scheduler_gpus: 4
+  scheduler_cpus: 64
+
+notes:
+  status: ready_for_4gpu_speed_profile
+  purpose: >-
+    Production-like 4GPU x64 PsiFormer speed profile with diagonal paths off.
