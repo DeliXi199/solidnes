@@ -36,6 +36,7 @@ diagnostics:
   build_pbc_config: true
   native_ferminet_excited_state: true
   expected_states: 2
+  independent_state_params: true
   objective: vmc_overlap
   method_profile: szabo_noe_2024_penalty
   optimizer: kfac
@@ -43,7 +44,7 @@ diagnostics:
   overlap_penalty: 4.0
   overlap_scale_by: max_gap_std
   overlap_clip_width: 10.0
-  overlap_sort_states_by: energy
+  overlap_sort_states_by: null
   clip_median: true
   expected_outputs:
     - train_stats.csv

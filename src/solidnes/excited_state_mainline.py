@@ -29,6 +29,7 @@ MAINLINE_EXCITED_STATE_ATTENTION = "fused_qkv"
 MAINLINE_EXCITED_STATE_ATTENTION_KERNEL_GPU = "jax"
 MAINLINE_EXCITED_STATE_METHOD_PROFILE = "szabo_noe_2024_penalty"
 MAINLINE_EXCITED_STATE_MIN_STATES = 2
+MAINLINE_EXCITED_STATE_INDEPENDENT_STATE_PARAMS = True
 
 
 @dataclass(frozen=True)
@@ -74,6 +75,7 @@ def classify_excited_state_mainline(
     attention_implementation: str | None = None,
     attention_kernel_gpu: str | None = None,
     method_profile: str | None = None,
+    independent_state_params: bool | None = None,
 ) -> ExcitedStateMainlineSelection:
     """Classify whether a config is on the 0096 excited-state mainline."""
 
@@ -83,6 +85,7 @@ def classify_excited_state_mainline(
     resolved_attention = resolve_mainline_attention(attention_implementation)
     kernel_value = _lower_or_none(attention_kernel_gpu)
     profile_value = _lower_or_none(method_profile)
+    independent_value = bool(independent_state_params)
 
     if objective_value != MAINLINE_EXCITED_STATE_OBJECTIVE:
         return ExcitedStateMainlineSelection(
@@ -106,6 +109,14 @@ def classify_excited_state_mainline(
             role="legacy_or_control",
             is_mainline=False,
             reason="native vmc_overlap is active, but the network is not PsiFormer",
+            resolved_attention=resolved_attention,
+        )
+    if independent_value != MAINLINE_EXCITED_STATE_INDEPENDENT_STATE_PARAMS:
+        return ExcitedStateMainlineSelection(
+            method="psiformer_vmc_overlap_shared_state_params",
+            role="legacy_or_control",
+            is_mainline=False,
+            reason="mainline excited-state route requires independent per-state parameters",
             resolved_attention=resolved_attention,
         )
     if resolved_attention != MAINLINE_EXCITED_STATE_ATTENTION:
@@ -155,6 +166,7 @@ __all__ = [
     "ExcitedStateMainlineSelection",
     "MAINLINE_EXCITED_STATE_ATTENTION",
     "MAINLINE_EXCITED_STATE_ATTENTION_KERNEL_GPU",
+    "MAINLINE_EXCITED_STATE_INDEPENDENT_STATE_PARAMS",
     "MAINLINE_EXCITED_STATE_METHOD",
     "MAINLINE_EXCITED_STATE_METHOD_PROFILE",
     "MAINLINE_EXCITED_STATE_MIN_STATES",

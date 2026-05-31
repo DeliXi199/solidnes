@@ -1,0 +1,227 @@
+{
+  "job_id": "133789",
+  "run_name": "fullnode_anygpu_ferminet_x64_deepqmc_b4096_i10000_levmap128_jaxattn",
+  "checkpoint_dir": "tasks/psiformer/0097_deepqmc_aligned_excited_state/runs/fullnode_anygpu_ferminet_x64_deepqmc_b4096_i10000_levmap128_jaxattn/results/checkpoints",
+  "runtime": {
+    "experiment": "diamond_c_psiformer_pbc_gamma_attention_deepqmc_aligned_fullnode_anygpu_ferminet_x64_b4096_iter10000_levmap128_jaxattn",
+    "network_type": "psiformer",
+    "objective": "vmc_overlap",
+    "states": 2,
+    "iterations": 10000,
+    "batch_size": 4096,
+    "optimizer": "kfac",
+    "laplacian": "folx",
+    "psiformer_attention_configured": "ferminet",
+    "psiformer_attention_resolved": "ferminet",
+    "psiformer_attention_kernel_gpu": "jax",
+    "psiformer_attention_kernel_gpu_resolved": "jax",
+    "elapsed_seconds": 22016.804794501513,
+    "seconds_per_iteration": 2.201680479450151,
+    "jax_version": "0.10.1",
+    "jax_backend": "gpu",
+    "jax_devices": [
+      "cuda:0",
+      "cuda:1",
+      "cuda:2",
+      "cuda:3"
+    ],
+    "final_checkpoint": {
+      "required": true,
+      "iterations": 10000,
+      "final_step": 9999,
+      "checkpoint_path": "/data/home/yihaoxu/research/projects/solidnes/tasks/psiformer/0097_deepqmc_aligned_excited_state/runs/fullnode_anygpu_ferminet_x64_deepqmc_b4096_i10000_levmap128_jaxattn/results/checkpoints/qmcjax_ckpt_009999.npz",
+      "exists": true
+    }
+  },
+  "rows": 10000,
+  "first_step": 0,
+  "final_step": 9999,
+  "scalar_energy": {
+    "first": -27.140308533096032,
+    "last": -75.33918576402516,
+    "min": -75.43428617615044,
+    "max": -26.945457367593495,
+    "tail100_mean": -75.3046723835305,
+    "tail500_mean": -75.30552925157892,
+    "tail1000_mean": -75.30490753527197,
+    "tail1000_std": 0.03201046554436503
+  },
+  "ewmean": {
+    "first": -27.140308533096032,
+    "last": -75.306026934183,
+    "min": -75.3262947806672,
+    "max": -27.100445857059036,
+    "tail100_mean": -75.3049271243964,
+    "tail500_mean": -75.30525863129495,
+    "tail1000_mean": -75.30480958203643,
+    "tail1000_std": 0.008227200564515516
+  },
+  "ewvar": {
+    "first": -0.0,
+    "last": 0.0013767540959284917,
+    "min": -0.0,
+    "max": 19.608432863987844,
+    "tail100_mean": 0.0008153139561456929,
+    "tail500_mean": 0.0009053250654742266,
+    "tail1000_mean": 0.0009538743116057407,
+    "tail1000_std": 0.0003187812064227375
+  },
+  "pmove": {
+    "first": 0.91739501953125,
+    "last": 0.5355102539062501,
+    "min": 0.52479248046875,
+    "max": 0.91739501953125,
+    "tail100_mean": 0.5350439453125001,
+    "tail500_mean": 0.5350993164062501,
+    "tail1000_mean": 0.5350986328125,
+    "tail1000_std": 0.0024371330920326508
+  },
+  "final_state_energy": [
+    -75.4491703411549,
+    -75.22920118689542
+  ],
+  "tail100_state_energy_mean": [
+    -75.40582092534746,
+    -75.2040701998989
+  ],
+  "tail1000_state_energy_mean": [
+    -75.4017380831894,
+    -75.20893115292758
+  ],
+  "final_ground_energy": -75.4491703411549,
+  "final_excited_energy": -75.22920118689542,
+  "fixed_gap_hartree": {
+    "first": 1.1815262417083296,
+    "last": 0.2199691542594735,
+    "min": -3.9822346424687893,
+    "max": 5.21967982379023,
+    "tail100_mean": 0.20175072544860626,
+    "tail500_mean": 0.19297819710256614,
+    "tail1000_mean": 0.19280693026156154,
+    "final_rolling100": 0.21170356638883214
+  },
+  "fixed_gap_ev": {
+    "first": 32.15096692289593,
+    "last": 5.985665618757849,
+    "min": -108.36212497837215,
+    "max": 142.03472376554652,
+    "tail100_mean": 5.489916915590305,
+    "tail500_mean": 5.251204258412328,
+    "tail1000_mean": 5.246543850250623,
+    "final_rolling100": 5.760747514659677
+  },
+  "sorted_gap_hartree": {
+    "first": 1.1815262417083296,
+    "last": 0.2199691542594735,
+    "min": 7.2027762598736444e-06,
+    "max": 5.21967982379023,
+    "tail100_mean": 0.20175072544860626,
+    "tail500_mean": 0.1933271450383059,
+    "tail1000_mean": 0.19298140422943147,
+    "final_rolling100": 0.21170356638883214
+  },
+  "sorted_gap_ev": {
+    "first": 32.15096692289593,
+    "last": 5.985665618757849,
+    "min": 0.00019599752685085456,
+    "max": 142.03472376554652,
+    "tail100_mean": 5.489916915590305,
+    "tail500_mean": 5.260699615471484,
+    "tail1000_mean": 5.251291528780201,
+    "final_rolling100": 5.760747514659677
+  },
+  "fixed_gap_negative_count": 1439,
+  "fixed_gap_negative_count_last100": 0,
+  "fixed_gap_negative_count_last1000": 3,
+  "state_ordering_first": [
+    0,
+    1
+  ],
+  "state_ordering_final": [
+    0,
+    1
+  ],
+  "state_ordering_swap_count": 0,
+  "state_ordering_first_swap_step": null,
+  "state_ordering_last_swap_step": null,
+  "final_overlap_matrix": [
+    [
+      1.0,
+      0.019137041500670793
+    ],
+    [
+      -0.011157305403096894,
+      1.0
+    ]
+  ],
+  "final_symmetric_overlap_matrix": [
+    [
+      1.0,
+      0.0
+    ],
+    [
+      -0.0,
+      1.0
+    ]
+  ],
+  "final_overlap_penalty_matrix": [
+    [
+      1.0,
+      0.0
+    ],
+    [
+      0.0,
+      1.0
+    ]
+  ],
+  "final_overlap_gradient_scale": [
+    [
+      3.0192534923553467,
+      3.0192534923553467
+    ],
+    [
+      2.9963645935058594,
+      2.9963645935058594
+    ]
+  ],
+  "symmetric_overlap01": {
+    "first": 0.1274432502634924,
+    "last": 0.0,
+    "min": -0.22996079427525348,
+    "max": 0.14930996725577989,
+    "tail100_mean": -4.476005640127121e-05,
+    "tail500_mean": -0.0006904280077350202,
+    "tail1000_mean": -0.00037448494043411764,
+    "tail1000_std": 0.01033136945754261,
+    "tail1000_abs_mean": 0.006063146687092206,
+    "tail1000_abs_max": 0.038439443091297
+  },
+  "abs_symmetric_overlap01": {
+    "first": 0.1274432502634924,
+    "last": 0.0,
+    "min": 0.0,
+    "max": 0.22996079427525348,
+    "tail100_mean": 0.004321405679814003,
+    "tail500_mean": 0.005244232085898338,
+    "tail1000_mean": 0.006063146687092206,
+    "tail1000_std": 0.008371321754819456
+  },
+  "overlap_penalty01": {
+    "first": 0.016241782037723158,
+    "last": 0.0,
+    "min": 0.0,
+    "max": 0.05288196690370545,
+    "tail100_mean": 6.82947731636237e-05,
+    "tail500_mean": 8.312344225903583e-05,
+    "tail1000_mean": 0.00010677069664398798,
+    "tail1000_std": 0.0002075751583430706
+  },
+  "final_overlap_scale_energy_ewm": [
+    -75.3988265991211,
+    -75.20720672607422
+  ],
+  "final_overlap_scale_std_ewm": [
+    3.0188488960266113,
+    2.9961400032043457
+  ]
+}

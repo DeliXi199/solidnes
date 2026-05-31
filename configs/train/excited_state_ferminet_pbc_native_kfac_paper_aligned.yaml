@@ -7,6 +7,7 @@ training:
   objective: vmc_overlap
   method_profile: szabo_noe_2024_penalty
   states: 2
+  independent_state_params: true
   overlap_penalty: 4.0
   overlap_weights: null
   overlap_scale_by: max_gap_std
@@ -14,7 +15,7 @@ training:
   overlap_max_scale: 5.0
   overlap_clip_width: 10.0
   overlap_clip_exclude_width: .inf
-  overlap_sort_states_by: energy
+  overlap_sort_states_by: null
   overlap_use_ewm_scale: true
   overlap_ewm_max_alpha: 0.999
   overlap_ewm_decay_alpha: 10.0
@@ -38,7 +39,7 @@ training:
     damping: 0.001
     cov_ema_decay: 0.95
     norm_constraint: 0.001
-    norm_constraint_scale_by_states: true
+    norm_constraint_scale_by_states: false
 
 stability_checks:
   finite_energy: true

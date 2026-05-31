@@ -53,6 +53,7 @@ class FermiNetAdapterSummary:
     excited_state_route_role: str | None
     excited_state_route_is_mainline: bool
     states: int
+    independent_state_params: bool
     overlap_penalty: float
     overlap_weights: tuple[float, ...] | None
     overlap_scale_by: str | None
@@ -122,6 +123,7 @@ class FermiNetAdapterSummary:
             "excited_state_route_role": self.excited_state_route_role,
             "excited_state_route_is_mainline": self.excited_state_route_is_mainline,
             "states": self.states,
+            "independent_state_params": self.independent_state_params,
             "overlap_penalty": self.overlap_penalty,
             "overlap_weights": self.overlap_weights,
             "overlap_scale_by": self.overlap_scale_by,
@@ -226,6 +228,9 @@ class FermiNetAdapterBundle:
                 else None
             ),
             method_profile=self.cfg.optim.get("method_profile"),
+            independent_state_params=bool(
+                self.cfg.network.get("independent_states", False)
+            ),
         )
         return FermiNetAdapterSummary(
             experiment_name=self.experiment["experiment_name"],
@@ -244,6 +249,9 @@ class FermiNetAdapterBundle:
             excited_state_route_role=route.role,
             excited_state_route_is_mainline=route.is_mainline,
             states=int(self.cfg.system.get("states", 0)),
+            independent_state_params=bool(
+                self.cfg.network.get("independent_states", False)
+            ),
             overlap_penalty=float(self.cfg.optim.overlap.penalty),
             overlap_weights=None
             if self.cfg.optim.overlap.weights is None
@@ -431,6 +439,7 @@ def format_summary(summary: FermiNetAdapterSummary) -> str:
         f"excited_state_route_role: {summary.excited_state_route_role}",
         f"excited_state_route_is_mainline: {summary.excited_state_route_is_mainline}",
         f"states: {summary.states}",
+        f"independent_state_params: {summary.independent_state_params}",
         f"overlap_penalty: {summary.overlap_penalty}",
         f"overlap_weights: {summary.overlap_weights}",
         f"overlap_scale_by: {summary.overlap_scale_by}",
@@ -512,16 +521,18 @@ def _method_profile_defaults(method_profile: str | None) -> dict[str, Any]:
     if method_profile == "szabo_noe_2024_penalty":
         return {
             "overlap_penalty": 4.0,
+            "overlap_equal_weights": True,
             "overlap_scale_by": "max_gap_std",
             "overlap_min_scale": 0.001,
             "overlap_max_scale": 5.0,
             "overlap_clip_width": 10.0,
             "overlap_clip_exclude_width": float("inf"),
-            "overlap_sort_states_by": "energy",
+            "overlap_sort_states_by": None,
             "overlap_use_ewm_scale": True,
             "overlap_ewm_max_alpha": 0.999,
             "overlap_ewm_decay_alpha": 10.0,
-            "kfac_norm_constraint_scale_by_states": True,
+            "independent_state_params": True,
+            "kfac_norm_constraint_scale_by_states": False,
         }
     raise ValueError(f"Unsupported FermiNet method_profile: {method_profile}")
 
@@ -594,6 +605,15 @@ def _build_ferminet_config(
             train_cfg.get("excited_states", cfg.system.get("states", 0)),
         )
     )
+    cfg.network.independent_states = bool(
+        train_cfg.get(
+            "independent_state_params",
+            train_cfg.get(
+                "independent_states",
+                profile_defaults.get("independent_state_params", False),
+            ),
+        )
+    )
     if cfg.optim.objective == "vmc_overlap" and cfg.system.states <= 0:
         raise ValueError("FermiNet vmc_overlap objective requires training.states > 0")
     cfg.optim.overlap.penalty = float(
@@ -609,10 +629,19 @@ def _build_ferminet_config(
     )
     if "overlap_weights" in train_cfg:
         overlap_weights = train_cfg.get("overlap_weights")
-        cfg.optim.overlap.weights = (
-            None
-            if overlap_weights is None
-            else tuple(float(weight) for weight in overlap_weights)
+        if overlap_weights is None and profile_defaults.get("overlap_equal_weights", False):
+            cfg.optim.overlap.weights = tuple(
+                [1.0 / float(cfg.system.states)] * int(cfg.system.states)
+            )
+        else:
+            cfg.optim.overlap.weights = (
+                None
+                if overlap_weights is None
+                else tuple(float(weight) for weight in overlap_weights)
+            )
+    elif profile_defaults.get("overlap_equal_weights", False):
+        cfg.optim.overlap.weights = tuple(
+            [1.0 / float(cfg.system.states)] * int(cfg.system.states)
         )
     cfg.optim.overlap.scale_by = train_cfg.get(
         "overlap_scale_by",

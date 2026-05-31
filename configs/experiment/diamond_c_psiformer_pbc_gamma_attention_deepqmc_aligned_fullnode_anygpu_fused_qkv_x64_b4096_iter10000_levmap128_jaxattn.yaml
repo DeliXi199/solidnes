@@ -1,5 +1,5 @@
 project: solidnes
-experiment_name: diamond_c_psiformer_pbc_gamma_attention_paper_fullnode_anygpu_ferminet_x64_attnfix_b4096_iter10000_levmap128_jaxattn
+experiment_name: diamond_c_psiformer_pbc_gamma_attention_deepqmc_aligned_fullnode_anygpu_fused_qkv_x64_b4096_iter10000_levmap128_jaxattn
 stage: psiformer
 phase: psiformer_attention_full_stack
 
@@ -10,7 +10,7 @@ backend:
   mode: native_ferminet_psiformer_training
 
 system_config: ../system/diamond_c_primitive_gamma.yaml
-model_config: ../model/psiformer_pbc_paper_attention_ferminet_x64_jaxattn.yaml
+model_config: ../model/psiformer_pbc_paper_attention_fused_qkv_x64_jaxattn.yaml
 sampler_config: ../sampler/metropolis_ferminet_pbc_short.yaml
 train_config: ../train/excited_state_psiformer_pbc_native_kfac_attention_paper_benchmark_batch4096_iter10000_levmap128.yaml
 
@@ -27,9 +27,9 @@ runtime:
   xla_python_client_mem_fraction: 0.90
 
 output:
-  log_dir: tasks/psiformer/0096_psiformer_attention_full_stack/runs/fullnode_anygpu_ferminet_x64_attnfix_b4096_i10000_levmap128_jaxattn/logs/backend
-  checkpoint_dir: tasks/psiformer/0096_psiformer_attention_full_stack/runs/fullnode_anygpu_ferminet_x64_attnfix_b4096_i10000_levmap128_jaxattn/results/checkpoints
-  validation_dir: tasks/psiformer/0096_psiformer_attention_full_stack/runs/fullnode_anygpu_ferminet_x64_attnfix_b4096_i10000_levmap128_jaxattn/results/validation
+  log_dir: tasks/psiformer/0097_deepqmc_aligned_excited_state/runs/fullnode_anygpu_fused_qkv_x64_deepqmc_b4096_i10000_levmap128_jaxattn/logs/backend
+  checkpoint_dir: tasks/psiformer/0097_deepqmc_aligned_excited_state/runs/fullnode_anygpu_fused_qkv_x64_deepqmc_b4096_i10000_levmap128_jaxattn/results/checkpoints
+  validation_dir: tasks/psiformer/0097_deepqmc_aligned_excited_state/runs/fullnode_anygpu_fused_qkv_x64_deepqmc_b4096_i10000_levmap128_jaxattn/results/validation
 
 diagnostics:
   import_ferminet: true
@@ -45,6 +45,7 @@ diagnostics:
   max_vmap_batch_size: 0
   max_local_energy_vmap_batch_size: 128
   overlap_penalty: 4.0
+  overlap_weights: [0.5, 0.5]
   overlap_scale_by: max_gap_std
   overlap_clip_width: 10.0
   overlap_sort_states_by: null
@@ -52,7 +53,7 @@ diagnostics:
   observables_s2: false
   model: psiformer
   model_size: paper
-  attention_implementation: ferminet
+  attention_implementation: fused_qkv
   attention_kernel_gpu: jax
   precision_profile: fp64
   x64_enabled: true
@@ -70,10 +71,11 @@ diagnostics:
     - overlap_state_ordering.npy
     - overlap_scale_energy_ewm.npy
     - overlap_scale_std_ewm.npy
-    - runtime metadata with resolved ferminet attention
+    - runtime metadata with resolved fused_qkv attention
 
 notes:
-  status: ready_after_fullnode_compile_probe
+  status: ready_after_deepqmc_alignment_check
   purpose: >-
-    Upstream-attention x64 10000-step comparison candidate after the slow
-    compile fix. Submit only after the matching two-step full-node probe passes.
+    Fused-QKV x64 10000-step excited-state rerun after aligning the native
+    overlap-ratio centering, overlap tangent, equal state weights, and fixed
+    state ordering with the DeepQMC-style route.

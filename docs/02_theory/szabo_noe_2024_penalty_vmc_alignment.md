@@ -38,11 +38,12 @@ overlap_min_scale: 0.001
 overlap_max_scale: 5.0
 overlap_clip_width: 10.0
 overlap_clip_exclude_width: inf
-overlap_sort_states_by: energy
+overlap_sort_states_by: null
 overlap_use_ewm_scale: true
 overlap_ewm_max_alpha: 0.999
 overlap_ewm_decay_alpha: 10.0
-kfac_norm_constraint_scale_by_states: true
+independent_state_params: true
+kfac_norm_constraint_scale_by_states: false
 ```
 
 ## Objective
@@ -56,13 +57,20 @@ S_ij^2 = max(x_ij * x_ji, 0)
 S_ij = sign(x_ij) * sqrt(S_ij^2)
 ```
 
-The default FermiNet state weights are retained unless explicitly overridden by
-`overlap_weights`.
+The DeepQMC-aligned profile uses equal state weights. In SolidNES configs,
+`overlap_weights: null` under `method_profile: szabo_noe_2024_penalty` resolves
+to a uniform tuple such as `(0.5, 0.5)` for two states. Explicit
+`overlap_weights` values are still honored.
 
 The scalar overlap penalty strength is the fixed DeepQMC/Szabo-Noe hyperparameter
 `alpha = overlap_penalty = 4.0`. There is no separate automatic search for
 `alpha` in the reference DeepQMC implementation. The automatic part of the
 method is the overlap-gradient scaling in the custom tangent below.
+
+With `independent_state_params: true`, native FermiNet/PsiFormer excited-state
+runs initialize one complete network parameter tree per state. The multi-state
+network API still returns `psi_i(x)` for every state, but parameters are not
+shared across states; the states are coupled by the overlap-penalty objective.
 
 ## Overlap Tangent
 
@@ -70,9 +78,10 @@ The custom-JVP overlap tangent follows the lower-state-detached upper-triangle
 form used by the DeepQMC/Szabo-Noe reference implementation:
 
 ```text
+psi ratios subtract each state's mean log amplitude before exponentiation
 ratio gradients are median-MAD clipped
 ratio gradients are centered over the sample axis
-states are optionally ordered by running energy
+states use index ordering by default; energy ordering is an explicit control
 only the ordered upper triangle contributes to the overlap tangent
 the tangent is unpermuted back to the original state order
 ```
@@ -164,10 +173,10 @@ For diamond Gamma with `(n_alpha, n_beta) = (6, 6)`, this targets the fixed
 
 ## KFAC Norm Constraint
 
-For multi-state native FermiNet `vmc_overlap`, the method profile scales
-`cfg.optim.kfac.norm_constraint` by the number of states. The YAML value remains
-the single-state base value; the adapter writes the effective value into the
-FermiNet config and build summary.
+For the DeepQMC-aligned `vmc_overlap` profile, SolidNES keeps
+`cfg.optim.kfac.norm_constraint` at the YAML value and does not multiply it by
+the number of states. This matches the explicit per-state parameterization,
+where the state count already increases the trainable parameter tree.
 
 ## Explicit Non-Goals
 

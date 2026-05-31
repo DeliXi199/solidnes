@@ -13,9 +13,12 @@ for path in (PROJECT_ROOT / "src", FERMINET_ROOT):
     if str(path) not in sys.path:
         sys.path.insert(0, str(path))
 
+import jax
 import jax.numpy as jnp
+import kfac_jax
 import numpy as np
 
+from ferminet import curvature_tags_and_blocks
 from ferminet import loss as ferminet_loss
 from ferminet import networks
 from ferminet import train as ferminet_train
@@ -30,9 +33,13 @@ def main() -> int:
     _check_tree_all_finite()
     _check_spin_penalty_energy_helper()
     _check_spin_penalty_bare_energy_helper()
+    _check_deepqmc_ratio_log_centering()
     _check_ratio_clipping()
     _check_state_ordering()
+    _check_deepqmc_overlap_tangent_prefactor()
     _check_custom_jvp_smoke()
+    _check_independent_state_network_wrapper()
+    _check_independent_state_kfac_step_smoke()
     _check_loss_consumes_ewm_scale_fields()
     _check_method_profile_adapter_defaults()
     _check_spin_penalty_adapter_plumbing()
@@ -238,8 +245,46 @@ def _check_ratio_clipping() -> None:
         raise AssertionError("infinite exclude_width should keep all mask entries")
 
 
+def _check_deepqmc_ratio_log_centering() -> None:
+    sign_psi = jnp.ones((2, 2, 2), dtype=jnp.float32)
+    log_psi = jnp.array(
+        [
+            [[1.0, -2.0], [0.2, -1.5]],
+            [[1.4, -1.7], [0.5, -1.1]],
+        ],
+        dtype=jnp.float32,
+    )
+    centered_ratio = ferminet_loss._overlap_ratios_from_state_matrix(  # pylint: disable=protected-access
+        sign_psi,
+        log_psi,
+    )
+    mean_log = jnp.mean(log_psi, axis=(0, 1))
+    shifted = log_psi - mean_log[None, None, :]
+    expected = sign_psi * _batch_diag(sign_psi)[..., None] * jnp.exp(
+        shifted - _batch_diag(shifted)[..., None]
+    )
+    np.testing.assert_allclose(
+        np.asarray(centered_ratio),
+        np.asarray(expected),
+        rtol=1e-6,
+    )
+
+    raw = sign_psi * _batch_diag(sign_psi)[..., None] * jnp.exp(
+        log_psi - _batch_diag(log_psi)[..., None]
+    )
+    raw_overlap = jnp.mean(raw, axis=0)
+    centered_overlap = jnp.mean(centered_ratio, axis=0)
+    np.testing.assert_allclose(
+        np.asarray(ferminet_loss._symmetrized_squared_overlap(centered_overlap)),  # pylint: disable=protected-access
+        np.asarray(ferminet_loss._symmetrized_squared_overlap(raw_overlap)),  # pylint: disable=protected-access
+        rtol=1e-6,
+    )
+
+
 def _check_state_ordering() -> None:
     energy = jnp.array([-1.0, -3.0, -2.0])
+    default_ordering = ferminet_loss._state_ordering(energy, None)  # pylint: disable=protected-access
+    np.testing.assert_array_equal(np.asarray(default_ordering), np.array([0, 1, 2]))
     ordering = ferminet_loss._state_ordering(energy, "energy")  # pylint: disable=protected-access
     np.testing.assert_array_equal(np.asarray(ordering), np.array([1, 2, 0]))
     vector = jnp.array([[10.0, 20.0, 30.0]])
@@ -247,32 +292,32 @@ def _check_state_ordering() -> None:
     restored = ferminet_loss._unpermute_state_vector(ordered, ordering)  # pylint: disable=protected-access
     np.testing.assert_allclose(np.asarray(restored), np.asarray(vector))
 
-    two_state_order = ferminet_loss._state_ordering(  # pylint: disable=protected-access
-        jnp.array([-1.0, -3.0]),
-        "energy",
+
+
+def _check_deepqmc_overlap_tangent_prefactor() -> None:
+    clipped_overlap = jnp.array(
+        [
+            [[1.0, 2.0], [3.0, 1.0]],
+            [[1.0, 4.0], [5.0, 1.0]],
+        ],
+        dtype=jnp.float32,
     )
-    clipped_overlap = jnp.array([[[1.0, 2.0], [3.0, 1.0]]])
-    centered_overlap_diff = jnp.array([[[0.0, 5.0], [7.0, 0.0]]])
+    mask = jnp.ones_like(clipped_overlap, dtype=bool)
     scale = jnp.ones((2, 2), dtype=jnp.float32)
-    ordered_clipped = ferminet_loss._permute_state_matrix(  # pylint: disable=protected-access
+    ordering = jnp.array([0, 1], dtype=jnp.int32)
+    tangent_diff = ferminet_loss._deepqmc_overlap_tangent_diff(  # pylint: disable=protected-access
         clipped_overlap,
-        two_state_order,
+        mask,
+        scale,
+        ordering,
     )
-    ordered_diff = ferminet_loss._permute_state_matrix(  # pylint: disable=protected-access
-        centered_overlap_diff,
-        two_state_order,
+    # DeepQMC uses the mean opposite-direction ratio as the prefactor, not a
+    # samplewise product between walkers from different state chains.
+    np.testing.assert_allclose(
+        np.asarray(tangent_diff),
+        np.array([[0.0, -6.0], [0.0, 6.0]], dtype=np.float32),
+        rtol=1e-6,
     )
-    ordered_scale = ferminet_loss._permute_state_matrix(scale, two_state_order)  # pylint: disable=protected-access
-    ordered_pair_diff = ordered_clipped * ordered_diff.transpose((0, 2, 1))
-    ordered_overlap_diff = 2.0 * jnp.sum(
-        jnp.triu(ordered_pair_diff * ordered_scale, 1),
-        axis=1,
-    )
-    original_overlap_diff = ferminet_loss._unpermute_state_vector(  # pylint: disable=protected-access
-        ordered_overlap_diff,
-        two_state_order,
-    )
-    np.testing.assert_allclose(np.asarray(original_overlap_diff), np.array([[30.0, 0.0]]))
 
 
 def _check_custom_jvp_smoke() -> None:
@@ -307,7 +352,7 @@ def _check_custom_jvp_smoke() -> None:
         overlap_min_scale=0.001,
         overlap_max_scale=5.0,
         overlap_clip_width=10.0,
-        overlap_sort_states_by="energy",
+        overlap_sort_states_by=None,
     )
     params = jnp.array([0.1, -0.2], dtype=jnp.float32)
     value, grad = jax.value_and_grad(lambda p: loss_fn(p, jax.random.PRNGKey(0), data)[0])(
@@ -357,10 +402,145 @@ def _check_loss_consumes_ewm_scale_fields() -> None:
     np.testing.assert_array_equal(np.asarray(aux.state_ordering), np.array([1, 0]))
 
 
-def jax_random_key():
-    import jax
+def _check_independent_state_network_wrapper() -> None:
+    base_network = networks.make_fermi_net(
+        nspins=(1, 1),
+        charges=jnp.array([2.0], dtype=jnp.float32),
+        determinants=2,
+        states=0,
+        hidden_dims=((8, 4),),
+    )
+    network = networks.make_independent_state_network(base_network, states=2)
+    params = network.init(jax_random_key())
+    if "state_params" not in params:
+        raise AssertionError("independent wrapper must store per-state params")
+    state_params = params["state_params"]
+    if not isinstance(state_params, tuple) or len(state_params) != 2:
+        raise AssertionError("independent wrapper must store one parameter tree per state")
+    base_params = base_network.init(jax_random_key())
+    base_structure = jax.tree_util.tree_structure(base_params)
+    base_shapes = [leaf.shape for leaf in jax.tree_util.tree_leaves(base_params)]
+    for state_param in state_params:
+        if jax.tree_util.tree_structure(state_param) != base_structure:
+            raise AssertionError("each state parameter tree must match the base network")
+        state_shapes = [leaf.shape for leaf in jax.tree_util.tree_leaves(state_param)]
+        if state_shapes != base_shapes:
+            raise AssertionError("state parameter leaves must not add a synthetic state axis")
+    if network.options.states != 2:
+        raise AssertionError("wrapped network options must advertise two states")
 
+    pos = jnp.array([0.1, 0.0, 0.0, -0.2, 0.1, 0.0], dtype=jnp.float32)
+    spins = jnp.array([1.0, -1.0], dtype=jnp.float32)
+    atoms = jnp.zeros((1, 3), dtype=jnp.float32)
+    charges = jnp.array([2.0], dtype=jnp.float32)
+    sign, log_psi = network.apply(params, pos, spins, atoms, charges)
+    if sign.shape != (2,) or log_psi.shape != (2,):
+        raise AssertionError("independent wrapper must return one output per state")
+    stacked_params = {
+        "state_params": jax.tree_util.tree_map(lambda *xs: jnp.stack(xs, axis=0), *state_params)
+    }
+    stacked_sign, stacked_log_psi = network.apply(stacked_params, pos, spins, atoms, charges)
+    if stacked_sign.shape != (2,) or stacked_log_psi.shape != (2,):
+        raise AssertionError("independent wrapper must read legacy stacked params")
+
+    state_matrix = networks.make_state_matrix(network.apply, 2)
+
+    def local_energy(params, key, data):  # noqa: ARG001
+        del params, key, data
+        return jnp.array([1.0, 1.5], dtype=jnp.float32), None
+
+    data = networks.FermiNetData(
+        positions=jnp.tile(jnp.concatenate([pos, pos + 0.05])[None, :], (3, 1)),
+        spins=jnp.tile(jnp.concatenate([spins, spins])[None, :], (3, 1)),
+        atoms=jnp.tile(atoms[None, :, :], (3, 1, 1)),
+        charges=jnp.tile(charges[None, :], (3, 1)),
+    )
+    loss_fn = ferminet_loss.make_energy_overlap_loss(
+        state_matrix,
+        local_energy,
+        overlap_weight=(0.5, 0.5),
+        overlap_penalty=4.0,
+    )
+    loss, aux = loss_fn(params, jax_random_key(), data)
+    if not bool(jnp.isfinite(loss)):
+        raise AssertionError("independent-state overlap loss must be finite")
+    if aux.mean_s_ij.shape != (2, 2):
+        raise AssertionError("independent-state overlap aux must be a 2x2 matrix")
+
+
+def _check_independent_state_kfac_step_smoke() -> None:
+    base_network = networks.make_fermi_net(
+        nspins=(1, 1),
+        charges=jnp.array([2.0], dtype=jnp.float32),
+        determinants=1,
+        states=0,
+        hidden_dims=((4, 2),),
+    )
+    network = networks.make_independent_state_network(base_network, states=2)
+    state_matrix = networks.make_state_matrix(network.apply, 2)
+    params = network.init(jax_random_key())
+
+    def local_energy(params, key, data):  # noqa: ARG001
+        del params, key, data
+        return jnp.array([1.0, 1.5], dtype=jnp.float32), None
+
+    loss_fn = ferminet_loss.make_energy_overlap_loss(
+        state_matrix,
+        local_energy,
+        overlap_weight=(0.5, 0.5),
+        overlap_penalty=4.0,
+    )
+    val_and_grad = jax.value_and_grad(
+        lambda p, key, data: loss_fn(p, key, data),
+        argnums=0,
+        has_aux=True,
+    )
+    optimizer = kfac_jax.Optimizer(
+        val_and_grad,
+        l2_reg=0.0,
+        norm_constraint=0.001,
+        value_func_has_aux=True,
+        value_func_has_rng=True,
+        learning_rate_schedule=lambda step: jnp.asarray(1e-4),
+        curvature_ema=0.95,
+        inverse_update_period=1,
+        min_damping=1e-4,
+        num_burnin_steps=0,
+        register_only_generic=False,
+        estimation_mode="fisher_exact",
+        auto_register_kwargs={
+            "graph_patterns": curvature_tags_and_blocks.GRAPH_PATTERNS,
+        },
+    )
+    pos = jnp.array([0.1, 0.0, 0.0, -0.2, 0.1, 0.0], dtype=jnp.float32)
+    spins = jnp.array([1.0, -1.0], dtype=jnp.float32)
+    atoms = jnp.zeros((1, 3), dtype=jnp.float32)
+    charges = jnp.array([2.0], dtype=jnp.float32)
+    data = networks.FermiNetData(
+        positions=jnp.tile(jnp.concatenate([pos, pos + 0.05])[None, :], (4, 1)),
+        spins=jnp.tile(jnp.concatenate([spins, spins])[None, :], (4, 1)),
+        atoms=jnp.tile(atoms[None, :, :], (4, 1, 1)),
+        charges=jnp.tile(charges[None, :], (4, 1)),
+    )
+    state = optimizer.init(params, jax.random.PRNGKey(2), data)
+    _, _, stats = optimizer.step(
+        params=params,
+        state=state,
+        rng=jax.random.PRNGKey(3),
+        batch=data,
+        momentum=jnp.zeros([]),
+        damping=jnp.asarray(0.001),
+    )
+    if not bool(jnp.isfinite(stats["loss"])):
+        raise AssertionError("independent-state KFAC smoke loss must be finite")
+
+
+def jax_random_key():
     return jax.random.PRNGKey(0)
+
+
+def _batch_diag(matrix):
+    return jax.vmap(jnp.diag)(matrix)
 
 
 def _check_method_profile_adapter_defaults() -> None:
@@ -373,9 +553,14 @@ def _check_method_profile_adapter_defaults() -> None:
         raise AssertionError("method profile was not propagated")
     if not summary.overlap_use_ewm_scale:
         raise AssertionError("paper method profile must enable EWM overlap scaling")
-    np.testing.assert_allclose(summary.kfac_norm_constraint, 0.002)
-    if not summary.kfac_norm_constraint_scale_by_states:
-        raise AssertionError("KFAC norm constraint must be state-count scaled")
+    np.testing.assert_allclose(summary.overlap_weights, (0.5, 0.5))
+    if not summary.independent_state_params:
+        raise AssertionError("DeepQMC-aligned profile must use per-state params")
+    if summary.overlap_sort_states_by is not None:
+        raise AssertionError("DeepQMC-aligned profile must keep index state ordering")
+    np.testing.assert_allclose(summary.kfac_norm_constraint, 0.001)
+    if summary.kfac_norm_constraint_scale_by_states:
+        raise AssertionError("DeepQMC-aligned profile must not state-scale KFAC norm")
     np.testing.assert_allclose(summary.spin_penalty, 0.0)
     if summary.s2_observable:
         raise AssertionError("base paper-aligned config should not enable S^2")

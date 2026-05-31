@@ -20,6 +20,7 @@ os.environ.setdefault("JAX_PLATFORMS", "cpu")
 
 from solidnes.backends.ferminet_adapter import build_ferminet_adapter
 from solidnes.excited_state_mainline import MAINLINE_EXCITED_STATE_ATTENTION
+from solidnes.excited_state_mainline import MAINLINE_EXCITED_STATE_INDEPENDENT_STATE_PARAMS
 from solidnes.excited_state_mainline import MAINLINE_EXCITED_STATE_METHOD
 from solidnes.excited_state_mainline import MAINLINE_EXCITED_STATE_MODEL_CONFIG
 from solidnes.excited_state_mainline import MAINLINE_EXCITED_STATE_NETWORK
@@ -63,6 +64,7 @@ def main() -> int:
 
     mainline = build_ferminet_adapter(PROJECT_ROOT / args.mainline_experiment)
     _assert_mainline_summary(mainline.summary)
+    _assert_deepqmc_alignment_defaults(mainline.summary)
     _assert_equal(
         _relative_path(mainline.paths.model),
         MAINLINE_EXCITED_STATE_MODEL_CONFIG,
@@ -106,6 +108,11 @@ def _assert_mainline_summary(summary) -> None:
     _assert_equal(summary.objective, MAINLINE_EXCITED_STATE_OBJECTIVE, "objective")
     _assert_equal(summary.network_type, MAINLINE_EXCITED_STATE_NETWORK, "network_type")
     _assert_equal(summary.states, 2, "states")
+    _assert_equal(
+        summary.independent_state_params,
+        MAINLINE_EXCITED_STATE_INDEPENDENT_STATE_PARAMS,
+        "independent per-state params",
+    )
     _assert_equal(summary.excited_state_route, MAINLINE_EXCITED_STATE_METHOD, "route")
     _assert_equal(summary.excited_state_route_role, "mainline", "route role")
     _assert_equal(summary.excited_state_route_is_mainline, True, "mainline flag")
@@ -114,6 +121,18 @@ def _assert_mainline_summary(summary) -> None:
         MAINLINE_EXCITED_STATE_ATTENTION,
         "attention resolution",
     )
+
+
+def _assert_deepqmc_alignment_defaults(summary) -> None:
+    _assert_equal(summary.overlap_weights, (0.5, 0.5), "overlap weights")
+    _assert_equal(summary.independent_state_params, True, "independent per-state params")
+    _assert_equal(summary.overlap_sort_states_by, None, "state ordering")
+    _assert_equal(
+        summary.kfac_norm_constraint_scale_by_states,
+        False,
+        "KFAC norm state scaling",
+    )
+    _assert_equal(summary.kfac_norm_constraint, 0.001, "KFAC norm constraint")
 
 
 def _assert_path_exists(path: str) -> None:
