@@ -1,0 +1,144 @@
+{
+  "config": {
+    "allowed_gpu_counts": [
+      4
+    ],
+    "allowed_partitions": [
+      "amdgpu40g",
+      "amdgpu80g",
+      "h200"
+    ],
+    "blocked_partitions": [
+      "gpu80gllm",
+      "gpu40gllm",
+      "h20llm",
+      "gpu4090",
+      "gpu4090_8",
+      "gpu4090_128",
+      "h800",
+      "test"
+    ],
+    "exclusive_when_full_node": false,
+    "idle_extra_partitions": [
+      "intelgpu80g",
+      "amdgpu40g",
+      "amdgpu80g"
+    ],
+    "min_cpus": 64,
+    "min_gpus": 4,
+    "precision_profile": "fp64",
+    "queue_min_cpus": 64,
+    "queue_min_gpus": 4,
+    "queue_mode": "flexible",
+    "target_gpus": 4
+  },
+  "kind": "gpu",
+  "ready": true,
+  "reason": "no_free_gpu_queue_flexible_partitions",
+  "sbatch": {
+    "request": {
+      "cpus": 64,
+      "gpus": 4,
+      "gres": "gpu:4",
+      "partition": "amdgpu40g,amdgpu80g,h200"
+    },
+    "sbatch_args": [
+      "--nodes",
+      "1",
+      "--partition",
+      "amdgpu40g,amdgpu80g,h200",
+      "--gres",
+      "gpu:4",
+      "--cpus-per-task",
+      "64",
+      "--mem",
+      "64000",
+      "--job-name",
+      "solidnes-0103-fused_qkv-low_level",
+      "--account",
+      "hmt03",
+      "--time",
+      "10:00:00",
+      "--export",
+      "ALL,SOLIDNES_TOTAL_GPUS=4,SOLIDNES_TOTAL_CPU_CORES=64,SOLIDNES_CPUS_PER_GPU_BASE=16,SOLIDNES_CPU_REMAINDER=0,SOLIDNES_CPUS_PER_GPU_LIST=16:16:16:16,SOLIDNES_CPU_BATCHES=gpu0:0-15;gpu1:16-31;gpu2:32-47;gpu3:48-63,SOLIDNES_CPU_PARALLELISM=64",
+      "--output",
+      "tasks/psiformer/0103_attention_merge_keys_4gpu_10000/logs/slurm/%x_%j.log",
+      "--error",
+      "tasks/psiformer/0103_attention_merge_keys_4gpu_10000/logs/slurm/%x_%j.err"
+    ],
+    "sbatch_command": [
+      "sbatch",
+      "--nodes",
+      "1",
+      "--partition",
+      "amdgpu40g,amdgpu80g,h200",
+      "--gres",
+      "gpu:4",
+      "--cpus-per-task",
+      "64",
+      "--mem",
+      "64000",
+      "--job-name",
+      "solidnes-0103-fused_qkv-low_level",
+      "--account",
+      "hmt03",
+      "--time",
+      "10:00:00",
+      "--export",
+      "ALL,SOLIDNES_TOTAL_GPUS=4,SOLIDNES_TOTAL_CPU_CORES=64,SOLIDNES_CPUS_PER_GPU_BASE=16,SOLIDNES_CPU_REMAINDER=0,SOLIDNES_CPUS_PER_GPU_LIST=16:16:16:16,SOLIDNES_CPU_BATCHES=gpu0:0-15;gpu1:16-31;gpu2:32-47;gpu3:48-63,SOLIDNES_CPU_PARALLELISM=64",
+      "--output",
+      "tasks/psiformer/0103_attention_merge_keys_4gpu_10000/logs/slurm/%x_%j.log",
+      "--error",
+      "tasks/psiformer/0103_attention_merge_keys_4gpu_10000/logs/slurm/%x_%j.err",
+      "scripts/slurm/run_ferminet_gpu_smoke.slurm"
+    ],
+    "sbatch_command_quoted": "sbatch --nodes 1 --partition amdgpu40g,amdgpu80g,h200 --gres gpu:4 --cpus-per-task 64 --mem 64000 --job-name solidnes-0103-fused_qkv-low_level --account hmt03 --time 10:00:00 --export 'ALL,SOLIDNES_TOTAL_GPUS=4,SOLIDNES_TOTAL_CPU_CORES=64,SOLIDNES_CPUS_PER_GPU_BASE=16,SOLIDNES_CPU_REMAINDER=0,SOLIDNES_CPUS_PER_GPU_LIST=16:16:16:16,SOLIDNES_CPU_BATCHES=gpu0:0-15;gpu1:16-31;gpu2:32-47;gpu3:48-63,SOLIDNES_CPU_PARALLELISM=64' --output tasks/psiformer/0103_attention_merge_keys_4gpu_10000/logs/slurm/%x_%j.log --error tasks/psiformer/0103_attention_merge_keys_4gpu_10000/logs/slurm/%x_%j.err scripts/slurm/run_ferminet_gpu_smoke.slurm"
+  },
+  "selection": {
+    "candidates": [
+      {
+        "allocated_cpus": 26,
+        "allocated_gpus": 4,
+        "free_gpus": 4,
+        "free_memory_mb": 1515944,
+        "gpu_model_key": "h200",
+        "gpu_type": "",
+        "gres": "gpu:8",
+        "idle_cpus": 166,
+        "is_available": true,
+        "is_idle": false,
+        "name": "gpuh2001",
+        "partitions": [
+          "h200",
+          "h200llm"
+        ],
+        "state": "MIXED+PLANNED",
+        "total_cpus": 192,
+        "total_gpus": 8,
+        "total_memory_mb": 2000000
+      }
+    ],
+    "selected_node": {
+      "allocated_cpus": 26,
+      "allocated_gpus": 4,
+      "free_gpus": 4,
+      "free_memory_mb": 1515944,
+      "gpu_model_key": "h200",
+      "gpu_type": "",
+      "gres": "gpu:8",
+      "idle_cpus": 166,
+      "is_available": true,
+      "is_idle": false,
+      "name": "gpuh2001",
+      "partitions": [
+        "h200",
+        "h200llm"
+      ],
+      "state": "MIXED+PLANNED",
+      "total_cpus": 192,
+      "total_gpus": 8,
+      "total_memory_mb": 2000000
+    },
+    "selected_partition": "amdgpu40g,amdgpu80g,h200"
+  }
+}

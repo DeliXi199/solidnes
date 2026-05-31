@@ -1,0 +1,56 @@
+project: solidnes
+experiment_name: diamond_c_psiformer_pbc_gamma_deepqmc_attention_ferminet_merge_embed_batch4096_iter10000
+stage: psiformer
+phase: deepqmc_attention_merge_keys_4gpu_10000
+
+backend:
+  name: ferminet
+  repository: https://github.com/google-deepmind/ferminet
+  inspected_commit: c4312c315dda1c5728994ba89629744f71c6eb66
+  mode: native_ferminet_psiformer_training
+
+system_config: ../system/diamond_c_primitive_gamma.yaml
+model_config: ../model/psiformer_pbc_paper_attention_ferminet_x64_jaxattn.yaml
+sampler_config: ../sampler/metropolis_ferminet_pbc_short.yaml
+train_config: ../train/excited_state_psiformer_pbc_native_kfac_deepqmc_merge_embed_batch4096_iter10000.yaml
+
+ferminet_config_template:
+  module: solidnes/backends/ferminet_configs/diamond_pbc_gamma.py
+
+runtime:
+  target_jax_version: 0.10.1
+  cuda_extra: cuda12
+  precision_profile: fp64
+  x64_enabled: true
+  require_gpu: true
+  xla_python_client_preallocate: true
+  xla_python_client_mem_fraction: 0.90
+
+output:
+  log_dir: tasks/psiformer/0103_attention_merge_keys_4gpu_10000/runs/ferminet_merge_embed/logs/backend
+  checkpoint_dir: tasks/psiformer/0103_attention_merge_keys_4gpu_10000/runs/ferminet_merge_embed/results/checkpoints
+  validation_dir: tasks/psiformer/0103_attention_merge_keys_4gpu_10000/runs/ferminet_merge_embed/results/validation
+
+diagnostics:
+  native_ferminet_excited_state: true
+  expected_states: 2
+  independent_state_params: true
+  independent_state_merge_keys: [layers/embed]
+  diagonal_paths: {mcmc_trace: true, local_energy: true, overlap_jvp: true}
+  profile_step_times: true
+  objective: vmc_overlap
+  method_profile: szabo_noe_2024_penalty
+  optimizer: kfac
+  batch_size: 4096
+  iterations: 10000
+  model: psiformer
+  attention_implementation: ferminet
+  attention_kernel_gpu: jax
+  scheduler_partitions: [amdgpu40g, amdgpu80g, h200]
+  scheduler_gpus: 4
+  scheduler_cpus: 64
+
+notes:
+  status: ready_for_attention_merge_keys_4gpu_10000
+  purpose: >-
+    FermiNet-shaped Q/K/V attention sharing only input embedding leaves selected by layers/embed.
