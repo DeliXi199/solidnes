@@ -2,9 +2,7 @@
 
 Last updated: 2026-06-01, Asia/Shanghai
 
-This file is the canonical compact index for numbered task bundles after the
-global artifact migration. It is not a default startup context file; read it
-when allocating or checking task numbers.
+This file is the canonical ledger for numbered task bundles after the global artifact migration.
 
 ## Next Available Run Number
 

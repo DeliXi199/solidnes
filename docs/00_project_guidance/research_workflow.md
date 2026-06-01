@@ -2,11 +2,14 @@
 
 ## Default Session Flow
 
-1. Read `PROGRESS.md`.
-2. Check the latest file in `records/progress/`.
-3. Identify the current active objective.
-4. Make one small, reviewable change.
-5. Record what changed and what remains uncertain.
+1. Read `AGENTS.md`.
+2. Read `CURRENT_CONTEXT.md`.
+3. Read `ACTIVE_TASK.md` only when the user asks about the current small step
+   or the work will change task state.
+4. Search `records/progress/` or task README files only when historical detail
+   is needed.
+5. Make one small, reviewable change.
+6. Record what changed and what remains uncertain.
 
 ## What To Record
 
@@ -46,4 +49,3 @@ Experiment folders:
 ```text
 experiments/phaseN_system_target/
 ```
-

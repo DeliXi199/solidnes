@@ -58,7 +58,8 @@ Before creating a task:
 3. Create the task bundle.
 4. Point experiment YAML output paths into that bundle.
 5. Add or update records/run_index.md.
-6. Update tasks/TASK_LEDGER.md when the task completes or materially changes.
+6. Update tasks/TASK_LEDGER.md and the relevant split ledger under
+   tasks/ledger/ when the task completes or materially changes.
 ```
 
 Run numbers are never reused, even if a job fails or a retired task is deleted.
@@ -105,8 +106,9 @@ number.
 
 ## Ledgers
 
-- `records/run_index.md`: canonical run-number ledger and next available number.
-- `tasks/TASK_LEDGER.md`: readable task purpose and result ledger.
+- `records/run_index.md`: compact run-number index and next available number.
+- `tasks/TASK_LEDGER.md`: compact task-ledger index.
+- `tasks/ledger/`: split readable task ledgers by project phase.
 - `tasks/MIGRATION_MANIFEST.tsv`: machine-readable legacy migration map.
 
 ## Completion Rule
@@ -116,6 +118,8 @@ A task is not fully recorded until all of the following are true:
 ```text
 1. records/run_index.md has the run number and task root.
 2. Results, generated outputs, and logs are under the same task bundle.
-3. tasks/TASK_LEDGER.md records what was done and the key result.
-4. A dated progress record links to the task bundle when the work is substantial.
+3. tasks/TASK_LEDGER.md records the task in the compact index.
+4. The relevant split ledger under tasks/ledger/ records the key result when
+   the task completes or materially changes.
+5. A dated progress record links to the task bundle when the work is substantial.
 ```

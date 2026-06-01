@@ -13,22 +13,11 @@ in this order:
 
 ```text
 1. AGENTS.md
-2. CURRENT_CONTEXT.md
-3. DIRECTORY_MAP.md, only when creating or moving files
-```
-
-Do not default-read large historical context files. Read the files below only
-when the task specifically needs that layer:
-
-```text
-CURRENT_STATUS.md      project-level summary
-ACTIVE_TASK.md         current small step
-PROGRESS.md            short rolling update
-records/progress/      dated completed records
-records/archive/       exact archived context snapshots
-tasks/TASK_LEDGER.md   compact task-ledger index
-tasks/ledger/          split readable task ledgers
-tasks/**/README.md     task-local records
+2. CURRENT_STATUS.md
+3. ACTIVE_TASK.md
+4. PROGRESS.md, only the relevant current/recent section unless deeper history
+   is needed
+5. DIRECTORY_MAP.md, when creating or moving files
 ```
 
 If a task involves SLURM, CPU jobs, GPU jobs, queue status, or submitted
@@ -48,18 +37,12 @@ tasks/TASK_LEDGER.md
 ```
 
 If the user asks what the project has achieved, answer from
-`CURRENT_CONTEXT.md` first, then `CURRENT_STATUS.md` if more detail is needed.
-If the user asks what exact small step is active, answer from `ACTIVE_TASK.md`.
+`CURRENT_STATUS.md`. If the user asks what exact small step is active, answer
+from `ACTIVE_TASK.md`.
 
 ## Current Project Truth
 
 The current high-level truth is maintained in:
-
-```text
-CURRENT_CONTEXT.md
-```
-
-The project-level summary is maintained in:
 
 ```text
 CURRENT_STATUS.md
@@ -79,17 +62,13 @@ handoff source of truth.
 Use the files as follows:
 
 ```text
-CURRENT_CONTEXT.md
-  Hot startup context: current mainline, source-of-truth paths, latest
-  milestone, validation commands, and where to look next. Keep short.
-
 CURRENT_STATUS.md
-  Project-level summary: current conclusion, major milestones, evidence links,
-  caveats, and next phase. Keep historical detail out of this file.
+  Project-level snapshot: current conclusion, major milestones, evidence jobs,
+  caveats, and next phase.
 
 ACTIVE_TASK.md
-  Exact current small step only: state, current action, blocker, next action,
-  active job id, expected output, and completion criteria.
+  Exact small step: state, current action, next action, active job id, expected
+  output, and completion criteria.
 
 PROGRESS.md
   Short rolling current progress plus important recent updates. Detailed
@@ -106,8 +85,8 @@ records/run_index.md
   file.
 
 tasks/TASK_LEDGER.md
-  Compact human-readable ledger index. Use split ledgers under tasks/ledger/
-  and task README files for detailed task history.
+  Human-readable ledger of numbered task purposes, locations, and key
+  outcomes. Update it when a task completes or materially changes.
 ```
 
 Every time a job is submitted, starts running, completes, fails, or its results
@@ -125,26 +104,43 @@ artifact to keep together.
 
 ## Current Milestone
 
-Keep milestone detail out of `AGENTS.md`. The current short truth is:
+Two Phase 1 enabling milestones are complete at the project-validation level:
 
 ```text
-CURRENT_CONTEXT.md
+1. Carbon-diamond paper benchmark reproduction through both DeepSolid and
+   FermiNet.
+2. FermiNet PBC-HF pretraining implementation and diamond-Gamma validation for
+   the current cc-pVDZ workflow.
 ```
 
-As of 2026-06-01, the active source-code excited-state mainline is the
-DeepQMC-aligned no-merge PsiFormer/FermiNet native `vmc_overlap` route:
+Evidence:
 
 ```text
-merge_keys: []
-non-empty merge_keys: comparison branches only
+DeepSolid direct route:
+  Job 127816
+  Tail-2000 mean: -75.4161279970 Ha
+  DeepSolid supplementary diamond reference: -75.4009 Ha
+
+FermiNet route:
+  Training job 127898
+  Fixed-parameter evaluation job 127992
+  Evaluation mean: -75.4125655570 Ha
+  DeepSolid supplementary diamond reference: -75.4009 Ha
+
+FermiNet PBC-HF pretraining:
+  Runs 0047--0050
+  JAX PBC GTO cc-pVDZ AO max abs error: 1.12e-9
+  JAX PBC GTO cc-pVDZ occupied-MO max abs error: 8.51e-10
+  Runs 0053--0062
+  Fixed-iteration early training favored pretraining, while short wall-clock
+  timeboxed comparisons were mixed.
 ```
 
-Detailed evidence belongs in:
+Current next phase:
 
 ```text
-CURRENT_STATUS.md
-records/progress/
-tasks/**/README.md
+Reproduce the Szabo and Noe JCTC 2024 penalty-based excited-state VMC method
+in code, then test it on concrete periodic materials.
 ```
 
 ## SLURM And Scheduler Rules

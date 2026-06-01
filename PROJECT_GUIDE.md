@@ -80,15 +80,16 @@ Phase 1 requires them:
 ## Working Cycle
 
 Every assistant or coding-agent work session must start by reading
-`AGENTS.md`, then `CURRENT_STATUS.md`, then `ACTIVE_TASK.md`.
+`AGENTS.md`, then `CURRENT_CONTEXT.md`. Read `ACTIVE_TASK.md`,
+`CURRENT_STATUS.md`, or `PROGRESS.md` only when the task needs that layer.
 
 Each substantial work session should update:
 
 - `ACTIVE_TASK.md` whenever the exact small-step state changes.
 - `records/run_index.md` whenever a new numbered task bundle is created,
   submitted, completed, failed, or analyzed.
-- `tasks/TASK_LEDGER.md` whenever a numbered task completes or materially
-  changes.
+- `tasks/TASK_LEDGER.md` and the relevant split ledger under `tasks/ledger/`
+  whenever a numbered task completes or materially changes.
 - `PROGRESS.md` as a short rolling current-state snapshot.
 - `records/progress/` for dated progress notes.
 - `records/decisions/` when a strategic choice is made.

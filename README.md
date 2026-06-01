@@ -61,8 +61,10 @@ Phase 1 remains deliberately narrow:
 
 - [AGENTS.md](AGENTS.md): global operating instructions for assistants and
   coding agents; read this first before working in the project.
+- [CURRENT_CONTEXT.md](CURRENT_CONTEXT.md): short hot context for current
+  source defaults, active milestone, and where to look next.
 - [CURRENT_STATUS.md](CURRENT_STATUS.md): current milestone, evidence jobs,
-  caveats, and next phase.
+  caveats, and next phase summary.
 - [ACTIVE_TASK.md](ACTIVE_TASK.md): exact current small step, job state, next
   action, expected output, and completion condition.
 - [PROJECT_GUIDE.md](PROJECT_GUIDE.md): project scope, rules, and working style.
@@ -84,8 +86,9 @@ Phase 1 remains deliberately narrow:
 ```text
 solidnes/
   AGENTS.md             # Global instructions for assistants/coding agents
-  CURRENT_STATUS.md     # Current project-level state and milestone summary
-  ACTIVE_TASK.md        # Current small-step task state and next action
+  CURRENT_CONTEXT.md    # Short hot context for default startup
+  CURRENT_STATUS.md     # Short project-level state and milestone summary
+  ACTIVE_TASK.md        # Current small-step task state and next action only
   PROJECT_GUIDE.md       # Project principles and operating rules
   PROGRESS.md            # Short rolling current-state snapshot
   ROADMAP.md             # Phase-level research plan
@@ -98,7 +101,8 @@ solidnes/
   tasks/                 # Numbered task bundles: results, outputs, logs together
   tasks/ferminet_pretraining/
                          # FermiNet PBC-HF pretraining task bundles
-  tasks/TASK_LEDGER.md   # Readable ledger of numbered task purposes and results
+  tasks/TASK_LEDGER.md   # Compact numbered task ledger index
+  tasks/ledger/          # Split readable task ledgers by project phase
   src/solidnes/          # SolidNES package source and backend adapters
   references/            # Local reference notes and citation material
   external/              # Ignored local backend checkouts/copies
