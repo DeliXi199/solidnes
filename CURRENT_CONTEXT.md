@@ -118,3 +118,9 @@ tasks/TASK_LEDGER.md   compact task-ledger index
 tasks/ledger/          split readable task ledgers
 tasks/**/README.md     detailed task-local records
 ```
+
+Context-management policy:
+
+```text
+docs/00_project_guidance/context_management.md
+```

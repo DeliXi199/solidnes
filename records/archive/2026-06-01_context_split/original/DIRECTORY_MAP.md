@@ -8,12 +8,10 @@ This file defines what belongs in each top-level folder.
 - `AGENTS.md`: global operating instructions for any assistant or coding
   agent; read first at the start of each new answer or work session.
 - `PROJECT_GUIDE.md`: project identity, scope, principles, and operating rules.
-- `CURRENT_CONTEXT.md`: short hot startup context with current defaults,
-  source-of-truth paths, latest milestone, and where to look next.
-- `CURRENT_STATUS.md`: short project-level state snapshot, milestone summary,
+- `CURRENT_STATUS.md`: short current-state snapshot, milestone summary,
   evidence jobs, caveats, and next phase.
 - `ACTIVE_TASK.md`: exact current small step, next action, active job state,
-  expected output, and completion criteria only.
+  expected output, and completion criteria.
 - `PROGRESS.md`: short rolling current-state snapshot and immediate next
   actions; detailed history belongs in `records/progress/`.
 - `ROADMAP.md`: phase-level plan.
@@ -30,7 +28,6 @@ Use for:
 - Theory notes.
 - Meeting notes.
 - Reports and draft outlines.
-- Context-management policy and other operating rules.
 - Reference-project architecture notes.
 
 Do not use for:
@@ -164,9 +161,8 @@ The parent `results/validation/` directory holds cross-variant tables and
 plots. Individual variant summaries stay inside their `runs/<variant>/`
 directories.
 
-Use `tasks/TASK_LEDGER.md` as the compact task-ledger index and
-`tasks/ledger/` for split readable ledgers. Use `tasks/MIGRATION_MANIFEST.tsv`
-as the machine-readable migration map.
+Use `tasks/TASK_LEDGER.md` as the readable task ledger. Use
+`tasks/MIGRATION_MANIFEST.tsv` as the machine-readable migration map.
 
 Top-level `results/`, `outputs/`, and `logs/` are retired. Do not recreate
 them for new work.

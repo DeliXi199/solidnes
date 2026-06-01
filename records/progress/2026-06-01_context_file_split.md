@@ -15,6 +15,12 @@ CURRENT_CONTEXT.md
 `CURRENT_CONTEXT.md` carries the current source defaults, source-of-truth paths,
 latest milestone, validation commands, and where to look next.
 
+The ongoing policy is recorded in:
+
+```text
+docs/00_project_guidance/context_management.md
+```
+
 ## Cold Context
 
 Historical detail remains available through:
@@ -35,17 +41,23 @@ The exact pre-split files were archived under:
 
 ```text
 records/archive/2026-06-01_context_split/
+records/archive/2026-06-01_context_split/original/
 ```
 
-Archived copies include:
+Verified original copies exported from commit `916bcc4` include:
 
 ```text
-AGENTS.md
-CURRENT_STATUS.md
-ACTIVE_TASK.md
-PROGRESS.md
-TASK_LEDGER.md
-run_index.md
+original/AGENTS.md
+original/CURRENT_STATUS.md
+original/ACTIVE_TASK.md
+original/PROGRESS.md
+original/README.md
+original/PROJECT_GUIDE.md
+original/DIRECTORY_MAP.md
+original/docs/00_project_guidance/research_workflow.md
+original/docs/00_project_guidance/result_output_numbering.md
+original/records/run_index.md
+original/tasks/TASK_LEDGER.md
 ```
 
 ## Split Ledgers
