@@ -16,15 +16,18 @@ Readable split ledgers:
 tasks/ledger/0001_0062_ground_pretrain.md
 tasks/ledger/0063_0093_ferminet_excited.md
 tasks/ledger/0094_0103_psiformer_deepqmc.md
+tasks/ledger/0104_spin_penalty_alignment.md
+tasks/ledger/0105_spin_state_specific_alignment.md
 ```
 
 ## Current Position
 
 ```text
-Next available task number: 0104
+Next available task number: 0106
 Current source-code excited-state mainline: fused-QKV no-merge DeepQMC-aligned
 Default merge_keys: []
 Non-empty merge_keys: explicit comparison branches
+Optional spin penalty: DeepQMC-style loss-level beta * <S^2>
 ```
 
 ## Recent Tasks
@@ -41,6 +44,8 @@ Non-empty merge_keys: explicit comparison branches
 | 0101 | completed | `tasks/psiformer/0101_deepqmc_merge_keys_4gpu_sweep` | Ran 200-step merge-key sweep; merge remained a comparison branch question. |
 | 0102 | completed | `tasks/psiformer/0102_deepqmc_nonmerge_alignment_final_validation` | Validated non-merge alignment and diagonal path speed at 4GPU scale. |
 | 0103 | completed | `tasks/psiformer/0103_attention_merge_keys_4gpu_10000` | Completed 10000-step attention x merge-key comparison; supports no-merge source default. |
+| 0104 | completed | `tasks/excited_state_nesvmc/0104_deepqmc_spin_penalty_alignment_gpu_smoke` | SLURM job 135738 validated DeepQMC-style loss-level spin penalty with beta=10 on the no-merge PsiFormer route; finite energy/overlap/S2 outputs. |
+| 0105 | completed | `tasks/excited_state_nesvmc/0105_deepqmc_spin_state_specific_gpu_smoke` | SLURM job 135764 validated the final DeepQMC state-specific local S² estimator in the loss-level spin penalty; finite energy/overlap/S2 outputs. |
 
 ## Maintenance Rules
 

@@ -22,6 +22,7 @@ from ferminet import curvature_tags_and_blocks
 from ferminet import hamiltonian
 from ferminet import loss as ferminet_loss
 from ferminet import networks
+from ferminet import observables
 from ferminet import train as ferminet_train
 from solidnes.backends.ferminet_adapter import build_ferminet_adapter
 
@@ -34,6 +35,11 @@ def main() -> int:
     _check_tree_all_finite()
     _check_spin_penalty_energy_helper()
     _check_spin_penalty_bare_energy_helper()
+    _check_deepqmc_spin_penalty_terms()
+    _check_deepqmc_spin_penalty_rank2_state_axis()
+    _check_deepqmc_spin_penalty_custom_jvp()
+    _check_deepqmc_state_specific_spin_estimator()
+    _check_deepqmc_spin_penalty_s2_observable_smoke()
     _check_deepqmc_ratio_log_centering()
     _check_ratio_clipping()
     _check_state_ordering()
@@ -224,6 +230,181 @@ def _check_spin_penalty_bare_energy_helper() -> None:
         np.eye(2, dtype=np.float32),
         rtol=1e-6,
     )
+
+
+def _check_deepqmc_spin_penalty_terms() -> None:
+    s2 = jnp.array(
+        [
+            [[1.0, 0.1], [0.2, 3.0]],
+            [[2.0, 0.3], [0.4, 5.0]],
+            [[4.0, 0.5], [0.6, 7.0]],
+        ],
+        dtype=jnp.float32,
+    )
+    loss, tangent_coeff, by_state = ferminet_loss._deepqmc_spin_penalty_terms(  # pylint: disable=protected-access
+        s2,
+        10.0,
+    )
+    expected_by_state = np.array([7.0 / 3.0, 5.0], dtype=np.float32)
+    np.testing.assert_allclose(np.asarray(by_state), expected_by_state, rtol=1e-6)
+    np.testing.assert_allclose(np.asarray(loss), 10.0 * expected_by_state.mean(), rtol=1e-6)
+    expected_coeff = 10.0 * 0.5 * (
+        np.array([[1.0, 3.0], [2.0, 5.0], [4.0, 7.0]], dtype=np.float32)
+        - expected_by_state
+    )
+    np.testing.assert_allclose(np.asarray(tangent_coeff), expected_coeff, rtol=1e-6)
+
+
+def _check_deepqmc_spin_penalty_rank2_state_axis() -> None:
+    # Regression: a rank-2 [batch, states] state-specific spin tensor must not
+    # be mistaken for a [states, states] matrix when batch == states.
+    s2 = jnp.array([[1.0, 3.0], [2.0, 5.0]], dtype=jnp.float32)
+    loss, tangent_coeff, by_state = ferminet_loss._deepqmc_spin_penalty_terms(  # pylint: disable=protected-access
+        s2,
+        10.0,
+    )
+    expected_by_state = np.array([1.5, 4.0], dtype=np.float32)
+    np.testing.assert_allclose(np.asarray(by_state), expected_by_state, rtol=1e-6)
+    np.testing.assert_allclose(np.asarray(loss), 10.0 * expected_by_state.mean(), rtol=1e-6)
+    expected_coeff = 10.0 * 0.5 * (np.asarray(s2) - expected_by_state)
+    np.testing.assert_allclose(np.asarray(tangent_coeff), expected_coeff, rtol=1e-6)
+
+
+def _check_deepqmc_spin_penalty_custom_jvp() -> None:
+    beta = 10.0
+
+    def network(params, positions, spins, atoms, charges):  # noqa: ARG001
+        del spins, atoms, charges
+        x = positions[0]
+        log_psi = jnp.array(
+            [[params[0] * x, 0.0], [0.0, params[1] * x]], dtype=jnp.float32
+        )
+        return jnp.ones_like(log_psi), log_psi
+
+    def local_energy(params, key, data):  # noqa: ARG001
+        del params, key, data
+        return jnp.array([0.0, 0.0], dtype=jnp.float32), None
+
+    def spin_operator(params, data, state):  # noqa: ARG001
+        del params, state
+        x = data.positions[0]
+        return jnp.diag(jnp.array([1.0 + x, 3.0 + 2.0 * x], dtype=jnp.float32))
+
+    positions = jnp.array([[0.1], [0.2], [0.3], [0.4]], dtype=jnp.float32)
+    data = networks.FermiNetData(
+        positions=positions,
+        spins=jnp.zeros((4, 1), dtype=jnp.float32),
+        atoms=jnp.zeros((4, 1, 3), dtype=jnp.float32),
+        charges=jnp.ones((4, 1), dtype=jnp.float32),
+    )
+    loss_fn = ferminet_loss.make_energy_overlap_loss(
+        network,
+        local_energy,
+        spin_operator=spin_operator,
+        spin_penalty=beta,
+        overlap_penalty=0.0,
+        overlap_weight=(0.5, 0.5),
+    )
+    params = jnp.array([0.7, -0.3], dtype=jnp.float32)
+    value, grad = jax.value_and_grad(lambda p: loss_fn(p, jax_random_key(), data)[0])(
+        params
+    )
+    _, aux = loss_fn(params, jax_random_key(), data)
+    s2_diag = np.stack(
+        [1.0 + np.asarray(positions[:, 0]), 3.0 + 2.0 * np.asarray(positions[:, 0])],
+        axis=1,
+    )
+    by_state = s2_diag.mean(axis=0)
+    expected_value = beta * by_state.mean()
+    expected_grad = beta * 0.5 * np.mean(
+        np.asarray(positions[:, 0, None]) * (s2_diag - by_state), axis=0
+    )
+    np.testing.assert_allclose(np.asarray(value), expected_value, rtol=1e-6)
+    np.testing.assert_allclose(np.asarray(grad), expected_grad, rtol=1e-6)
+    np.testing.assert_allclose(np.asarray(aux.energy), np.array([0.0, 0.0]), rtol=1e-6)
+    np.testing.assert_allclose(np.asarray(aux.spin), by_state.mean(), rtol=1e-6)
+    np.testing.assert_allclose(np.asarray(aux.spin_penalty), expected_value, rtol=1e-6)
+    np.testing.assert_allclose(np.asarray(aux.spin_by_state), by_state, rtol=1e-6)
+
+
+def _check_deepqmc_state_specific_spin_estimator() -> None:
+    def signed_network(params, positions, spins, atoms, charges):  # noqa: ARG001
+        del spins, atoms, charges
+        coords = jnp.reshape(positions, (2, -1))[:, 0]
+        log_psi = jnp.array(
+            [
+                params[0, 0] * coords[0] + params[0, 1] * coords[1],
+                params[1, 0] * coords[0] + params[1, 1] * coords[1],
+            ],
+            dtype=jnp.float32,
+        )
+        return jnp.ones_like(log_psi), log_psi
+
+    def state_specific_network(params, state, positions, spins, atoms, charges):  # noqa: ARG001
+        del spins, atoms, charges
+        coords = jnp.reshape(positions, (2, -1))[:, 0]
+        log_psi = params[state, 0] * coords[0] + params[state, 1] * coords[1]
+        return jnp.asarray(1.0, dtype=jnp.float32), log_psi
+
+    params = jnp.array([[0.2, -0.7], [0.6, 0.1]], dtype=jnp.float32)
+    data = networks.FermiNetData(
+        positions=jnp.array([0.1, 0.4, -0.3, 0.8], dtype=jnp.float32),
+        spins=jnp.array([1.0, -1.0, 1.0, -1.0], dtype=jnp.float32),
+        atoms=jnp.zeros((1, 1), dtype=jnp.float32),
+        charges=jnp.ones((1,), dtype=jnp.float32),
+    )
+    s2_fn = observables.make_deepqmc_state_s2(
+        signed_network,
+        nspins=(1, 1),
+        states=2,
+        state_specific_network=state_specific_network,
+    )
+    s2 = s2_fn(params, data, None)
+    coords = np.asarray(data.positions).reshape(2, 2)
+    expected = []
+    for state in range(2):
+        up, down = coords[state]
+        a, b = np.asarray(params[state])
+        expected.append(1.0 - np.exp((a - b) * (down - up)))
+    np.testing.assert_allclose(np.asarray(s2), np.asarray(expected), rtol=1e-6)
+
+    s2_fn_no_fast_path = observables.make_deepqmc_state_s2(
+        signed_network,
+        nspins=(1, 1),
+        states=2,
+    )
+    np.testing.assert_allclose(
+        np.asarray(s2_fn_no_fast_path(params, data, None)),
+        np.asarray(expected),
+        rtol=1e-6,
+    )
+
+
+def _check_deepqmc_spin_penalty_s2_observable_smoke() -> None:
+    def signed_network(params, positions, spins, atoms, charges):  # noqa: ARG001
+        del spins, atoms, charges
+        x = jnp.sum(positions)
+        log_psi = jnp.array([params[0] * x, -params[1] * x], dtype=jnp.float32)
+        return jnp.ones_like(log_psi), log_psi
+
+    params = jnp.array([0.4, 0.8], dtype=jnp.float32)
+    data = networks.FermiNetData(
+        positions=jnp.array([0.1, 0.2, 0.5, 0.7], dtype=jnp.float32),
+        spins=jnp.array([1.0, -1.0, 1.0, -1.0], dtype=jnp.float32),
+        atoms=jnp.zeros((1, 1), dtype=jnp.float32),
+        charges=jnp.ones((1,), dtype=jnp.float32),
+    )
+    s2_fn = observables.make_s2(signed_network, nspins=(1, 1), states=2)
+    s2 = s2_fn(params, data, None)
+    if s2.shape != (2, 2):
+        raise AssertionError(f"state S^2 observable must return 2x2, got {s2.shape}")
+    if not bool(jnp.all(jnp.isfinite(s2))):
+        raise AssertionError("state S^2 observable produced non-finite values")
+    loss, coeff, by_state = ferminet_loss._deepqmc_spin_penalty_terms(s2[None], 10.0)  # pylint: disable=protected-access
+    if coeff.shape != (1, 2):
+        raise AssertionError(f"spin penalty JVP coeff must keep state axis, got {coeff.shape}")
+    if not bool(jnp.isfinite(loss)) or not bool(jnp.all(jnp.isfinite(by_state))):
+        raise AssertionError("spin penalty terms from S^2 observable must be finite")
 
 
 def _check_ratio_clipping() -> None:
@@ -751,6 +932,15 @@ def _check_spin_penalty_adapter_plumbing() -> None:
         raise AssertionError("spin smoke config must enable S^2 diagnostics")
     if not bool(bundle.cfg.observables.s2):
         raise AssertionError("spin smoke config did not set cfg.observables.s2")
+
+    beta10 = build_ferminet_adapter(
+        PROJECT_ROOT
+        / "configs/experiment/diamond_c_ferminet_pbc_gamma_native_vmc_overlap_kfac_paper_aligned_spin_beta10_iter2000.yaml"
+    )
+    np.testing.assert_allclose(beta10.summary.spin_penalty, 10.0)
+    np.testing.assert_allclose(float(beta10.cfg.optim.spin_energy), 10.0)
+    if not beta10.summary.s2_observable:
+        raise AssertionError("DeepQMC-reference beta=10 config must enable S^2")
 
 
 if __name__ == "__main__":

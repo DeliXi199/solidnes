@@ -21,6 +21,16 @@ Non-empty `merge_keys` remain implemented for explicit comparison branches.
 
 ## Recent Changes
 
+- `0105`: completed final SLURM GPU smoke for the DeepQMC state-specific local
+  S² estimator in the loss-level spin penalty; job 135764 finished with finite
+  train stats plus energy/overlap/S2 diagnostics.
+- `0104`: completed SLURM GPU smoke for DeepQMC-style loss-level spin penalty
+  with beta=10 on the no-merge fused-QKV PsiFormer route; job 135738 finished
+  with finite train stats plus energy/overlap/S2 diagnostics.
+- Updated the optional `vmc_overlap` spin-penalty path to match DeepQMC's
+  state-specific `evaluate_spin` estimator and loss-level `beta * <S^2>`
+  custom-JVP structure; the initial reference beta is `10.0` as in the public
+  DeepQMC CLI example.
 - `34d6574`: set the no-merge excited-state mainline in source/config defaults.
 - `916bcc4`: recorded the no-merge excited-state milestone in project files.
 - `0103`: completed the attention x merge-key 10000-step comparison bundle and
@@ -37,9 +47,10 @@ See `ACTIVE_TASK.md`.
 Current short version:
 
 ```text
-Context-file split is in progress.
-Goal: make AGENTS.md + CURRENT_CONTEXT.md enough for default Codex startup.
-Historical context remains archived and searchable.
+No compute job is running. The source-code mainline remains no-merge fused-QKV
+`vmc_overlap`; optional spin-penalty code is now DeepQMC-style state-specific
+loss-level beta `<S^2>` rather than local-energy injection and passed the 0105
+SLURM GPU smoke.
 ```
 
 ## History Links

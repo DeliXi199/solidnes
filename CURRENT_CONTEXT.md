@@ -24,11 +24,19 @@ diagonal_overlap_jvp: true
 overlap_weights: equal by state
 overlap_sort_states_by: null
 kfac.norm_constraint_scale_by_states: false
+spin_penalty: 0.0 by default
 ```
 
 Non-empty `merge_keys` remain implemented and configurable, but they are
 comparison branches. They should resolve as `merge_key_variant`, not
 `mainline`.
+
+Optional spin-penalty runs now use DeepQMC-style loss-level
+`beta * <S^2>`/custom-JVP semantics for `vmc_overlap`; the loss operator uses a
+state-specific local S² estimator matching DeepQMC `evaluate_spin`, while the
+full S² matrix remains an observable diagnostic. The initial DeepQMC-reference
+beta is `10.0`; loss-level smoke `0104` and final state-specific smoke `0105`
+both passed through SLURM.
 
 ## Source Of Truth
 
@@ -62,7 +70,7 @@ records/progress/2026-06-01_context_file_split.md
 The next available task number is:
 
 ```text
-0104
+0106
 ```
 
 ## Validation Commands

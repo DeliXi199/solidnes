@@ -1,0 +1,35 @@
+{
+  "experiment": "diamond_c_psiformer_pbc_gamma_deepqmc_spin_beta10_smoke_batch128_iter2",
+  "network_type": "psiformer",
+  "objective": "vmc_overlap",
+  "states": 2,
+  "independent_state_params": true,
+  "independent_state_merge_keys": [],
+  "diagonal_mcmc_trace": true,
+  "diagonal_local_energy": true,
+  "diagonal_overlap_jvp": true,
+  "profile_step_times": true,
+  "profile_loss_components": false,
+  "iterations": 2,
+  "batch_size": 128,
+  "optimizer": "kfac",
+  "laplacian": "folx",
+  "psiformer_attention_configured": "fused_qkv",
+  "psiformer_attention_resolved": "fused_qkv",
+  "psiformer_attention_kernel_gpu": "jax",
+  "psiformer_attention_kernel_gpu_resolved": "jax",
+  "elapsed_seconds": 349.0291733071208,
+  "seconds_per_iteration": 174.5145866535604,
+  "jax_version": "0.10.1",
+  "jax_backend": "gpu",
+  "jax_devices": [
+    "cuda:0"
+  ],
+  "final_checkpoint": {
+    "required": false,
+    "iterations": 2,
+    "final_step": null,
+    "checkpoint_path": null,
+    "exists": null
+  }
+}

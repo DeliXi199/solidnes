@@ -1,0 +1,68 @@
+project: solidnes
+experiment_name: diamond_c_psiformer_pbc_gamma_deepqmc_spin_state_specific_beta10_smoke_batch128_iter2
+stage: excited_state_nesvmc
+phase: deepqmc_spin_state_specific_alignment_gpu_smoke
+
+backend:
+  name: ferminet
+  repository: https://github.com/google-deepmind/ferminet
+  inspected_commit: c4312c315dda1c5728994ba89629744f71c6eb66
+  mode: native_ferminet_psiformer_training
+
+system_config: ../system/diamond_c_primitive_gamma.yaml
+model_config: ../model/psiformer_pbc_paper_attention_fused_qkv_x64_jaxattn.yaml
+sampler_config: ../sampler/metropolis_ferminet_pbc_short.yaml
+train_config: ../train/excited_state_psiformer_pbc_native_kfac_deepqmc_spin_beta10_smoke_batch128_iter2.yaml
+
+ferminet_config_template:
+  module: solidnes/backends/ferminet_configs/diamond_pbc_gamma.py
+
+runtime:
+  target_jax_version: 0.10.1
+  cuda_extra: cuda12
+  precision_profile: speed
+  x64_enabled: false
+  require_gpu: true
+  xla_python_client_preallocate: true
+  xla_python_client_mem_fraction: 0.90
+
+output:
+  log_dir: tasks/excited_state_nesvmc/0105_deepqmc_spin_state_specific_gpu_smoke/logs/backend
+  checkpoint_dir: tasks/excited_state_nesvmc/0105_deepqmc_spin_state_specific_gpu_smoke/results/checkpoints
+  validation_dir: tasks/excited_state_nesvmc/0105_deepqmc_spin_state_specific_gpu_smoke/results/validation
+
+diagnostics:
+  native_ferminet_excited_state: true
+  expected_states: 2
+  independent_state_params: true
+  independent_state_merge_keys: []
+  diagonal_paths: {mcmc_trace: true, local_energy: true, overlap_jvp: true}
+  objective: vmc_overlap
+  method_profile: szabo_noe_2024_penalty
+  optimizer: kfac
+  batch_size: 128
+  iterations: 2
+  model: psiformer
+  attention_implementation: fused_qkv
+  attention_kernel_gpu: jax
+  spin_penalty: 10.0
+  spin_estimator: deepqmc_state_specific
+  observables_s2: true
+  expected_outputs:
+    - train_stats.csv
+    - energy_matrix.npy
+    - bare_energy_matrix.npy
+    - s2_matrix.npy
+    - overlap_matrix.npy
+    - overlap_symmetric_matrix.npy
+    - overlap_penalty_matrix.npy
+    - overlap_gradient_scale.npy
+    - overlap_state_ordering.npy
+
+notes:
+  status: ready_for_deepqmc_spin_state_specific_gpu_smoke
+  purpose: >-
+    SLURM-submitted smoke for the final DeepQMC-style spin penalty on the
+    no-merge fused-QKV PsiFormer excited-state route. This validates both
+    loss-level beta * <S^2> semantics and the state-specific local S^2 estimator
+    matching DeepQMC evaluate_spin.

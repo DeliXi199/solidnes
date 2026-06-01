@@ -179,10 +179,14 @@ L += spin_penalty * <S^2>
 
 For SolidNES periodic diamond Gamma, the first controlled two-state probe
 initially deferred this while the overlap method was being stabilized. The
-native FermiNet path now exposes this as `spin_penalty`, mapped to
-`cfg.optim.spin_energy`, with `observables_s2` writing `s2_matrix.npy`.
+native FermiNet `vmc_overlap` path now exposes this as `spin_penalty`, mapped
+to `cfg.optim.spin_energy`, but applies it at the loss/JVP level rather than by
+clipping an effective `H + beta S^2` local energy. The loss uses a
+state-specific local S² estimator matching DeepQMC `evaluate_spin`; the separate
+`observables_s2` diagnostic still writes FermiNet's full `s2_matrix.npy`.
 Spin-targeted runs still need an explicit target sector and penalty strength in
-the experiment YAML.
+the experiment YAML; the initial DeepQMC-reference value is `spin_penalty:
+10.0`, matching the public DeepQMC CLI example.
 
 ## Current SolidNES/FermiNet Mapping
 

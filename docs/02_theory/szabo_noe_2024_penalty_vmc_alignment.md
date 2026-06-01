@@ -142,16 +142,25 @@ to FermiNet's native:
 cfg.optim.spin_energy = beta
 ```
 
-When `beta > 0`, the native FermiNet path minimizes the effective local energy
-`H + beta S^2`. For state-specific `vmc_overlap` local energies, SolidNES adds
-`beta * diag(S^2)` to the per-state local-energy vector. For matrix-energy
-paths, it adds `beta * trace(S^2)` to the scalar objective and `beta * S^2` to
-the auxiliary local-energy matrix. This follows the DeepQMC/Szabo-Noe optional
-penalty form:
+For the DeepQMC-aligned native `vmc_overlap` path, `beta > 0` is now applied
+as a loss-level term rather than by modifying the Hamiltonian local energy:
 
 ```text
-L += spin_penalty * <S^2>
+L = weighted_energy + overlap_penalty + beta * <S^2>
 ```
+
+The spin estimator used by this loss is the state-specific local estimator from
+DeepQMC `evaluate_spin`: for each sampled state walker, SolidNES evaluates that
+state's wavefunction, swaps every up/down electron pair, subtracts the
+signed-amplitude ratio from `S(S+1)+n_down`, and then averages equally over
+states and samples. The custom JVP uses DeepQMC's score-function form: the
+Hamiltonian energy coefficient is clipped/centered as before, while the spin
+coefficient is the per-state centered local `S^2` contribution with the final
+equal state average. This avoids clipping `H + beta S^2` as one combined local
+energy.
+
+For non-`vmc_overlap` legacy FermiNet objectives, `cfg.optim.spin_energy` still
+uses the older effective-local-energy path `H + beta S^2`.
 
 SolidNES also exposes:
 
@@ -159,14 +168,17 @@ SolidNES also exposes:
 observables_s2: true
 ```
 
-which writes `s2_matrix.npy` for native excited-state runs. If
-`observables_s2` is not set, SolidNES enables it automatically when
-`spin_penalty > 0`. Spin-targeted runs also write `bare_energy_matrix.npy`,
-which removes the spin penalty from the training energy diagnostics and should
-be used for physical excitation gaps. The base `szabo_noe_2024_penalty` profile
-keeps `spin_penalty: 0.0`; spin-targeted runs should use an explicit spin
-config so the physical sector and penalty strength are visible in the
-experiment YAML.
+which writes the separate FermiNet full matrix observable `s2_matrix.npy` for
+native excited-state runs. If `observables_s2` is not set, SolidNES enables it
+automatically when `spin_penalty > 0`. DeepQMC-style `vmc_overlap`
+spin-targeted runs also write `bare_energy_matrix.npy`; because the spin term is
+loss-level, this matrix is identical to the Hamiltonian `energy_matrix.npy` and
+should be used as the physical gap diagnostic rather than the scalar training
+objective. The base
+`szabo_noe_2024_penalty` profile keeps `spin_penalty: 0.0`; spin-targeted runs
+should use an explicit spin config so the physical sector and penalty strength
+are visible in the experiment YAML.  The initial DeepQMC-reference penalty
+choice is `spin_penalty: 10.0`, matching the public DeepQMC CLI example.
 
 For diamond Gamma with `(n_alpha, n_beta) = (6, 6)`, this targets the fixed
 `S_z = 0` sector and penalizes spin contamination away from low `S^2`.

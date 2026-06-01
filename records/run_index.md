@@ -9,7 +9,7 @@ when allocating or checking task numbers.
 ## Next Available Run Number
 
 ```text
-0104
+0106
 ```
 
 ## Numbered Runs
@@ -115,6 +115,8 @@ when allocating or checking task numbers.
 | 0101 | completed | 2026-05-31 | `solidnes/tasks/psiformer/0101_deepqmc_merge_keys_4gpu_sweep/` | `tasks/psiformer/0101_deepqmc_merge_keys_4gpu_sweep/results/` | 3 | 6 |
 | 0102 | completed | 2026-05-31 | `solidnes/tasks/psiformer/0102_deepqmc_nonmerge_alignment_final_validation/` | `tasks/psiformer/0102_deepqmc_nonmerge_alignment_final_validation/results/` | 3 | 6 |
 | 0103 | completed | 2026-06-01 | `solidnes/tasks/psiformer/0103_attention_merge_keys_4gpu_10000/` | `tasks/psiformer/0103_attention_merge_keys_4gpu_10000/results/` | 18 | 18 |
+| 0104 | completed | 2026-06-01 | `solidnes/tasks/excited_state_nesvmc/0104_deepqmc_spin_penalty_alignment_gpu_smoke/` | `tasks/excited_state_nesvmc/0104_deepqmc_spin_penalty_alignment_gpu_smoke/results/` | 1 | 2 |
+| 0105 | completed | 2026-06-01 | `solidnes/tasks/excited_state_nesvmc/0105_deepqmc_spin_state_specific_gpu_smoke/` | `tasks/excited_state_nesvmc/0105_deepqmc_spin_state_specific_gpu_smoke/results/` | 1 | 2 |
 
 ## Cleanup Notes
 
