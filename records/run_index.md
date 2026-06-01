@@ -1,13 +1,13 @@
 # SolidNES Run Index
 
-Last updated: 2026-05-28, Asia/Shanghai
+Last updated: 2026-06-01, Asia/Shanghai
 
 This file is the canonical ledger for numbered task bundles after the global artifact migration.
 
 ## Next Available Run Number
 
 ```text
-0097
+0104
 ```
 
 ## Numbered Runs
@@ -105,7 +105,14 @@ This file is the canonical ledger for numbered task bundles after the global art
 | 0093 | completed | 2026-05-26 | `solidnes/tasks/excited_state_nesvmc/0093_ferminet_native_vmc_overlap_kfac_paper_aligned_iter10000_fast_nan_guard/` | `tasks/excited_state_nesvmc/0093_ferminet_native_vmc_overlap_kfac_paper_aligned_iter10000_fast_nan_guard/results/` | 1 | 2 |
 | 0094 | completed | 2026-05-27 | `solidnes/tasks/psiformer/0094_psiformer_attention_build_benchmark/` | `tasks/psiformer/0094_psiformer_attention_build_benchmark/results/` | 4 | 4 |
 | 0095 | completed | 2026-05-27 | `solidnes/tasks/psiformer/0095_psiformer_native_training_smoke/` | `tasks/psiformer/0095_psiformer_native_training_smoke/results/` | 8 | 8 |
-| 0096 | fp64_folxfix_rerun_submitted | 2026-05-27 | `solidnes/tasks/psiformer/0096_psiformer_attention_full_stack/` | `tasks/psiformer/0096_psiformer_attention_full_stack/results/` | 29 | 14 |
+| 0096 | completed | 2026-05-27 | `solidnes/tasks/psiformer/0096_psiformer_attention_full_stack/` | `tasks/psiformer/0096_psiformer_attention_full_stack/results/` | 29 | 14 |
+| 0097 | completed | 2026-05-29 | `solidnes/tasks/psiformer/0097_deepqmc_aligned_excited_state/` | `tasks/psiformer/0097_deepqmc_aligned_excited_state/results/` | 4 | 8 |
+| 0098 | completed | 2026-05-30 | `solidnes/tasks/psiformer/0098_deepqmc_alignment_gpu_smoke/` | `tasks/psiformer/0098_deepqmc_alignment_gpu_smoke/results/` | 4 | 8 |
+| 0099 | completed | 2026-05-30 | `solidnes/tasks/psiformer/0099_deepqmc_alignment_speed_benchmark/` | `tasks/psiformer/0099_deepqmc_alignment_speed_benchmark/results/` | 1 | 2 |
+| 0100 | completed | 2026-05-30 | `solidnes/tasks/psiformer/0100_deepqmc_alignment_4gpu_speed_benchmark/` | `tasks/psiformer/0100_deepqmc_alignment_4gpu_speed_benchmark/results/` | 2 | 4 |
+| 0101 | completed | 2026-05-31 | `solidnes/tasks/psiformer/0101_deepqmc_merge_keys_4gpu_sweep/` | `tasks/psiformer/0101_deepqmc_merge_keys_4gpu_sweep/results/` | 3 | 6 |
+| 0102 | completed | 2026-05-31 | `solidnes/tasks/psiformer/0102_deepqmc_nonmerge_alignment_final_validation/` | `tasks/psiformer/0102_deepqmc_nonmerge_alignment_final_validation/results/` | 3 | 6 |
+| 0103 | completed | 2026-06-01 | `solidnes/tasks/psiformer/0103_attention_merge_keys_4gpu_10000/` | `tasks/psiformer/0103_attention_merge_keys_4gpu_10000/results/` | 18 | 18 |
 
 ## Cleanup Notes
 

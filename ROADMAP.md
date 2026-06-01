@@ -91,6 +91,12 @@ current cc-pVDZ workflow. The active Phase 1 work is now to reproduce the
 Szabo and Noe JCTC 2024 penalty-based excited-state VMC method in code and run
 the first controlled NES-VMC excited-state probes.
 
+Update 2026-06-01: the DeepQMC-aligned two-state excited-state implementation is
+now the source-code mainline. The default route is PsiFormer/FermiNet native
+`vmc_overlap` with fused-QKV attention, independent per-state parameters,
+`merge_keys: []`, and diagonal independent-state fast paths. Non-empty
+`merge_keys` remain available as explicit comparison branches.
+
 ## Phase 1B: Excited-State And Finite-Size Checks
 
 Goal: reproduce the penalty-based excited-state VMC method in the SolidNES
@@ -105,6 +111,10 @@ Deliverables:
 - Concrete material-test tasks after the controlled probe works.
 - Optional twist-averaged diamond calculation.
 - Finite-size and twist-sensitivity notes.
+
+Status: method mainline selected and encoded in source defaults as of
+2026-06-01; next work should use that route for controlled material tests while
+keeping merge-key sharing only as a labeled comparison branch.
 
 ## Phase 2: First High-Value Application
 

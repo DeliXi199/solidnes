@@ -1,20 +1,45 @@
 # SolidNES Current Status
 
-Last updated: 2026-05-28, Asia/Shanghai
+Last updated: 2026-06-01, Asia/Shanghai
 
 ## Current Conclusion
 
-Two Phase 1 enabling milestones are complete at the project-validation level:
+Three Phase 1 enabling milestones are complete at the project-validation level:
 
 1. The carbon-diamond paper benchmark reproduction is complete through both
    DeepSolid and FermiNet.
 2. The FermiNet PBC-HF pretraining implementation and diamond-Gamma validation
    milestone is complete for the current cc-pVDZ workflow.
+3. The DeepQMC-aligned two-state excited-state method is now the SolidNES
+   source-code mainline: PsiFormer/FermiNet native `vmc_overlap`, independent
+   per-state parameter trees, `merge_keys: []` by default, diagonal
+   MCMC/local-energy/overlap-JVP paths, equal overlap energy weighting, fixed
+   state ordering, and KFAC norm state scaling disabled.
 
 The project can now move from ground-state and pretraining route hardening to
-the next phase: reproduce the Szabo and Noe JCTC 2024 penalty-based
-excited-state VMC method in the SolidNES code path, then test it on concrete
-periodic materials.
+the next phase: use the source-code mainline excited-state route for controlled
+periodic material tests and keep non-empty `merge_keys` only as explicit
+comparison branches.
+
+The source milestone was committed and pushed as:
+
+```text
+34d6574 Set no-merge excited-state mainline
+```
+
+Validation evidence:
+
+```text
+python scripts/validation/check_excited_state_mainline_defaults.py
+SOLIDNES_BUILD_ONLY=1 python scripts/backends/run_ferminet_train.py --mainline-excited-state
+SOLIDNES_BUILD_ONLY=1 python scripts/backends/run_ferminet_train.py configs/experiment/diamond_c_psiformer_pbc_gamma_deepqmc_attention_fused_qkv_merge_layers_batch4096_iter10000.yaml
+python scripts/validation/check_ferminet_native_overlap_loss_alignment.py
+```
+
+The no-merge config resolves to `excited_state_route_role: mainline` with
+`independent_state_merge_keys: ()`. A non-empty merge config resolves to
+`excited_state_route_role: merge_key_variant`, confirming that merge support is
+still present but not the default.
 
 Current excited-state implementation status: the native FermiNet PBC
 `vmc_overlap` path now includes the paper-aligned overlap loss cleanup,
@@ -169,6 +194,16 @@ default.
 
 ## Current Task State
 
+As of 2026-06-01, task `0103` completed the attention x merge-key comparison
+bundle and the project mainline has been updated to the no-merge DeepQMC-aligned
+route. The source-of-truth constants in
+`src/solidnes/excited_state_mainline.py` now point at
+`configs/experiment/diamond_c_psiformer_pbc_gamma_deepqmc_attention_fused_qkv_merge_none_batch4096_iter10000.yaml`
+and
+`configs/train/excited_state_psiformer_pbc_native_kfac_deepqmc_merge_none_batch4096_iter10000.yaml`.
+The older shared-`layers` path remains available through explicit merge-key
+configs for controls.
+
 Task `0096` completed the formal PsiFormer attention speed comparison. It kept
 pretraining out of scope and ran the paper-scale native training comparison
 under `tasks/psiformer/0096_psiformer_attention_full_stack/`. Full-node jobs
@@ -221,9 +256,8 @@ upstream median forward time was 0.000454 s and fused-QKV was 0.000432 s, a
 calculations are GPU-only, `auto` now resolves directly to `fused_qkv`;
 `ferminet` remains only as an explicit ablation/control option.
 
-The next concrete action is to wait for the fp64 FOLX-fix reruns to complete,
-then regenerate the attention speed and state-gap comparison from the x64
-outputs.
+That 0096 attention validation is now superseded by the 0102/0103 DeepQMC
+alignment and merge-key comparison work for default method selection.
 
 Task `0088` completed the previous excited-state step. It is the requested
 long beta=0 native FermiNet PBC two-state `vmc_overlap` baseline with 100000

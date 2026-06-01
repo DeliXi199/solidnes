@@ -17,6 +17,11 @@ reproduce the Szabo and Noe JCTC 2024 penalty-based excited-state VMC method in
 code, then test it on concrete periodic materials, with FermiNet as the primary
 future-development framework.
 
+As of 2026-06-01, the source-code excited-state mainline is the DeepQMC-aligned
+PsiFormer/FermiNet native `vmc_overlap` route with independent per-state
+parameters and `merge_keys: []` by default. Non-empty `merge_keys` remain in the
+codebase as explicit comparison branches, not the production default.
+
 Passed so far:
 
 - DeepSolid import/config smoke in an isolated JAX 0.4.30 probe environment.
@@ -35,6 +40,10 @@ Passed so far:
   evaluation.
 - FermiNet PBC-HF pretraining implementation, JAX PBC GTO cc-pVDZ validation,
   GPU integration, and matched no-pretraining comparisons for diamond Gamma.
+- DeepQMC-aligned excited-state mainline promoted into source defaults:
+  no-merge independent state parameters, diagonal MCMC/local-energy/overlap-JVP
+  paths, fused-QKV PsiFormer attention, and optional merge-key comparison
+  support retained.
 - Dedicated next-phase task area:
   `tasks/excited_state_nesvmc/`.
 

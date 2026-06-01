@@ -1,6 +1,6 @@
 # Progress
 
-Last updated: 2026-05-29
+Last updated: 2026-06-01
 
 ## Current State
 
@@ -9,6 +9,16 @@ Project policy now requires every iterative training or evaluation task with
 runs launched through `run_ferminet_train.py` enforce this at runtime; DeepSolid
 configs built through the adapter use step-based checkpointing for the same
 rule unless explicitly overridden.
+
+The DeepQMC-aligned excited-state method has been promoted into source-code
+defaults. `--mainline-excited-state` now resolves to the 0103 fused-QKV
+no-merge PsiFormer configuration with independent per-state parameters,
+`merge_keys: []`, diagonal MCMC/local-energy/overlap-JVP paths, equal overlap
+energy weighting, fixed state ordering, and KFAC state-count norm scaling
+disabled. Non-empty `merge_keys` are still implemented and are classified as
+`merge_key_variant`, so they remain available for explicit controls but are not
+the production default. This milestone was committed and pushed as
+`34d6574 Set no-merge excited-state mainline`.
 
 Carbon-diamond benchmark reproduction is complete through both DeepSolid and
 FermiNet. The FermiNet PBC-HF pretraining implementation and diamond-Gamma
@@ -106,19 +116,13 @@ See `ACTIVE_TASK.md` for the exact state and next command.
 
 Short version:
 
-- Active task: PsiFormer attention full-stack validation without pretraining.
-- State: fp64 FOLX-fix rerun submitted after completing the formal speed-profile
-  10000-step attention comparison.
-- Latest result: task `0096` is allocated under
-  `tasks/psiformer/0096_psiformer_attention_full_stack/`; `test` flow checks
-  passed and the full-node speed jobs `131735` and `131736` completed on
-  `amdgpu40g/gpu006` with batch4096, 10000 iterations, 4 GPUs, 64 CPU cores,
-  no spin penalty, and no S2 observables. Fused-QKV was 0.657% slower
-  end-to-end. The first corrected fp64/no-TF32 attempt `131952`/`131953` was
-  replaced after the FOLX spin-feature concatenate warning; clean FOLX-fix
-  reruns are jobs `131974` fused-QKV and `131975` upstream. State/gap plots
-  currently cover the completed speed-profile runs and need regeneration after
-  the fp64 FOLX-fix jobs finish.
+- Active task: source-code mainline bookkeeping for the DeepQMC-aligned
+  no-merge excited-state method.
+- State: complete and pushed to `origin/main`.
+- Latest result: `scripts/validation/check_excited_state_mainline_defaults.py`
+  passed; build-only `--mainline-excited-state` resolves to the no-merge
+  mainline; build-only merge-layers resolves to `merge_key_variant`; and
+  `scripts/validation/check_ferminet_native_overlap_loss_alignment.py` passed.
 - Evidence: GPU target/backend probes `0047--0050`, training integration and
   matched controls `0053--0062`.
 - Completed in this step: cloned ignored `external/deepqmc/` at revision

@@ -1,6 +1,6 @@
 # SolidNES Active Task
 
-Last updated: 2026-05-28, Asia/Shanghai
+Last updated: 2026-06-01, Asia/Shanghai
 
 ## Purpose
 
@@ -22,23 +22,28 @@ work belongs in `records/progress/`.
 ## Current Small Step
 
 ```text
-Step name: PsiFormer attention full-stack validation without pretraining
-State: x64 FOLX-fix rerun submitted
-Current action: the same two full-node no-pretrain PsiFormer attention comparisons were resubmitted with `runtime.precision_profile=fp64`, `runtime.x64_enabled=true`, `JAX_ENABLE_X64=1`, and `psiformer.tf32=false`. The first x64 attempt (`131952`/`131953`) was cancelled after `131952` exposed a FOLX x64 sparse-mask warning at the PsiFormer spin-feature concatenate. SolidNES now patches that concatenate with a value-preserving zero-derivative spin feature. Clean replacement jobs are `131974` fused-QKV attention running on `amdgpu40g/gpu006` and `131975` upstream/FermiNet attention pending in the combined `amdgpu40g,amdgpu80g` queue. Both request 4 GPUs, 64 CPU cores, batch4096, 10000 iterations, KFAC, FOLX, no spin penalty, and no S2 observables.
-Current blocker: waiting for the two fp64 FOLX-fix reruns to finish before regenerating the speed and gap comparison plots.
+Step name: Promote DeepQMC-aligned no-merge excited-state method to source mainline
+State: complete and pushed
+Current action: no Slurm job is required for this bookkeeping step. The source-code mainline now resolves to the 0103 fused-QKV no-merge configuration with independent per-state parameters, diagonal MCMC/local-energy/overlap-JVP paths, and DeepQMC-aligned overlap/KFAC defaults. Non-empty `merge_keys` remain available and are classified as `merge_key_variant`, not `mainline`.
+Current blocker: none.
 Backend: FermiNet
-System: carbon diamond primitive cell first, then selected material tests
-Goal: reproduce the Szabo and Noe JCTC 2024 penalty-based excited-state VMC
-      method in the SolidNES code path, then test it on concrete periodic
-      materials.
+System: carbon diamond primitive cell validation first, then selected material tests
+Goal: use the source-code mainline excited-state route for controlled periodic
+      material tests; keep merge-key sharing as an explicit comparison branch.
 ```
 
 ## Current Position
 
 ```text
 Benchmark reproduction is complete for both DeepSolid and FermiNet.
-Task 0096 is now active for the no-pretrain paper-scale PsiFormer attention
-full-stack validation. It lives under
+The DeepQMC-aligned excited-state method is now the SolidNES source-code
+mainline. Commit `34d6574` (`Set no-merge excited-state mainline`) was pushed
+to `origin/main` on 2026-06-01. `--mainline-excited-state` resolves to
+`configs/experiment/diamond_c_psiformer_pbc_gamma_deepqmc_attention_fused_qkv_merge_none_batch4096_iter10000.yaml`.
+The default merge key set is empty; explicit non-empty merge-key configs remain
+available for controls.
+Task 0096 is the completed no-pretrain paper-scale PsiFormer attention
+full-stack validation that led into the DeepQMC-alignment work. It lives under
 `tasks/psiformer/0096_psiformer_attention_full_stack/`. Test-partition flow
 checks passed: GPU forward exactness job `131685` completed, and native KFAC
 smoke job `131686` completed with `auto -> fused_qkv`. Full-node 10000-step
@@ -61,7 +66,7 @@ variant subruns for `auto_smoke`, `ferminet_b512`, `fused_qkv_b512`, and
 on `test/test001`. The GPU `auto` policy resolved to `fused_qkv`; b512
 full-training timing was effectively tied and slightly slower for fused-QKV
 (`36.855` vs `37.075` s/iter, `0.994x`), so short native training is dominated
-outside the attention projection. The next available run number is 0097.
+outside the attention projection.
 Task 0094 is the completed PsiFormer/self-attention implementation step. It lives
 under `tasks/psiformer/0094_psiformer_attention_build_benchmark/`, per the
 requested task organization. Build-only config passed with
@@ -112,9 +117,10 @@ completed beta=10 pressure test. 0088 contains the completed and analyzed
 beta=0 100000-step baseline. Tasks 0089--0093 contain the fixed-ground and
 native-route follow-ups. Task 0094 is the completed PsiFormer/self-attention
 bundle. Task 0095 is the completed PsiFormer native training smoke/comparison
-bundle. Task 0096 is the active no-pretrain PsiFormer attention full-stack
-bundle with the fp64 FOLX-fix rerun now queued/running; the next available run
-number is 0097.
+bundle. Task 0096 is the completed no-pretrain PsiFormer attention full-stack
+bundle. Tasks 0097--0103 contain the DeepQMC alignment, diagonal-path speed,
+merge-key, and 10000-step comparison work that led to the current no-merge
+mainline. The next available run number is 0104.
 Native FermiNet spin penalty is now wired through SolidNES configs:
 `spin_penalty` maps to `cfg.optim.spin_energy`, `observables_s2` writes
 `s2_matrix.npy`, and spin-penalized runs write `bare_energy_matrix.npy` for
