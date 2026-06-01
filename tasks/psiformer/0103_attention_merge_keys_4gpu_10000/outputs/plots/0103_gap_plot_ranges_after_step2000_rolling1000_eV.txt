@@ -1,0 +1,12 @@
+start_step=2000
+rolling_window=1000
+unit=eV
+hartree_to_ev=27.211386245988
+fused_qkv_merge_none_retry: gap_ylim_eV=(3.668959, 6.308959)
+fused_qkv_merge_layers: gap_ylim_eV=(3.188988, 5.828988)
+fused_qkv_merge_embed: gap_ylim_eV=(3.667037, 6.307037)
+fused_qkv_merge_low_level: gap_ylim_eV=(3.768483, 6.408483)
+ferminet_merge_none: gap_ylim_eV=(2.941485, 5.581485)
+ferminet_merge_layers: gap_ylim_eV=(3.682569, 6.322569)
+ferminet_merge_embed: gap_ylim_eV=(3.649690, 6.289690)
+ferminet_merge_low_level: gap_ylim_eV=(3.660372, 6.300372)

@@ -1,9 +1,9 @@
 # 0102 DeepQMC Non-Merge Alignment Final Validation
 
 This task validates the DeepQMC-aligned excited-state path after freezing
-`merge_keys` work. The current mainline parameter sharing remains fixed at
-`independent_state_merge_keys: [layers]`; this task does not sweep or optimize
-merge-key choices.
+`merge_keys` work. The source-code mainline now defaults to
+`independent_state_merge_keys: []`; explicit non-empty `merge_keys` remain
+available only as comparison branches.
 
 ## Code Scope
 

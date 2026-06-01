@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Check that the source-code excited-state mainline resolves to task 0096."""
+"""Check that the source-code excited-state mainline resolves to no-merge 0096."""
 
 from __future__ import annotations
 
@@ -22,6 +22,7 @@ from solidnes.backends.ferminet_adapter import build_ferminet_adapter
 from solidnes.excited_state_mainline import MAINLINE_EXCITED_STATE_ATTENTION
 from solidnes.excited_state_mainline import MAINLINE_EXCITED_STATE_INDEPENDENT_STATE_PARAMS
 from solidnes.excited_state_mainline import MAINLINE_EXCITED_STATE_METHOD
+from solidnes.excited_state_mainline import MAINLINE_EXCITED_STATE_MERGE_KEYS
 from solidnes.excited_state_mainline import MAINLINE_EXCITED_STATE_MODEL_CONFIG
 from solidnes.excited_state_mainline import MAINLINE_EXCITED_STATE_NETWORK
 from solidnes.excited_state_mainline import MAINLINE_EXCITED_STATE_OBJECTIVE
@@ -126,7 +127,11 @@ def _assert_mainline_summary(summary) -> None:
 def _assert_deepqmc_alignment_defaults(summary) -> None:
     _assert_equal(summary.overlap_weights, (0.5, 0.5), "overlap weights")
     _assert_equal(summary.independent_state_params, True, "independent per-state params")
-    _assert_equal(summary.independent_state_merge_keys, ("layers",), "merge keys")
+    _assert_equal(
+        summary.independent_state_merge_keys,
+        MAINLINE_EXCITED_STATE_MERGE_KEYS,
+        "merge keys",
+    )
     _assert_equal(summary.diagonal_mcmc_trace, True, "diagonal MCMC trace")
     _assert_equal(summary.diagonal_local_energy, True, "diagonal local energy")
     _assert_equal(summary.diagonal_overlap_jvp, True, "diagonal overlap JVP")

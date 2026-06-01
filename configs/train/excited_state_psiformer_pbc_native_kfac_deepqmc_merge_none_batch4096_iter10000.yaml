@@ -63,7 +63,7 @@ stability_checks:
   finite_state_ordering: true
 
 notes:
-  status: attention_merge_keys_4gpu_merge_none_iter10000
+  status: attention_no_merge_mainline_iter10000
   purpose: >-
-    10000-step x64 4GPU attention x merge_keys comparison with fully
-    independent per-state parameter trees and DeepQMC-aligned diagonal paths.
+    10000-step x64 4GPU no-merge mainline with fully independent per-state
+    parameter trees and DeepQMC-aligned diagonal excited-state paths.

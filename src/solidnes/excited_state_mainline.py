@@ -8,20 +8,20 @@ from typing import Any
 
 MAINLINE_EXCITED_STATE_METHOD = "0096_psiformer_vmc_overlap_fused_qkv"
 MAINLINE_EXCITED_STATE_REFERENCE_TASK = (
-    "tasks/psiformer/0096_psiformer_attention_full_stack"
+    "tasks/psiformer/0103_attention_merge_keys_4gpu_10000"
 )
 MAINLINE_EXCITED_STATE_REFERENCE_EXPERIMENT = (
     "configs/experiment/"
-    "diamond_c_psiformer_pbc_gamma_attention_paper_fullnode_anygpu_"
-    "fused_qkv_x64_attnfix_b4096_iter10000_levmap128_jaxattn.yaml"
+    "diamond_c_psiformer_pbc_gamma_deepqmc_attention_fused_qkv_"
+    "merge_none_batch4096_iter10000.yaml"
 )
 MAINLINE_EXCITED_STATE_MODEL_CONFIG = (
     "configs/model/psiformer_pbc_paper_attention_fused_qkv_x64_jaxattn.yaml"
 )
 MAINLINE_EXCITED_STATE_TRAIN_CONFIG = (
     "configs/train/"
-    "excited_state_psiformer_pbc_native_kfac_attention_paper_benchmark_"
-    "batch4096_iter10000_levmap128.yaml"
+    "excited_state_psiformer_pbc_native_kfac_deepqmc_merge_none_"
+    "batch4096_iter10000.yaml"
 )
 MAINLINE_EXCITED_STATE_OBJECTIVE = "vmc_overlap"
 MAINLINE_EXCITED_STATE_NETWORK = "psiformer"
@@ -30,6 +30,7 @@ MAINLINE_EXCITED_STATE_ATTENTION_KERNEL_GPU = "jax"
 MAINLINE_EXCITED_STATE_METHOD_PROFILE = "szabo_noe_2024_penalty"
 MAINLINE_EXCITED_STATE_MIN_STATES = 2
 MAINLINE_EXCITED_STATE_INDEPENDENT_STATE_PARAMS = True
+MAINLINE_EXCITED_STATE_MERGE_KEYS: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -76,8 +77,9 @@ def classify_excited_state_mainline(
     attention_kernel_gpu: str | None = None,
     method_profile: str | None = None,
     independent_state_params: bool | None = None,
+    independent_state_merge_keys: tuple[str, ...] | list[str] | None = None,
 ) -> ExcitedStateMainlineSelection:
-    """Classify whether a config is on the 0096 excited-state mainline."""
+    """Classify whether a config is on the no-merge excited-state mainline."""
 
     objective_value = _lower_or_none(objective)
     network_value = _lower_or_none(network_type)
@@ -86,6 +88,7 @@ def classify_excited_state_mainline(
     kernel_value = _lower_or_none(attention_kernel_gpu)
     profile_value = _lower_or_none(method_profile)
     independent_value = bool(independent_state_params)
+    merge_keys = tuple(str(key) for key in (independent_state_merge_keys or ()))
 
     if objective_value != MAINLINE_EXCITED_STATE_OBJECTIVE:
         return ExcitedStateMainlineSelection(
@@ -117,6 +120,14 @@ def classify_excited_state_mainline(
             role="legacy_or_control",
             is_mainline=False,
             reason="mainline excited-state route requires independent per-state parameters",
+            resolved_attention=resolved_attention,
+        )
+    if merge_keys != MAINLINE_EXCITED_STATE_MERGE_KEYS:
+        return ExcitedStateMainlineSelection(
+            method=MAINLINE_EXCITED_STATE_METHOD,
+            role="merge_key_variant",
+            is_mainline=False,
+            reason="mainline architecture with optional merge_keys parameter sharing",
             resolved_attention=resolved_attention,
         )
     if resolved_attention != MAINLINE_EXCITED_STATE_ATTENTION:
@@ -153,7 +164,7 @@ def classify_excited_state_mainline(
         method=MAINLINE_EXCITED_STATE_METHOD,
         role="mainline",
         is_mainline=True,
-        reason="0096 PsiFormer vmc_overlap fused-QKV excited-state route",
+        reason="0096 PsiFormer vmc_overlap fused-QKV no-merge excited-state route",
         resolved_attention=resolved_attention,
     )
 
@@ -169,6 +180,7 @@ __all__ = [
     "MAINLINE_EXCITED_STATE_INDEPENDENT_STATE_PARAMS",
     "MAINLINE_EXCITED_STATE_METHOD",
     "MAINLINE_EXCITED_STATE_METHOD_PROFILE",
+    "MAINLINE_EXCITED_STATE_MERGE_KEYS",
     "MAINLINE_EXCITED_STATE_MIN_STATES",
     "MAINLINE_EXCITED_STATE_MODEL_CONFIG",
     "MAINLINE_EXCITED_STATE_NETWORK",

@@ -4,6 +4,9 @@ This task compares the two 0096 PsiFormer attention implementations against
 four independent-state parameter sharing choices after the non-merge DeepQMC
 alignment work was fixed.
 
+Source-code mainline default: fused-QKV attention with `merge_keys: []`. The
+non-empty merge-key rows remain optional comparison branches.
+
 ## Fixed Settings
 
 - Batch size: 4096
@@ -30,10 +33,15 @@ alignment work was fixed.
 | 134846 | ferminet | layers | solidnes-0103-ferminet-layers |
 | 134847 | ferminet | layers/embed | solidnes-0103-ferminet-embed |
 | 134848 | ferminet | envelope, jastrow, layers/embed | solidnes-0103-ferminet-low_level |
+| 134924 | fused_qkv | none | solidnes-0103-fused_qkv-none-retry |
 
 All jobs were submitted with the project GPU submitter using flexible queue mode,
 so pending jobs keep the combined partition target
 `amdgpu40g,amdgpu80g,h200`.
+
+Job `134924` is an identical retry of the `fused_qkv` + no-merge training
+configuration. Its experiment name and output directory are separate to avoid
+concurrent writes into the original `134841` checkpoint directory.
 
 ## Evaluation Plan
 

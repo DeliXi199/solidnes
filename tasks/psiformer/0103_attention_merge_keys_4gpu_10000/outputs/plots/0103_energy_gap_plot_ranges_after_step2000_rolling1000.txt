@@ -1,0 +1,10 @@
+start_step=2000
+rolling_window=1000
+fused_qkv_merge_none_retry: energy_ylim=(-75.428075, -75.129824), gap_ylim=(0.135341, 0.231341)
+fused_qkv_merge_layers: energy_ylim=(-75.426542, -75.121214), gap_ylim=(0.117702, 0.213702)
+fused_qkv_merge_embed: energy_ylim=(-75.425375, -75.135070), gap_ylim=(0.135270, 0.231270)
+fused_qkv_merge_low_level: energy_ylim=(-75.425075, -75.130075), gap_ylim=(0.138998, 0.234998)
+ferminet_merge_none: energy_ylim=(-75.422031, -75.133022), gap_ylim=(0.108607, 0.204607)
+ferminet_merge_layers: energy_ylim=(-75.421935, -75.129006), gap_ylim=(0.135841, 0.231841)
+ferminet_merge_embed: energy_ylim=(-75.423056, -75.130257), gap_ylim=(0.134633, 0.230633)
+ferminet_merge_low_level: energy_ylim=(-75.422754, -75.132817), gap_ylim=(0.135025, 0.231025)

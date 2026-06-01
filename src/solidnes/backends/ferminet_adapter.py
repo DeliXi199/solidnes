@@ -230,6 +230,10 @@ class FermiNetAdapterBundle:
         fixed_ground = self.cfg.optim.get("fixed_ground", {})
         psiformer_attention = psiformer_attention_implementation(self.cfg)
         independent_states = bool(self.cfg.network.get("independent_states", False))
+        independent_state_merge_keys = tuple(
+            str(key)
+            for key in self.cfg.network.get("independent_state_merge_keys", ())
+        )
         auto_diagonal_paths = (
             independent_states and str(self.cfg.optim.objective) == "vmc_overlap"
         )
@@ -245,6 +249,7 @@ class FermiNetAdapterBundle:
             ),
             method_profile=self.cfg.optim.get("method_profile"),
             independent_state_params=independent_states,
+            independent_state_merge_keys=independent_state_merge_keys,
         )
         return FermiNetAdapterSummary(
             experiment_name=self.experiment["experiment_name"],
@@ -264,10 +269,7 @@ class FermiNetAdapterBundle:
             excited_state_route_is_mainline=route.is_mainline,
             states=int(self.cfg.system.get("states", 0)),
             independent_state_params=independent_states,
-            independent_state_merge_keys=tuple(
-                str(key)
-                for key in self.cfg.network.get("independent_state_merge_keys", ())
-            ),
+            independent_state_merge_keys=independent_state_merge_keys,
             diagonal_mcmc_trace=_resolve_auto_bool(
                 self.cfg.optim.get("diagonal_mcmc_trace", None),
                 auto_diagonal_paths,

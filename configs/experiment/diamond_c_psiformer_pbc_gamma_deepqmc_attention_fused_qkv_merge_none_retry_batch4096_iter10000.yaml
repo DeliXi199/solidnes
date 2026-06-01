@@ -1,5 +1,5 @@
 project: solidnes
-experiment_name: diamond_c_psiformer_pbc_gamma_deepqmc_attention_fused_qkv_merge_none_batch4096_iter10000
+experiment_name: diamond_c_psiformer_pbc_gamma_deepqmc_attention_fused_qkv_merge_none_retry_batch4096_iter10000
 stage: psiformer
 phase: deepqmc_attention_merge_keys_4gpu_10000
 
@@ -27,9 +27,9 @@ runtime:
   xla_python_client_mem_fraction: 0.90
 
 output:
-  log_dir: tasks/psiformer/0103_attention_merge_keys_4gpu_10000/runs/fused_qkv_merge_none/logs/backend
-  checkpoint_dir: tasks/psiformer/0103_attention_merge_keys_4gpu_10000/runs/fused_qkv_merge_none/results/checkpoints
-  validation_dir: tasks/psiformer/0103_attention_merge_keys_4gpu_10000/runs/fused_qkv_merge_none/results/validation
+  log_dir: tasks/psiformer/0103_attention_merge_keys_4gpu_10000/runs/fused_qkv_merge_none_retry/logs/backend
+  checkpoint_dir: tasks/psiformer/0103_attention_merge_keys_4gpu_10000/runs/fused_qkv_merge_none_retry/results/checkpoints
+  validation_dir: tasks/psiformer/0103_attention_merge_keys_4gpu_10000/runs/fused_qkv_merge_none_retry/results/validation
 
 diagnostics:
   native_ferminet_excited_state: true
@@ -51,7 +51,8 @@ diagnostics:
   scheduler_cpus: 64
 
 notes:
-  status: ready_for_no_merge_mainline_4gpu_10000
+  status: ready_for_attention_merge_keys_4gpu_10000_retry
   purpose: >-
-    Fused-QKV no-merge mainline with no parameter sharing across independent
-    states.
+    Retry of the fused-QKV attention run with no parameter sharing across
+    independent states. Training parameters match the original merge-none job;
+    only the experiment name and output directories are separate.
