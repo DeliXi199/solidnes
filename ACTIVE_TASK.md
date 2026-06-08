@@ -1,6 +1,6 @@
 # SolidNES Active Task
 
-Last updated: 2026-06-01, Asia/Shanghai
+Last updated: 2026-06-08, Asia/Shanghai
 
 This file records only the current small step. Historical task state belongs in
 `records/progress/`, `tasks/TASK_LEDGER.md`, and task-local README files.
@@ -8,14 +8,16 @@ This file records only the current small step. Historical task state belongs in
 ## Current Small Step
 
 ```text
-Step name: 0105 DeepQMC state-specific spin GPU smoke
-State: complete
-Current action: SLURM job `135764` completed successfully via
-  `scripts/slurm/submit_ferminet_gpu_smoke.sh` on `amdgpu40g/gpu004`.
+Step name: 2026-06-08 spin-penalty/default-lr milestone save
+State: completed
+Current action: milestone record and default-parameter data snapshot prepared
+  for Git commit and GitHub push.
 Current blocker: none.
-Next action: final diff review, update FermiNet patch/docs, then commit/push.
-Completion condition: satisfied; train_stats and energy/overlap/S2 diagnostic
-  arrays are finite and records document state-specific spin alignment.
+Next action: use `eta0=0.02`, `tau=10000`, `learning_rate_decay=1.0`, and
+  `kfac.damping=0.001` as the default optimizer schedule for future
+  excited-state calculations unless a new task explicitly overrides it.
+Completion condition: milestone record and data snapshot are committed and
+  pushed to GitHub.
 ```
 
 ## Current Project Position
@@ -31,15 +33,20 @@ Non-default merge:
   supported as explicit merge_key_variant comparison branches.
 
 Latest source milestone:
-  34d6574 Set no-merge excited-state mainline
-  916bcc4 Record no-merge excited-state milestone
+  spin penalty implementation complete
+  default excited-state optimizer schedule selected from 0113/0114
+
+Default excited-state optimizer schedule:
+  eta0=0.02, tau=10000, learning_rate_decay=1.0
+  kfac.damping=0.001
 
 Latest spin-penalty update:
+  records/progress/2026-06-08_spin_penalty_default_lr_milestone.md
   records/progress/2026-06-01_spin_penalty_deepqmc_alignment.md
 
 Current hot context:
   CURRENT_CONTEXT.md
 
 Next available task number:
-  0106
+  0115
 ```

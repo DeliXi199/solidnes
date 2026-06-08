@@ -1,333 +1,691 @@
 diff --git a/ferminet/loss.py b/ferminet/loss.py
-index 36244c7..7887075 100644
+index 7887075..38f4be7 100644
 --- a/ferminet/loss.py
 +++ b/ferminet/loss.py
-@@ -46,6 +46,12 @@ class AuxiliaryLossData:
-     overlap_gradient_scale: Pairwise scale applied only to overlap gradients.
-     state_ordering: State ordering used for lower-state-detached overlap
-       gradients.
-+    spin: Mean S^2 contribution used by the optional DeepQMC-style spin
-+      penalty.
-+    spin_by_state: Per-state mean S^2 contributions before the final equal
-+      state average.
-+    spin_penalty: Weighted scalar contribution added to the loss by the
-+      optional spin penalty.
+@@ -52,6 +52,8 @@ class AuxiliaryLossData:
+       state average.
+     spin_penalty: Weighted scalar contribution added to the loss by the
+       optional spin penalty.
++    spin_tangent_coeff: Samplewise coefficient used by the custom JVP for the
++      optional DeepQMC-style spin penalty.
      fixed_ground_overlap: Fixed-reference overlap estimate, when using
        fixed-ground excited-state training.
      fixed_ground_overlap_on_excited: One-sided
-@@ -71,6 +77,9 @@ class AuxiliaryLossData:
-   squared_s_ij: jax.Array | None = None
-   overlap_gradient_scale: jax.Array | None = None
-   state_ordering: jax.Array | None = None
-+  spin: jax.Array | None = None
-+  spin_by_state: jax.Array | None = None
-+  spin_penalty: jax.Array | None = None
+@@ -62,6 +64,8 @@ class AuxiliaryLossData:
+     fixed_ground_overlap_squared: Squared fixed-ground overlap penalty term.
+     fixed_ground_overlap_penalty: Weighted contribution added to the scalar
+       objective by fixed-ground overlap training.
++    fixed_ground_overlap_tangent_coeff: Samplewise coefficient used by the
++      fixed-ground overlap custom JVP.
+     fixed_ground_energy_reference: Optional fixed ground-state energy used only
+       for diagnostics.
+   """
+@@ -80,11 +84,13 @@ class AuxiliaryLossData:
+   spin: jax.Array | None = None
+   spin_by_state: jax.Array | None = None
+   spin_penalty: jax.Array | None = None
++  spin_tangent_coeff: jax.Array | None = None
    fixed_ground_overlap: jax.Array | None = None
    fixed_ground_overlap_on_excited: jax.Array | None = None
    fixed_ground_overlap_on_ground: jax.Array | None = None
-@@ -372,6 +381,51 @@ def _unpermute_state_vector(vector: jnp.ndarray, ordering: jnp.ndarray) -> jnp.n
-   return jnp.take(vector, inverse, axis=-1)
+   fixed_ground_overlap_squared: jax.Array | None = None
+   fixed_ground_overlap_penalty: jax.Array | None = None
++  fixed_ground_overlap_tangent_coeff: jax.Array | None = None
+   fixed_ground_energy_reference: jax.Array | None = None
 
 
-+def _diagonal_spin_contributions(spin_local: jnp.ndarray) -> jnp.ndarray:
-+  """Return the per-sample per-state S^2 contributions.
+@@ -325,6 +331,33 @@ def _masked_centered_fixed_ground_overlap_diff(
+   return centered * safe_weight
+
+
++def _fixed_ground_overlap_tangent_coeff(
++    overlap_ratio: jnp.ndarray,
++    overlap_on_excited: jnp.ndarray,
++    overlap_on_ground: jnp.ndarray,
++    fixed_ground_overlap: jnp.ndarray,
++    *,
++    symmetric_sampling: bool,
++    overlap_clip_width: float,
++    overlap_clip_exclude_width: float,
++    overlap_gradient_scale: float,
++) -> jnp.ndarray:
++  """Return the fixed-reference overlap coefficient for the custom JVP."""
 +
-+  The FermiNet S^2 observable can return a batched full state matrix for
-+  excited-state calculations.  DeepQMC's spin penalty is evaluated on the state
-+  sampled by each chain, so the loss-level penalty consumes only the diagonal
-+  entries.  A rank-2 ``[batch, states]`` array is already diagonal/state-specific
-+  and must not be treated as a square matrix when ``batch == states``.
-+  """
++  clipped_overlap, ratio_gradient_mask = _clip_fixed_ground_overlap_ratios(
++      overlap_ratio,
++      overlap_clip_width,
++      overlap_clip_exclude_width)
++  overlap_diff = _masked_centered_fixed_ground_overlap_diff(
++      clipped_overlap, ratio_gradient_mask)
++  if symmetric_sampling:
++    pair_is_active = (overlap_on_excited * overlap_on_ground) > 0.0
++    overlap_prefactor = jnp.where(pair_is_active, overlap_on_ground, 0.0)
++  else:
++    overlap_prefactor = fixed_ground_overlap
++  return 2.0 * overlap_prefactor * overlap_diff * overlap_gradient_scale
 +
-+  spin_local = jnp.asarray(spin_local)
-+  if spin_local.ndim >= 3 and spin_local.shape[-1] == spin_local.shape[-2]:
-+    return jnp.diagonal(spin_local, axis1=-2, axis2=-1)
-+  return spin_local
 +
-+
-+def _deepqmc_spin_penalty_terms(
-+    spin_local: jnp.ndarray,
-+    spin_penalty: float,
-+) -> tuple[jnp.ndarray, jnp.ndarray, jnp.ndarray]:
-+  """Return DeepQMC-style spin penalty loss and JVP coefficients.
-+
-+  DeepQMC adds ``beta * <S^2>`` to the scalar loss, where ``<S^2>`` is the
-+  equal average over electronic states and samples.  Its custom JVP adds the
-+  score-function tangent of this expectation, i.e. per-state centered local
-+  S^2 contributions with the same final state average.  The coefficient
-+  returned here has shape ``[batch, states]`` and can be added to the existing
-+  diagonal log-wavefunction tangent coefficients.
-+  """
-+
-+  spin_diag = _diagonal_spin_contributions(spin_local).real
-+  if spin_diag.ndim == 0:
-+    spin_by_state = constants.pmean(spin_diag)
+ def _overlap_gradient_scale(
+     energy: jnp.ndarray,
+     variance: jnp.ndarray,
+@@ -417,6 +450,11 @@ def _deepqmc_spin_penalty_terms(
+     spin_mean = spin_by_state
+     spin_diff = spin_diag - spin_by_state
+     state_weight = jnp.asarray(1.0, dtype=spin_diag.dtype)
++  elif spin_diag.ndim == 1:
++    spin_by_state = constants.pmean(jnp.mean(spin_diag, axis=0))
 +    spin_mean = spin_by_state
 +    spin_diff = spin_diag - spin_by_state
 +    state_weight = jnp.asarray(1.0, dtype=spin_diag.dtype)
-+  else:
-+    spin_by_state = constants.pmean(jnp.mean(spin_diag, axis=0))
-+    spin_mean = jnp.mean(spin_by_state)
-+    spin_diff = spin_diag - spin_by_state
-+    state_weight = jnp.asarray(1.0 / spin_diag.shape[-1], dtype=spin_diag.dtype)
-+  penalty = jnp.asarray(spin_penalty, dtype=spin_diag.dtype)
-+  return penalty * spin_mean, penalty * state_weight * spin_diff, spin_by_state
-+
-+
- def make_loss(network: networks.LogFermiNetLike,
-               local_energy: hamiltonian.LocalEnergy,
-               clip_local_energy: float = 0.0,
-@@ -683,6 +737,8 @@ def make_wqmc_loss(
- def make_energy_overlap_loss(network: networks.LogFermiNetLike,
-                              local_energy: hamiltonian.LocalEnergy,
-                              diagonal_network: networks.LogFermiNetLike | None = None,
-+                             spin_operator=None,
-+                             spin_penalty: float = 0.0,
-                              clip_local_energy: float = 0.0,
-                              clip_from_median: bool = True,
-                              center_at_clipped_energy: bool = True,
-@@ -711,6 +767,10 @@ def make_energy_overlap_loss(network: networks.LogFermiNetLike,
-       outputs for independent-state networks. The main overlap forward still
-       uses the full state matrix; this callable only avoids an unnecessary full
-       matrix forward in the custom-JVP tangent and KFAC registration path.
-+    spin_operator: Optional batchless local S^2 estimator.  When present, the
+   else:
+     spin_by_state = constants.pmean(jnp.mean(spin_diag, axis=0))
+     spin_mean = jnp.mean(spin_by_state)
+@@ -433,7 +471,9 @@ def make_loss(network: networks.LogFermiNetLike,
+               center_at_clipped_energy: bool = True,
+               complex_output: bool = False,
+               max_vmap_batch_size: int = 0,
+-              max_local_energy_vmap_batch_size: int | None = None) -> LossFn:
++              max_local_energy_vmap_batch_size: int | None = None,
++              spin_operator=None,
++              spin_penalty: float = 0.0) -> LossFn:
+   """Creates the loss function, including custom gradients.
+
+   Args:
+@@ -459,6 +499,10 @@ def make_loss(network: networks.LogFermiNetLike,
+       This keeps pure VMC aligned with the excited-state overlap loss path,
+       where local-energy/FOLX compilation can be chunked independently from the
+       log-wavefunction batch used for KFAC registration.
++    spin_operator: Optional batchless local S^2 estimator. When present, the
 +      loss adds DeepQMC-style ``spin_penalty * <S^2>`` outside the Hamiltonian
 +      local-energy clipping path.
 +    spin_penalty: Strength of the optional DeepQMC-style spin penalty.
-     clip_local_energy: If greater than zero, clip local energies that are
-       outside [E_L - n D, E_L + n D], where E_L is the mean local energy, n is
-       this value and D the mean absolute deviation of the local energies from
-@@ -772,6 +832,11 @@ def make_energy_overlap_loss(network: networks.LogFermiNetLike,
-   batch_diagonal_network = (
-       None if diagonal_network is None else
-       network_vmap(diagonal_network, in_axes=(None, 0, 0, 0, 0), out_axes=0))
+
+   Returns:
+     Callable with signature (params, data) and returns (loss, aux_data), where
+@@ -480,17 +524,26 @@ def make_loss(network: networks.LogFermiNetLike,
+       if max_vmap_batch_size == 0
+       else functools.partial(folx.batched_vmap,
+                              max_batch_size=max_vmap_batch_size))
++  data_axes = networks.FermiNetData(positions=0, spins=0, atoms=0, charges=0)
+   batch_local_energy = local_energy_vmap(
+       local_energy,
+       in_axes=(
+           None,
+           0,
+-          networks.FermiNetData(positions=0, spins=0, atoms=0, charges=0),
++          data_axes,
+       ),
+       out_axes=(0, 0)
+   )
+   batch_network = network_vmap(
+       network, in_axes=(None, 0, 0, 0, 0), out_axes=0)
 +  if spin_operator is None and spin_penalty != 0.0:
-+    raise ValueError('spin_penalty requires a spin_operator for vmc_overlap')
++    raise ValueError('spin_penalty requires a spin_operator')
++  if complex_output and spin_operator is not None:
++    raise NotImplementedError('Complex output is not supported with '
++                              'DeepQMC-style spin penalties.')
 +  batch_spin_operator = (
 +      None if spin_operator is None else
 +      network_vmap(spin_operator, in_axes=(None, data_axes, None), out_axes=0))
-   overlap_weight = jnp.array(overlap_weight)
 
-   # TODO(pfau): how much of this can be factored out with make_loss?
-@@ -822,8 +887,14 @@ def make_energy_overlap_loss(network: networks.LogFermiNetLike,
-         scale_energy,
-         scale_std)
-     ordering = _state_ordering(loss.real, overlap_sort_states_by, order_energy)
--
--    return (weighted_energy + overlap_penalty * total_overlap,
-+    spin_loss = jnp.asarray(0.0, dtype=weighted_energy.real.dtype)
+   @jax.custom_jvp
+   def total_energy(
+@@ -520,30 +573,47 @@ def make_loss(network: networks.LogFermiNetLike,
+     loss = constants.pmean(jnp.mean(e_l))
+     loss_diff = e_l - loss
+     variance = constants.pmean(jnp.mean(loss_diff * jnp.conj(loss_diff)))
+-    return loss, AuxiliaryLossData(
++    spin_loss = jnp.asarray(0.0, dtype=loss.real.dtype)
 +    spin_by_state = None
++    spin_tangent_coeff = None
 +    if batch_spin_operator is not None:
 +      spin_local = batch_spin_operator(params, data, None)
-+      spin_loss, _, spin_by_state = _deepqmc_spin_penalty_terms(
++      spin_loss, spin_tangent_coeff, spin_by_state = _deepqmc_spin_penalty_terms(
 +          spin_local, spin_penalty)
-+
-+    return (weighted_energy + overlap_penalty * total_overlap + spin_loss,
-             AuxiliaryLossData(
-                 energy=loss,
-                 variance=variance.real,
-@@ -835,7 +906,11 @@ def make_energy_overlap_loss(network: networks.LogFermiNetLike,
-                 squared_s_ij=s_ij_squared,
-                 local_energy_mat=e_l,
-                 overlap_gradient_scale=scale,
--                state_ordering=ordering.astype(loss.real.dtype)))
-+                state_ordering=ordering.astype(loss.real.dtype),
-+                spin=spin_loss / jnp.asarray(spin_penalty, dtype=spin_loss.dtype)
-+                if spin_penalty != 0.0 else None,
-+                spin_by_state=spin_by_state,
-+                spin_penalty=spin_loss if batch_spin_operator is not None else None))
++    return loss + spin_loss, AuxiliaryLossData(
+         energy=loss,
+         variance=variance.real,
+         local_energy=e_l,
+         clipped_energy=e_l,
+         local_energy_mat=e_l_mat,
++        spin=spin_loss / jnp.asarray(spin_penalty, dtype=spin_loss.dtype)
++        if spin_penalty != 0.0 else None,
++        spin_by_state=spin_by_state,
++        spin_penalty=spin_loss if batch_spin_operator is not None else None,
++        spin_tangent_coeff=spin_tangent_coeff,
+     )
 
-   @total_energy_and_overlap.defjvp
-   def total_energy_and_overlap_jvp(primals, tangents):  # pylint: disable=unused-variable
-@@ -879,6 +954,10 @@ def make_energy_overlap_loss(network: networks.LogFermiNetLike,
-         ratio_gradient_mask,
-         aux_data.overlap_gradient_scale,
-         ordering)
-+    spin_diff = 0.0
-+    if batch_spin_operator is not None:
-+      spin_local = batch_spin_operator(params, data, None)
-+      _, spin_diff, _ = _deepqmc_spin_penalty_terms(spin_local, spin_penalty)
+   @total_energy.defjvp
+   def total_energy_jvp(primals, tangents):  # pylint: disable=unused-variable
+     """Custom Jacobian-vector product for unbiased local energy gradients."""
+     params, key, data = primals
+-    loss, aux_data = total_energy(params, key, data)
++    batch_loss, aux_data = total_energy(params, key, data)
++    energy = aux_data.energy
+
+     if clip_local_energy > 0.0:
+       aux_data.clipped_energy, diff = clip_local_values(
+           aux_data.local_energy,
+-          loss,
++          energy,
+           clip_local_energy,
+           clip_from_median,
+           center_at_clipped_energy,
+           complex_output)
+     else:
+-      diff = aux_data.local_energy - loss
++      diff = aux_data.local_energy - energy
++
++    spin_diff = (
++        0.0 if aux_data.spin_tangent_coeff is None
++        else aux_data.spin_tangent_coeff)
 
      # Due to the simultaneous requirements of KFAC (calling convention must be
      # (params, rng, data)) and Laplacian calculation (only want to take
-@@ -902,7 +981,9 @@ def make_energy_overlap_loss(network: networks.LogFermiNetLike,
-         batch_diag_log_network, primals, tangents)
-     kfac_jax.register_normal_predictive_distribution(diag_log_primal)
+@@ -567,14 +637,16 @@ def make_loss(network: networks.LogFermiNetLike,
+       term2 = jnp.sum(aux_data.clipped_energy*psi_tangent.real)
+       kfac_jax.register_normal_predictive_distribution(
+           psi_primal.real[:, None])
+-      primals_out = loss.real, aux_data
++      primals_out = batch_loss.real, aux_data
+       device_batch_size = jnp.shape(aux_data.local_energy)[0]
+       tangents_out = ((term1 - 2*term2).real / device_batch_size, aux_data)
+     else:
+       kfac_jax.register_normal_predictive_distribution(psi_primal[:, None])
+-      primals_out = loss, aux_data
++      primals_out = batch_loss, aux_data
+       device_batch_size = jnp.shape(aux_data.local_energy)[0]
+-      tangents_out = (jnp.dot(psi_tangent, diff) / device_batch_size, aux_data)
++      tangents_out = (
++          jnp.dot(psi_tangent, diff + spin_diff) / device_batch_size,
++          aux_data)
+     return primals_out, tangents_out
+
+   return total_energy
+@@ -588,7 +660,9 @@ def make_wqmc_loss(
+     center_at_clipped_energy: bool = True,
+     complex_output: bool = False,
+     max_vmap_batch_size: int = 0,
+-    vmc_weight: float = 0.0
++    vmc_weight: float = 0.0,
++    spin_operator=None,
++    spin_penalty: float = 0.0
+ ) -> LossFn:
+   """Creates the WQMC loss function, including custom gradients.
+
+@@ -613,6 +687,10 @@ def make_wqmc_loss(
+       the given batch size.
+     vmc_weight: The weight of the contribution from the standard VMC energy
+       gradient.
++    spin_operator: Optional batchless local S^2 estimator. When present, the
++      loss adds DeepQMC-style ``spin_penalty * <S^2>`` outside the Hamiltonian
++      local-energy clipping path.
++    spin_penalty: Strength of the optional DeepQMC-style spin penalty.
+
+   Returns:
+     Callable with signature (params, data) and returns (loss, aux_data), where
+@@ -621,16 +699,25 @@ def make_wqmc_loss(
+   """
+   vmap = jax.vmap if max_vmap_batch_size == 0 else functools.partial(
+       folx.batched_vmap, max_batch_size=max_vmap_batch_size)
++  data_axes = networks.FermiNetData(positions=0, spins=0, atoms=0, charges=0)
+   batch_local_energy = vmap(
+       local_energy,
+       in_axes=(
+           None,
+           0,
+-          networks.FermiNetData(positions=0, spins=0, atoms=0, charges=0),
++          data_axes,
+       ),
+       out_axes=(0, 0)
+   )
+   batch_network = vmap(network, in_axes=(None, 0, 0, 0, 0), out_axes=0)
++  if spin_operator is None and spin_penalty != 0.0:
++    raise ValueError('spin_penalty requires a spin_operator')
++  if complex_output and spin_operator is not None:
++    raise NotImplementedError('Complex output is not supported with '
++                              'DeepQMC-style spin penalties.')
++  batch_spin_operator = (
++      None if spin_operator is None else
++      vmap(spin_operator, in_axes=(None, data_axes, None), out_axes=0))
+
+   @jax.custom_jvp
+   def total_energy(
+@@ -660,6 +747,13 @@ def make_wqmc_loss(
+     loss = constants.pmean(jnp.mean(e_l))
+     loss_diff = e_l - loss
+     variance = constants.pmean(jnp.mean(loss_diff * jnp.conj(loss_diff)))
++    spin_loss = jnp.asarray(0.0, dtype=loss.real.dtype)
++    spin_by_state = None
++    spin_tangent_coeff = None
++    if batch_spin_operator is not None:
++      spin_local = batch_spin_operator(params, data, None)
++      spin_loss, spin_tangent_coeff, spin_by_state = _deepqmc_spin_penalty_terms(
++          spin_local, spin_penalty)
+
+     def batch_local_energy_pos(pos):
+       network_data = networks.FermiNetData(
+@@ -672,32 +766,42 @@ def make_wqmc_loss(
+
+     grad_e_l = jax.grad(batch_local_energy_pos)(data.positions)
+     grad_e_l = jnp.tanh(jax.lax.stop_gradient(grad_e_l))
+-    return loss, AuxiliaryLossData(
++    return loss + spin_loss, AuxiliaryLossData(
+         energy=loss,
+         variance=variance.real,
+         local_energy=e_l,
+         clipped_energy=e_l,
+         grad_local_energy=grad_e_l,
+         local_energy_mat=e_l_mat,
++        spin=spin_loss / jnp.asarray(spin_penalty, dtype=spin_loss.dtype)
++        if spin_penalty != 0.0 else None,
++        spin_by_state=spin_by_state,
++        spin_penalty=spin_loss if batch_spin_operator is not None else None,
++        spin_tangent_coeff=spin_tangent_coeff,
+     )
+
+   @total_energy.defjvp
+   def total_energy_jvp(primals, tangents):  # pylint: disable=unused-variable
+     """Custom Jacobian-vector product for unbiased local energy gradients."""
+     params, key, data = primals
+-    loss, aux_data = total_energy(params, key, data)
++    batch_loss, aux_data = total_energy(params, key, data)
++    energy = aux_data.energy
+
+     if clip_local_energy > 0.0:
+       aux_data.clipped_energy, diff = clip_local_values(
+           aux_data.local_energy,
+-          loss,
++          energy,
+           clip_local_energy,
+           clip_from_median,
+           center_at_clipped_energy,
+           complex_output,
+       )
+     else:
+-      diff = aux_data.local_energy - loss
++      diff = aux_data.local_energy - energy
++
++    spin_diff = (
++        0.0 if aux_data.spin_tangent_coeff is None
++        else aux_data.spin_tangent_coeff)
+
+     def log_q(params_, pos_, spins_, atoms_, charges_):
+       out = batch_network(params_, pos_, spins_, atoms_, charges_)
+@@ -724,10 +828,13 @@ def make_wqmc_loss(
+     )
+     log_q_tangent_out *= len(mask) / mask.sum()
+
+-    if vmc_weight > 1e-9:
++    if vmc_weight > 1e-9 or batch_spin_operator is not None:
+       _, psi_tangent = jax.jvp(batch_network, primals, tangents)
+-      log_q_tangent_out += vmc_weight * diff * psi_tangent
+-    primals_out = loss, aux_data
++      tangent_coeff = spin_diff
++      if vmc_weight > 1e-9:
++        tangent_coeff = tangent_coeff + vmc_weight * diff
++      log_q_tangent_out += tangent_coeff * psi_tangent
++    primals_out = batch_loss, aux_data
+     tangents_out = (log_q_tangent_out.mean(), aux_data)
+     return primals_out, tangents_out
+
+@@ -889,9 +996,10 @@ def make_energy_overlap_loss(network: networks.LogFermiNetLike,
+     ordering = _state_ordering(loss.real, overlap_sort_states_by, order_energy)
+     spin_loss = jnp.asarray(0.0, dtype=weighted_energy.real.dtype)
+     spin_by_state = None
++    spin_tangent_coeff = None
+     if batch_spin_operator is not None:
+       spin_local = batch_spin_operator(params, data, None)
+-      spin_loss, _, spin_by_state = _deepqmc_spin_penalty_terms(
++      spin_loss, spin_tangent_coeff, spin_by_state = _deepqmc_spin_penalty_terms(
+           spin_local, spin_penalty)
+
+     return (weighted_energy + overlap_penalty * total_overlap + spin_loss,
+@@ -910,7 +1018,8 @@ def make_energy_overlap_loss(network: networks.LogFermiNetLike,
+                 spin=spin_loss / jnp.asarray(spin_penalty, dtype=spin_loss.dtype)
+                 if spin_penalty != 0.0 else None,
+                 spin_by_state=spin_by_state,
+-                spin_penalty=spin_loss if batch_spin_operator is not None else None))
++                spin_penalty=spin_loss if batch_spin_operator is not None else None,
++                spin_tangent_coeff=spin_tangent_coeff))
+
+   @total_energy_and_overlap.defjvp
+   def total_energy_and_overlap_jvp(primals, tangents):  # pylint: disable=unused-variable
+@@ -954,10 +1063,9 @@ def make_energy_overlap_loss(network: networks.LogFermiNetLike,
+         ratio_gradient_mask,
+         aux_data.overlap_gradient_scale,
+         ordering)
+-    spin_diff = 0.0
+-    if batch_spin_operator is not None:
+-      spin_local = batch_spin_operator(params, data, None)
+-      _, spin_diff, _ = _deepqmc_spin_penalty_terms(spin_local, spin_penalty)
++    spin_diff = (
++        0.0 if aux_data.spin_tangent_coeff is None
++        else aux_data.spin_tangent_coeff)
+
+     # Due to the simultaneous requirements of KFAC (calling convention must be
+     # (params, rng, data)) and Laplacian calculation (only want to take
+@@ -1011,6 +1119,8 @@ def make_fixed_ground_overlap_loss(
+     symmetric_sampling: bool = False,
+     complex_output: bool = False,
+     max_vmap_batch_size: int = 0,
++    spin_operator=None,
++    spin_penalty: float = 0.0,
+ ) -> LossFn:
+   """Creates a single-state excited loss with a fixed ground-state penalty.
+
+@@ -1035,6 +1145,11 @@ def make_fixed_ground_overlap_loss(
+   batch_log_network = vmap(network, in_axes=(None, 0, 0, 0, 0), out_axes=0)
+   batch_signed_network = vmap(
+       signed_network, in_axes=(None, 0, 0, 0, 0), out_axes=(0, 0))
++  if spin_operator is None and spin_penalty != 0.0:
++    raise ValueError('spin_penalty requires a spin_operator')
++  batch_spin_operator = (
++      None if spin_operator is None else
++      vmap(spin_operator, in_axes=(None, data_axes, None), out_axes=0))
+
+   @jax.custom_jvp
+   def total_energy_and_fixed_ground_overlap(
+@@ -1088,7 +1203,23 @@ def make_fixed_ground_overlap_loss(
+       overlap = overlap_on_excited
+       overlap_squared = overlap * overlap
+     overlap_penalty_value = overlap_penalty * overlap_squared
+-    loss = energy + overlap_penalty_value
++    fixed_ground_overlap_tangent_coeff = _fixed_ground_overlap_tangent_coeff(
++        overlap_ratio,
++        overlap_on_excited,
++        overlap_on_ground,
++        overlap,
++        symmetric_sampling=symmetric_sampling,
++        overlap_clip_width=overlap_clip_width,
++        overlap_clip_exclude_width=overlap_clip_exclude_width,
++        overlap_gradient_scale=overlap_gradient_scale)
++    spin_loss = jnp.asarray(0.0, dtype=energy.real.dtype)
++    spin_by_state = None
++    spin_tangent_coeff = None
++    if batch_spin_operator is not None:
++      spin_local = batch_spin_operator(params, data, None)
++      spin_loss, spin_tangent_coeff, spin_by_state = _deepqmc_spin_penalty_terms(
++          spin_local, spin_penalty)
++    loss = energy + overlap_penalty_value + spin_loss
+     energy_ref = (
+         jnp.asarray(jnp.nan, dtype=energy.real.dtype)
+         if fixed_ground_energy_reference is None
+@@ -1105,7 +1236,13 @@ def make_fixed_ground_overlap_loss(
+         fixed_ground_overlap_on_ground=overlap_on_ground,
+         fixed_ground_overlap_squared=overlap_squared,
+         fixed_ground_overlap_penalty=overlap_penalty_value,
+-        fixed_ground_energy_reference=energy_ref)
++        fixed_ground_overlap_tangent_coeff=fixed_ground_overlap_tangent_coeff,
++        fixed_ground_energy_reference=energy_ref,
++        spin=spin_loss / jnp.asarray(spin_penalty, dtype=spin_loss.dtype)
++        if spin_penalty != 0.0 else None,
++        spin_by_state=spin_by_state,
++        spin_penalty=spin_loss if batch_spin_operator is not None else None,
++        spin_tangent_coeff=spin_tangent_coeff)
+
+   @total_energy_and_fixed_ground_overlap.defjvp
+   def total_energy_and_fixed_ground_overlap_jvp(primals, tangents):
+@@ -1126,32 +1263,10 @@ def make_fixed_ground_overlap_loss(
+     else:
+       energy_diff = aux_data.local_energy - energy
+
+-    sign_psi, log_psi = batch_signed_network(
+-        params, data.positions, data.spins, data.atoms, data.charges)
+-    sign_ground, log_ground = batch_signed_network(
+-        fixed_ground_params,
+-        data.positions,
+-        data.spins,
+-        data.atoms,
+-        data.charges)
+-    overlap_ratio = sign_ground * sign_psi * jnp.exp(log_ground - log_psi)
+-    clipped_overlap, ratio_gradient_mask = _clip_fixed_ground_overlap_ratios(
+-        overlap_ratio,
+-        overlap_clip_width,
+-        overlap_clip_exclude_width)
+-    overlap_diff = _masked_centered_fixed_ground_overlap_diff(
+-        clipped_overlap, ratio_gradient_mask)
+-    overlap_prefactor = aux_data.fixed_ground_overlap_on_ground
+-    if symmetric_sampling:
+-      pair_is_active = (
+-          aux_data.fixed_ground_overlap_on_excited *
+-          aux_data.fixed_ground_overlap_on_ground) > 0.0
+-      overlap_prefactor = jnp.where(pair_is_active, overlap_prefactor, 0.0)
+-    else:
+-      overlap_prefactor = aux_data.fixed_ground_overlap
+-    overlap_tangent = (
+-        2.0 * overlap_prefactor * overlap_diff *
+-        overlap_gradient_scale)
++    overlap_tangent = aux_data.fixed_ground_overlap_tangent_coeff
++    spin_diff = (
++        0.0 if aux_data.spin_tangent_coeff is None
++        else aux_data.spin_tangent_coeff)
+
+     data = primals[2]
+     data_tangents = tangents[2]
+@@ -1166,7 +1281,7 @@ def make_fixed_ground_overlap_loss(
+     psi_primal, psi_tangent = jax.jvp(batch_log_network, primals, tangents)
+     kfac_jax.register_normal_predictive_distribution(psi_primal[:, None])
      device_batch_size = jnp.shape(aux_data.local_energy)[0]
--    tangent_loss = energy_diff * overlap_weight + overlap_penalty * overlap_diff
-+    tangent_loss = (
-+        energy_diff * overlap_weight + overlap_penalty * overlap_diff +
-+        spin_diff)
+-    tangent_loss = energy_diff + overlap_penalty * overlap_tangent
++    tangent_loss = energy_diff + overlap_penalty * overlap_tangent + spin_diff
      tangents_out = (
-         jnp.sum(diag_log_tangent * tangent_loss) /
-         device_batch_size,
-diff --git a/ferminet/observables.py b/ferminet/observables.py
-index 30f15c0..0511f84 100644
---- a/ferminet/observables.py
-+++ b/ferminet/observables.py
-@@ -227,6 +227,79 @@ def make_s2(
-   return s2_estimator
-
-
-+def make_deepqmc_state_s2(
-+    signed_network: networks.FermiNetLike,
-+    nspins: Tuple[int, ...],
-+    assign_spin: bool = True,
-+    states: int = 0,
-+    state_specific_network: Optional[Callable[..., Tuple[jnp.ndarray, jnp.ndarray]]] = None,
-+) -> Observable:
-+  """Evaluates DeepQMC-style per-state local S^2 contributions.
-+
-+  ``make_s2(..., states=n)`` returns a full observable matrix using the native
-+  FermiNet excited-state matrix estimator.  DeepQMC's spin penalty instead uses
-+  the local spin estimator for each state's own sampled walkers.  This helper
-+  returns the diagonal/state-specific vector with shape ``[states]`` for one
-+  batchless excited-state configuration, matching DeepQMC's
-+  ``evaluate_spin`` logic.
-+  """
-+
-+  if states <= 0:
-+    raise ValueError('DeepQMC-style state S^2 requires states > 0')
-+  if not assign_spin:
-+    raise NotImplementedError('DeepQMC-style excited-state S^2 is only '
-+                              'implemented for spin-assigned wavefunctions')
-+
-+  def s2_estimator(
-+      params: networks.ParamTree,
-+      data: networks.FermiNetData,
-+      state: None = None,
-+  ) -> jnp.ndarray:
-+    """Returns one local S^2 contribution per excited state."""
-+    del state
-+
-+    if sum(nspins) == 1:
-+      return jnp.full((states,), 0.75)
-+
-+    na, nb = sorted(nspins, reverse=True)
-+    base_s2 = (na - nb) / 2 * ((na - nb) / 2 + 1) + nb
-+    positions = jnp.reshape(data.positions, (states, -1))
-+    spins = jnp.reshape(data.spins, (states, -1))
-+
-+    def evaluate_state(state_idx: int) -> jnp.ndarray:
-+      pos = positions[state_idx]
-+      spin = spins[state_idx]
-+
-+      def eval_network(pos_):
-+        if state_specific_network is not None:
-+          return state_specific_network(
-+              params, state_idx, pos_, spin, data.atoms, data.charges)
-+        sign_all, log_all = signed_network(
-+            params, pos_, spin, data.atoms, data.charges)
-+        return sign_all[state_idx], log_all[state_idx]
-+
-+      sign_psi, log_psi = eval_network(pos)
-+      xa, xb = jnp.split(
-+          jnp.reshape(pos, (sum(nspins), -1)), nspins[:1], axis=-2)
-+
-+      def _inner(ib, val):
-+        ia, s2 = val
-+        xx = xa.at[ia].set(xb[ib]), xb.at[ib].set(xa[ia])
-+        xx = jnp.reshape(jnp.concatenate(xx, axis=0), -1)
-+        sign_swap, log_swap = eval_network(xx)
-+        s2 -= sign_psi * sign_swap * jnp.exp(log_swap - log_psi)
-+        return ia, s2
-+
-+      def _outer(ia, s2):
-+        return jax.lax.fori_loop(0, nspins[1], _inner, (ia, s2))[1]
-+
-+      return jax.lax.fori_loop(0, nspins[0], _outer, base_s2)
-+
-+    return jnp.stack([evaluate_state(state_idx) for state_idx in range(states)])
-+
-+  return s2_estimator
-+
-+
- def make_dipole(
-     signed_network: networks.FermiNetLike,
-     states: int = 0,
+         jnp.dot(psi_tangent, tangent_loss) / device_batch_size,
+         aux_data)
 diff --git a/ferminet/train.py b/ferminet/train.py
-index b3f0ed3..adff47e 100644
+index adff47e..44c8dbd 100644
 --- a/ferminet/train.py
 +++ b/ferminet/train.py
-@@ -1363,22 +1363,36 @@ def train(cfg: ml_collections.ConfigDict, writer_manager=None):
-       **make_local_energy_kwargs,
-   )
+@@ -57,44 +57,6 @@ def _assign_spin_configuration(
+   return jnp.tile(spins[None], reps=(batch_size, 1))
 
-+  spin_operator = None
+
+-def _apply_spin_penalty_to_local_energy(
+-    local_energy: jnp.ndarray,
+-    aux_data: Optional[jnp.ndarray],
+-    s2: jnp.ndarray,
+-    weight: float,
+-    states: int,
+-) -> Tuple[jnp.ndarray, Optional[jnp.ndarray]]:
+-  """Adds the spin penalty to scalar/matrix or state-specific local energies."""
+-  if states:
+-    if aux_data is None:
+-      # State-specific excited-state losses consume a per-state local-energy
+-      # vector directly, so each state receives its diagonal S^2 penalty.
+-      return local_energy + weight * jnp.diag(s2), None
+-    return local_energy + weight * jnp.trace(s2), aux_data + weight * s2
+-  return local_energy + weight * s2, aux_data
+-
+-
+-def _remove_spin_penalty_from_energy_matrix(
+-    energy: jnp.ndarray,
+-    s2: jnp.ndarray,
+-    weight: float,
+-) -> jnp.ndarray:
+-  """Recovers bare Hamiltonian energies from spin-penalized diagnostics."""
+-  energy = jnp.asarray(energy)
+-  s2 = jnp.asarray(s2)
+-  if weight == 0.0:
+-    return energy
+-  if energy.ndim == 1 and s2.ndim >= 2:
+-    return energy - weight * jnp.diag(s2)
+-  if energy.shape == s2.shape:
+-    return energy - weight * s2
+-  if energy.shape == ():
+-    return energy - weight * jnp.trace(s2)
+-  raise ValueError(
+-      'Cannot remove spin penalty from energy with shape '
+-      f'{energy.shape} and S^2 shape {s2.shape}')
+-
+-
+ def _find_checkpoint_file(checkpoint_path: str) -> str:
+   """Returns a concrete checkpoint filename from a file or checkpoint dir."""
+   if os.path.isdir(checkpoint_path):
+@@ -1146,12 +1108,16 @@ def train(cfg: ml_collections.ConfigDict, writer_manager=None):
+     density_state_ckpt = None
+
+   if (cfg.optim.objective == 'fixed_ground_overlap' and
+-      fixed_ground_cfg.get('symmetric_sampling', False) and
++      fixed_ground_cfg.get('symmetric_sampling', True) and
+       (data.fixed_ground_positions is None or data.fixed_ground_spins is None)):
+     data = _with_fixed_ground_data(data)
+
+   # Set up logging and observables
+   train_schema = ['step', 'energy', 'ewmean', 'ewvar', 'pmove']
++  log_spin_by_state = bool(
++      cfg.optim.get(
++          'log_spin_by_state',
++          cfg.optim.get('spin_energy', 0.0) > 0.0 and bool(cfg.system.states)))
+   profile_step_times = bool(cfg.log.get('profile_step_times', False))
+   profile_loss_components = bool(
+       cfg.log.get('profile_loss_components', False))
+@@ -1178,6 +1144,12 @@ def train(cfg: ml_collections.ConfigDict, writer_manager=None):
+         'fixed_ground_overlap_penalty',
+         'fixed_ground_energy_ref',
+     ]
++  if cfg.optim.get('spin_energy', 0.0) > 0.0:
++    train_schema += ['spin', 'spin_penalty']
++    if log_spin_by_state and cfg.system.states:
++      train_schema += [
++          f'spin_state_{state_idx}' for state_idx in range(cfg.system.states)
++      ]
+
+   if cfg.system.states:
+     energy_matrix_file = open(
+@@ -1328,7 +1300,7 @@ def train(cfg: ml_collections.ConfigDict, writer_manager=None):
+       ndim=cfg.system.ndim,
+   )
+   if (cfg.optim.objective == 'fixed_ground_overlap' and
+-      fixed_ground_cfg.get('symmetric_sampling', False)):
++      fixed_ground_cfg.get('symmetric_sampling', True)):
+     logging.info('Using symmetric fixed-ground overlap with independently '
+                  'sampled fixed-reference walkers.')
+     mcmc_step = _make_fixed_ground_symmetric_mcmc_step(
+@@ -1365,13 +1337,13 @@ def train(cfg: ml_collections.ConfigDict, writer_manager=None):
+
+   spin_operator = None
    if cfg.optim.get('spin_energy', 0.0) > 0.0:
--    # Minimize <H + c * S^2> instead of just <H>
--    # Create a new local_energy function that takes the weighted sum of
--    # the local energy and the local spin magnitude.
--    local_s2_fn = observables.make_s2(
--        signed_network,
--        nspins=nspins,
--        states=cfg.system.states)
--    def local_energy_and_s2_fn(params, keys, data):
--      local_energy, aux_data = local_energy_fn(params, keys, data)
--      s2 = local_s2_fn(params, data, None)
--      weight = cfg.optim.get('spin_energy', 0.0)
--      local_energy_and_s2, aux_data = _apply_spin_penalty_to_local_energy(
--          local_energy, aux_data, s2, weight, cfg.system.states)
--      return local_energy_and_s2, aux_data
--    local_energy = local_energy_and_s2_fn
-+    if cfg.optim.objective == 'vmc_overlap':
-+      # DeepQMC adds beta * <S^2> as a loss-level penalty with its own
-+      # score-function tangent.  Do not fold S^2 into the Hamiltonian local
-+      # energy here, otherwise the local-energy clipping path would clip
-+      # H + beta S^2 rather than H alone.  Also use DeepQMC's state-specific
-+      # local S^2 estimator, not FermiNet's full matrix observable estimator.
-+      local_energy = local_energy_fn
-+      spin_operator = observables.make_deepqmc_state_s2(
-+          signed_network,
-+          nspins=nspins,
-+          states=cfg.system.states,
-+          state_specific_network=network.apply_state
-+          if (independent_states and network.apply_state is not None) else None)
-+    else:
-+      local_s2_fn = observables.make_s2(
-+          signed_network,
-+          nspins=nspins,
-+          states=cfg.system.states)
-+      # Legacy FermiNet path for non-overlap objectives: minimize
-+      # <H + c * S^2> by augmenting the local energy directly.
-+      def local_energy_and_s2_fn(params, keys, data):
-+        local_energy, aux_data = local_energy_fn(params, keys, data)
-+        s2 = local_s2_fn(params, data, None)
-+        weight = cfg.optim.get('spin_energy', 0.0)
-+        local_energy_and_s2, aux_data = _apply_spin_penalty_to_local_energy(
-+            local_energy, aux_data, s2, weight, cfg.system.states)
-+        return local_energy_and_s2, aux_data
-+      local_energy = local_energy_and_s2_fn
+-    if cfg.optim.objective == 'vmc_overlap':
+-      # DeepQMC adds beta * <S^2> as a loss-level penalty with its own
+-      # score-function tangent.  Do not fold S^2 into the Hamiltonian local
+-      # energy here, otherwise the local-energy clipping path would clip
+-      # H + beta S^2 rather than H alone.  Also use DeepQMC's state-specific
+-      # local S^2 estimator, not FermiNet's full matrix observable estimator.
+-      local_energy = local_energy_fn
++    # DeepQMC adds beta * <S^2> as a loss-level penalty with its own
++    # score-function tangent. Do not fold S^2 into the Hamiltonian local energy,
++    # otherwise local-energy clipping would clip H + beta S^2 rather than H.
++    local_energy = local_energy_fn
++    if cfg.system.states:
++      # Excited-state spin penalties use each state's own sampled walkers, not
++      # FermiNet's full matrix S^2 observable estimator.
+       spin_operator = observables.make_deepqmc_state_s2(
+           signed_network,
+           nspins=nspins,
+@@ -1379,20 +1351,10 @@ def train(cfg: ml_collections.ConfigDict, writer_manager=None):
+           state_specific_network=network.apply_state
+           if (independent_states and network.apply_state is not None) else None)
+     else:
+-      local_s2_fn = observables.make_s2(
++      spin_operator = observables.make_s2(
+           signed_network,
+           nspins=nspins,
+-          states=cfg.system.states)
+-      # Legacy FermiNet path for non-overlap objectives: minimize
+-      # <H + c * S^2> by augmenting the local energy directly.
+-      def local_energy_and_s2_fn(params, keys, data):
+-        local_energy, aux_data = local_energy_fn(params, keys, data)
+-        s2 = local_s2_fn(params, data, None)
+-        weight = cfg.optim.get('spin_energy', 0.0)
+-        local_energy_and_s2, aux_data = _apply_spin_penalty_to_local_energy(
+-            local_energy, aux_data, s2, weight, cfg.system.states)
+-        return local_energy_and_s2, aux_data
+-      local_energy = local_energy_and_s2_fn
++          states=0)
    else:
      local_energy = local_energy_fn
 
-@@ -1422,6 +1436,8 @@ def train(cfg: ml_collections.ConfigDict, writer_manager=None):
-         log_network_for_loss,
-         local_energy,
-         diagonal_network=diagonal_network_for_loss,
+@@ -1407,6 +1369,8 @@ def train(cfg: ml_collections.ConfigDict, writer_manager=None):
+         max_vmap_batch_size=cfg.optim.get('max_vmap_batch_size', 0),
+         max_local_energy_vmap_batch_size=cfg.optim.get(
+             'max_local_energy_vmap_batch_size', None),
 +        spin_operator=spin_operator,
 +        spin_penalty=cfg.optim.get('spin_energy', 0.0),
-         clip_local_energy=cfg.optim.clip_local_energy,
-         clip_from_median=cfg.optim.clip_median,
+     )
+   elif cfg.optim.objective == 'wqmc':
+     evaluate_loss = qmc_loss_functions.make_wqmc_loss(
+@@ -1417,7 +1381,9 @@ def train(cfg: ml_collections.ConfigDict, writer_manager=None):
          center_at_clipped_energy=cfg.optim.center_at_clip,
-@@ -1826,10 +1842,16 @@ def train(cfg: ml_collections.ConfigDict, writer_manager=None):
+         complex_output=use_complex,
+         max_vmap_batch_size=cfg.optim.get('max_vmap_batch_size', 0),
+-        vmc_weight=cfg.optim.get('vmc_weight', 1.0)
++        vmc_weight=cfg.optim.get('vmc_weight', 1.0),
++        spin_operator=spin_operator,
++        spin_penalty=cfg.optim.get('spin_energy', 0.0),
+     )
+   elif cfg.optim.objective == 'vmc_overlap':
+     if not cfg.system.states:
+@@ -1474,9 +1440,11 @@ def train(cfg: ml_collections.ConfigDict, writer_manager=None):
+         fixed_ground_energy_reference=cfg.optim.fixed_ground.get(
+             'energy_reference', None),
+         symmetric_sampling=cfg.optim.fixed_ground.get(
+-            'symmetric_sampling', False),
++            'symmetric_sampling', True),
+         complex_output=cfg.network.get('complex', False),
+-        max_vmap_batch_size=cfg.optim.get('max_vmap_batch_size', 0))
++        max_vmap_batch_size=cfg.optim.get('max_vmap_batch_size', 0),
++        spin_operator=spin_operator,
++        spin_penalty=cfg.optim.get('spin_energy', 0.0))
+   else:
+     raise ValueError(f'Not a recognized objective: {cfg.optim.objective}')
+
+@@ -1819,6 +1787,28 @@ def train(cfg: ml_collections.ConfigDict, writer_manager=None):
+           })
+           logging_str += ', E_phys=%03.4f E_h, S0=%0.5f'
+           logging_args += physical_energy, fixed_overlap
++        if aux_data.spin is not None:
++          spin = np.asarray(aux_data.spin)
++          spin_penalty_value = np.asarray(aux_data.spin_penalty)
++          if spin.ndim:
++            spin = spin[0]
++          if spin_penalty_value.ndim:
++            spin_penalty_value = spin_penalty_value[0]
++          writer_kwargs.update({
++              'spin': spin,
++              'spin_penalty': spin_penalty_value,
++          })
++          if (log_spin_by_state and cfg.system.states and
++              aux_data.spin_by_state is not None):
++            spin_by_state = np.asarray(aux_data.spin_by_state)
++            if spin_by_state.ndim > 1:
++              spin_by_state = spin_by_state[0]
++            spin_by_state = np.ravel(spin_by_state)
++            for state_idx in range(cfg.system.states):
++              writer_kwargs[f'spin_state_{state_idx}'] = (
++                  spin_by_state[state_idx])
++          logging_str += ', spin=%03.4f, spin_penalty=%03.4f'
++          logging_args += spin, spin_penalty_value
+         for key in observable_data:
+           obs_data = observable_data[key]
+           if cfg.system.states:
+@@ -1842,16 +1832,10 @@ def train(cfg: ml_collections.ConfigDict, writer_manager=None):
          energy_matrix = np.nanmean(np.nanmean(energy_matrix, axis=0), axis=0)
          np.save(energy_matrix_file, energy_matrix)
          if bare_energy_matrix_file is not None and cfg.observables.s2:
--          bare_energy_matrix = _remove_spin_penalty_from_energy_matrix(
--              energy_matrix,
--              observable_data['s2'],
--              cfg.optim.get('spin_energy', 0.0))
-+          if cfg.optim.objective == 'vmc_overlap':
-+            # DeepQMC-style spin penalties are added at the loss level, so the
-+            # excited-state energy matrix is already the bare Hamiltonian
-+            # diagnostic.
-+            bare_energy_matrix = energy_matrix
-+          else:
-+            bare_energy_matrix = _remove_spin_penalty_from_energy_matrix(
-+                energy_matrix,
-+                observable_data['s2'],
-+                cfg.optim.get('spin_energy', 0.0))
+-          if cfg.optim.objective == 'vmc_overlap':
+-            # DeepQMC-style spin penalties are added at the loss level, so the
+-            # excited-state energy matrix is already the bare Hamiltonian
+-            # diagnostic.
+-            bare_energy_matrix = energy_matrix
+-          else:
+-            bare_energy_matrix = _remove_spin_penalty_from_energy_matrix(
+-                energy_matrix,
+-                observable_data['s2'],
+-                cfg.optim.get('spin_energy', 0.0))
++          # DeepQMC-style spin penalties are added at the loss level, so the
++          # excited-state energy matrix is already the bare Hamiltonian
++          # diagnostic.
++          bare_energy_matrix = energy_matrix
            np.save(bare_energy_matrix_file, np.asarray(bare_energy_matrix))
          if aux_data.mean_s_ij is not None:
            overlap_matrix = np.asarray(aux_data.mean_s_ij)

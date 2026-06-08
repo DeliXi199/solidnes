@@ -1,6 +1,6 @@
 # Reference Notes: DeepQMC Penalty Excited States
 
-Last updated: 2026-05-24
+Last updated: 2026-06-02
 
 ## Source Snapshot
 
@@ -178,15 +178,32 @@ L += spin_penalty * <S^2>
 ```
 
 For SolidNES periodic diamond Gamma, the first controlled two-state probe
-initially deferred this while the overlap method was being stabilized. The
-native FermiNet `vmc_overlap` path now exposes this as `spin_penalty`, mapped
-to `cfg.optim.spin_energy`, but applies it at the loss/JVP level rather than by
-clipping an effective `H + beta S^2` local energy. The loss uses a
-state-specific local S² estimator matching DeepQMC `evaluate_spin`; the separate
-`observables_s2` diagnostic still writes FermiNet's full `s2_matrix.npy`.
-Spin-targeted runs still need an explicit target sector and penalty strength in
-the experiment YAML; the initial DeepQMC-reference value is `spin_penalty:
-10.0`, matching the public DeepQMC CLI example.
+initially deferred this while the overlap method was being stabilized. Native
+FermiNet/PsiFormer spin-enabled objectives now expose this as `spin_penalty`,
+mapped to `cfg.optim.spin_energy`, and apply it at the loss/JVP level rather
+than by clipping an effective `H + beta S^2` local energy. Excited-state losses
+consume the state-specific local S² estimator matching DeepQMC `evaluate_spin`;
+single-state VMC-style losses consume the ordinary local S² estimator through
+the same loss-level machinery. Per-state spin logging should use
+`log_spin_by_state: true`, which writes CSV columns from the loss-level
+estimator. The separate `observables_s2` diagnostic writes FermiNet's full
+`s2_matrix.npy` and is not part of the DeepQMC spin-penalty path. Spin-targeted
+runs still need an explicit target sector and penalty strength in the
+experiment YAML; the initial DeepQMC-reference value is `spin_penalty: 10.0`,
+matching the public DeepQMC CLI example.
+
+DeepQMC computes the local spin contributions once inside the custom-JVP path
+and reuses them for both the forward spin expectation and the score-function
+tangent. SolidNES mirrors that structure by carrying the samplewise
+`spin_tangent_coeff` through `AuxiliaryLossData`, so the tangent path does not
+call the expensive up/down exchange spin operator a second time.
+
+The same reuse rule should be applied to any auxiliary coefficient that is
+already available from the forward overlap calculation. Native `vmc_overlap`
+does this for the all-state ratio tensor used by the overlap tangent. The
+fixed-ground overlap path carries an analogous
+`fixed_ground_overlap_tangent_coeff`; this keeps that optional path from
+re-evaluating fixed-reference ratios in its JVP.
 
 ## Current SolidNES/FermiNet Mapping
 

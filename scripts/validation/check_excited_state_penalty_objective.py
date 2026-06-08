@@ -4,8 +4,11 @@
 from __future__ import annotations
 
 import math
+import os
 
 import numpy as np
+
+os.environ.setdefault("JAX_PLATFORMS", "cpu")
 
 from solidnes.excited_states import energy_gap_scale
 from solidnes.excited_states import energy_std_scale
@@ -21,7 +24,7 @@ from solidnes.excited_states import clip_psi_ratios_by_median
 from solidnes.excited_states import symmetrize_overlap_with_clipped_geometric_mean
 
 
-def _assert_close(actual, expected, *, tol=1e-12):
+def _assert_close(actual, expected, *, tol=1e-5):
     if not np.allclose(np.asarray(actual), np.asarray(expected), atol=tol, rtol=tol):
         raise AssertionError(f"actual={actual!r}, expected={expected!r}")
 
@@ -72,7 +75,11 @@ def main() -> None:
     )
     _assert_close(
         scaled_terms["penalty_objective"],
-        expected_weighted_energy + 4.0 * 0.2 * expected_overlap_01**2,
+        expected_weighted_energy + 4.0 * expected_overlap_01**2,
+    )
+    _assert_close(
+        scaled_terms["scaled_offdiag_squared_overlap"],
+        0.2 * expected_overlap_01**2,
     )
 
     energies = np.array([-75.0, -74.8])

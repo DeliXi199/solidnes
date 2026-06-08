@@ -1,6 +1,6 @@
 # SolidNES Current Context
 
-Last updated: 2026-06-01, Asia/Shanghai
+Last updated: 2026-06-08, Asia/Shanghai
 
 This is the default short context file for Codex and other coding agents. It is
 the hot handoff surface. Older history lives in `records/progress/`,
@@ -31,6 +31,12 @@ Non-empty `merge_keys` remain implemented and configurable, but they are
 comparison branches. They should resolve as `merge_key_variant`, not
 `mainline`.
 
+Fixed-ground is an explicit-only branch. Do not select, configure, or submit
+fixed-ground jobs unless the user directly asks for `fixed-ground`. When the
+user says "two excited-state methods" in the current PsiFormer context, prefer
+the two attention QKV handling routes (`fused_qkv` and upstream-shaped
+`ferminet`) unless they say otherwise.
+
 Optional spin-penalty runs now use DeepQMC-style loss-level
 `beta * <S^2>`/custom-JVP semantics for `vmc_overlap`; the loss operator uses a
 state-specific local S² estimator matching DeepQMC `evaluate_spin`, while the
@@ -38,13 +44,31 @@ full S² matrix remains an observable diagnostic. The initial DeepQMC-reference
 beta is `10.0`; loss-level smoke `0104` and final state-specific smoke `0105`
 both passed through SLURM.
 
+The default optimizer schedule for future excited-state calculations is now:
+
+```text
+learning_rate / eta0: 0.02
+learning_rate_delay / tau: 10000.0
+learning_rate_decay: 1.0
+kfac.damping: 0.001
+```
+
+This schedule was selected from the completed 0113/0114 fresh-start
+FermiNet-QKV eta/tau sweep using final-window statistics and 1000-step rolling
+mean/std/variance diagnostics. Treat it as the default unless a task explicitly
+declares a new sweep or ablation.
+
 ## Source Of Truth
 
 ```text
 src/solidnes/excited_state_mainline.py
 src/solidnes/backends/ferminet_adapter.py
+src/solidnes/excited_states/penalty.py
+src/solidnes/excited_states/ferminet_pbc_adapter.py
 configs/experiment/diamond_c_psiformer_pbc_gamma_deepqmc_attention_fused_qkv_merge_none_batch4096_iter10000.yaml
 configs/train/excited_state_psiformer_pbc_native_kfac_deepqmc_merge_none_batch4096_iter10000.yaml
+configs/experiment/diamond_c_psiformer_pbc_gamma_deepqmc_attention_ferminet_spin_beta10_damp1e3_default_eta2e2_tau10000_merge_none_batch4096_iter30000.yaml
+configs/train/excited_state_psiformer_pbc_native_kfac_deepqmc_spin_beta10_damp1e3_default_eta2e2_tau10000_merge_none_batch4096_iter30000.yaml
 scripts/validation/check_excited_state_mainline_defaults.py
 ```
 
@@ -53,24 +77,29 @@ fused-QKV config above.
 
 ## Current Milestone
 
-Committed and pushed:
+Current milestone:
 
 ```text
-34d6574 Set no-merge excited-state mainline
-916bcc4 Record no-merge excited-state milestone
+spin penalty implementation complete
+default excited-state optimizer schedule selected: eta0=0.02, tau=10000, decay=1.0
+default damping: 0.001
+analysis snapshot saved under records/analysis/2026-06-08_excited_state_default_eta2e2_tau10000/
 ```
 
 Project record:
 
 ```text
+records/progress/2026-06-08_spin_penalty_default_lr_milestone.md
+records/analysis/2026-06-08_excited_state_default_eta2e2_tau10000/default_parameter_decision.md
 records/progress/2026-06-01_excited_state_no_merge_mainline.md
 records/progress/2026-06-01_context_file_split.md
+records/progress/2026-06-01_fixed_ground_explicit_only_policy.md
 ```
 
 The next available task number is:
 
 ```text
-0106
+0115
 ```
 
 ## Validation Commands
@@ -80,9 +109,11 @@ Use these for mainline/config checks:
 ```text
 source .venv/ferminet-jax0101-cuda12/bin/activate
 python scripts/validation/check_excited_state_mainline_defaults.py
-SOLIDNES_BUILD_ONLY=1 python scripts/backends/run_ferminet_train.py --mainline-excited-state
-SOLIDNES_BUILD_ONLY=1 python scripts/backends/run_ferminet_train.py configs/experiment/diamond_c_psiformer_pbc_gamma_deepqmc_attention_fused_qkv_merge_layers_batch4096_iter10000.yaml
+python scripts/validation/check_excited_state_penalty_objective.py
 python scripts/validation/check_ferminet_native_overlap_loss_alignment.py
+SOLIDNES_BUILD_ONLY=1 python scripts/backends/run_ferminet_train.py --mainline-excited-state
+python scripts/backends/build_ferminet_config.py configs/experiment/diamond_c_psiformer_pbc_gamma_deepqmc_attention_ferminet_spin_beta10_damp1e3_default_eta2e2_tau10000_merge_none_batch4096_iter30000.yaml
+SOLIDNES_BUILD_ONLY=1 python scripts/backends/run_ferminet_train.py configs/experiment/diamond_c_psiformer_pbc_gamma_deepqmc_attention_fused_qkv_merge_layers_batch4096_iter10000.yaml
 ```
 
 Expected classification:

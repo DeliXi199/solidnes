@@ -14,8 +14,18 @@ from typing import Any, Iterable, Sequence
 
 
 CPU_PARTITION_ORDER_DEFAULT = ("regular256", "regular128", "regular6430", "regular", "test")
-GPU_BLOCKED_PARTITIONS_DEFAULT = ("gpu80gllm", "gpu40gllm", "h20llm", "gpu4090", "gpu4090_8", "gpu4090_128", "h800", "test")
-GPU_FLEXIBLE_QUEUE_PARTITIONS_DEFAULT = ("h200", "amdgpu80g", "amdgpu40g", "h20")
+GPU_BLOCKED_PARTITIONS_DEFAULT = (
+    "gpu80gllm",
+    "gpu40gllm",
+    "h20llm",
+    "h20",
+    "gpu4090",
+    "gpu4090_8",
+    "gpu4090_128",
+    "h800",
+    "test",
+)
+GPU_FLEXIBLE_QUEUE_PARTITIONS_DEFAULT = ("h200", "amdgpu80g", "amdgpu40g")
 GPU_FLEXIBLE_QUEUE_EXCLUDED_PARTITIONS_DEFAULT = ("intelgpu80g",)
 GPU_IDLE_EXTRA_PARTITIONS_DEFAULT = ("intelgpu80g", "amdgpu40g", "amdgpu80g")
 GPU_A100_80GB_PARTITIONS = ("intelgpu80g", "amdgpu80g", "gpu80gllm")

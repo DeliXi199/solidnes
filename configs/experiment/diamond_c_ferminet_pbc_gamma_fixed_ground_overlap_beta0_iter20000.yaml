@@ -35,6 +35,7 @@ diagnostics:
   import_ferminet: true
   build_pbc_config: true
   fixed_ground_overlap_objective: true
+  fixed_ground_symmetric_sampling: false
   expected_states: 0
   objective: fixed_ground_overlap
   optimizer: kfac
@@ -52,16 +53,16 @@ diagnostics:
     - qmcjax checkpoints
 
 notes:
-  status: ready_for_gpu_submit_after_build_check
+  status: legacy_one_sided_fixed_ground
   purpose: >-
-    User-requested beta=0/no-spin excited-state calculation using a fixed
-    preconverged ground-state checkpoint for the overlap penalty instead of
-    co-optimizing ground and excited states.
+    Legacy one-sided fixed-ground beta=0/no-spin calculation using a fixed
+    preconverged ground-state checkpoint. New DeepQMC-aligned fixed-ground
+    configs should use the symmetric fixed-ground/excited walker estimator.
   fixed_ground_source:
     task: 0044
     checkpoint: qmcjax_ckpt_018349.npz
     evaluation_reference_hartree: -75.4118625314
   method_caveat: >-
-    This is a one-trainable-state fixed-reference penalty run. The scalar
-    train_stats energy is the objective; physical_energy records the bare
+    This is a one-trainable-state one-sided fixed-reference penalty run. The
+    scalar train_stats energy is the objective; physical_energy records the bare
     excited-state Hamiltonian energy.

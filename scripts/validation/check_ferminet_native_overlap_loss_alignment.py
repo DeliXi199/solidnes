@@ -33,10 +33,12 @@ def main() -> int:
     _check_overlap_gradient_scale_uses_ewm_inputs()
     _check_deepqmc_style_overlap_ewm()
     _check_tree_all_finite()
-    _check_spin_penalty_energy_helper()
-    _check_spin_penalty_bare_energy_helper()
     _check_deepqmc_spin_penalty_terms()
+    _check_deepqmc_spin_penalty_rank1_batch_axis()
     _check_deepqmc_spin_penalty_rank2_state_axis()
+    _check_deepqmc_vmc_spin_penalty_custom_jvp()
+    _check_deepqmc_wqmc_spin_penalty_custom_jvp()
+    _check_deepqmc_fixed_ground_spin_penalty_custom_jvp()
     _check_deepqmc_spin_penalty_custom_jvp()
     _check_deepqmc_state_specific_spin_estimator()
     _check_deepqmc_spin_penalty_s2_observable_smoke()
@@ -44,6 +46,8 @@ def main() -> int:
     _check_ratio_clipping()
     _check_state_ordering()
     _check_deepqmc_overlap_tangent_prefactor()
+    _check_deepqmc_overlap_tangent_three_state_ordering()
+    _check_fixed_ground_overlap_custom_jvp()
     _check_custom_jvp_smoke()
     _check_independent_state_network_wrapper()
     _check_independent_state_merge_keys()
@@ -170,68 +174,6 @@ def _check_tree_all_finite() -> None:
         raise AssertionError("non-finite pytree was reported finite")
 
 
-def _check_spin_penalty_energy_helper() -> None:
-    s2 = jnp.array([[0.2, 0.01], [0.01, 2.1]], dtype=jnp.float32)
-
-    state_specific_energy, state_specific_aux = (
-        ferminet_train._apply_spin_penalty_to_local_energy(  # pylint: disable=protected-access
-            jnp.array([-2.0, -1.0], dtype=jnp.float32),
-            None,
-            s2,
-            0.5,
-            2,
-        )
-    )
-    np.testing.assert_allclose(
-        np.asarray(state_specific_energy),
-        np.array([-1.9, 0.05], dtype=np.float32),
-        rtol=1e-6,
-    )
-    if state_specific_aux is not None:
-        raise AssertionError("state-specific spin penalty should preserve None aux")
-
-    matrix_energy, matrix_aux = ferminet_train._apply_spin_penalty_to_local_energy(  # pylint: disable=protected-access
-        jnp.array(-3.0, dtype=jnp.float32),
-        jnp.eye(2, dtype=jnp.float32),
-        s2,
-        0.5,
-        2,
-    )
-    np.testing.assert_allclose(np.asarray(matrix_energy), -1.85, rtol=1e-6)
-    np.testing.assert_allclose(
-        np.asarray(matrix_aux),
-        np.eye(2, dtype=np.float32) + 0.5 * np.asarray(s2),
-        rtol=1e-6,
-    )
-
-
-def _check_spin_penalty_bare_energy_helper() -> None:
-    s2 = jnp.array([[0.2, 0.01], [0.01, 2.1]], dtype=jnp.float32)
-    state_energy = jnp.array([-1.9, 0.05], dtype=jnp.float32)
-    bare_state_energy = ferminet_train._remove_spin_penalty_from_energy_matrix(  # pylint: disable=protected-access
-        state_energy,
-        s2,
-        0.5,
-    )
-    np.testing.assert_allclose(
-        np.asarray(bare_state_energy),
-        np.array([-2.0, -1.0], dtype=np.float32),
-        rtol=1e-6,
-    )
-
-    energy_matrix = jnp.eye(2, dtype=jnp.float32) + 0.5 * s2
-    bare_energy_matrix = ferminet_train._remove_spin_penalty_from_energy_matrix(  # pylint: disable=protected-access
-        energy_matrix,
-        s2,
-        0.5,
-    )
-    np.testing.assert_allclose(
-        np.asarray(bare_energy_matrix),
-        np.eye(2, dtype=np.float32),
-        rtol=1e-6,
-    )
-
-
 def _check_deepqmc_spin_penalty_terms() -> None:
     s2 = jnp.array(
         [
@@ -255,6 +197,24 @@ def _check_deepqmc_spin_penalty_terms() -> None:
     np.testing.assert_allclose(np.asarray(tangent_coeff), expected_coeff, rtol=1e-6)
 
 
+def _check_deepqmc_spin_penalty_rank1_batch_axis() -> None:
+    # Ground-state VMC spin contributions have shape [batch]. The tangent
+    # coefficient must be beta * (S2_local - <S2>), with no extra state factor.
+    s2 = jnp.array([1.0, 2.0, 4.0], dtype=jnp.float32)
+    loss, tangent_coeff, by_state = ferminet_loss._deepqmc_spin_penalty_terms(  # pylint: disable=protected-access
+        s2,
+        10.0,
+    )
+    expected_mean = np.array(7.0 / 3.0, dtype=np.float32)
+    np.testing.assert_allclose(np.asarray(by_state), expected_mean, rtol=1e-6)
+    np.testing.assert_allclose(np.asarray(loss), 10.0 * expected_mean, rtol=1e-6)
+    np.testing.assert_allclose(
+        np.asarray(tangent_coeff),
+        10.0 * (np.asarray(s2) - expected_mean),
+        rtol=1e-6,
+    )
+
+
 def _check_deepqmc_spin_penalty_rank2_state_axis() -> None:
     # Regression: a rank-2 [batch, states] state-specific spin tensor must not
     # be mistaken for a [states, states] matrix when batch == states.
@@ -268,6 +228,156 @@ def _check_deepqmc_spin_penalty_rank2_state_axis() -> None:
     np.testing.assert_allclose(np.asarray(loss), 10.0 * expected_by_state.mean(), rtol=1e-6)
     expected_coeff = 10.0 * 0.5 * (np.asarray(s2) - expected_by_state)
     np.testing.assert_allclose(np.asarray(tangent_coeff), expected_coeff, rtol=1e-6)
+
+
+def _spin_penalty_scalar_problem():
+    beta = 10.0
+    positions = jnp.array([[0.1], [0.2], [0.3], [0.4]], dtype=jnp.float32)
+    data = networks.FermiNetData(
+        positions=positions,
+        spins=jnp.zeros((4, 1), dtype=jnp.float32),
+        atoms=jnp.zeros((4, 1, 3), dtype=jnp.float32),
+        charges=jnp.ones((4, 1), dtype=jnp.float32),
+    )
+
+    def network(params, positions, spins, atoms, charges):  # noqa: ARG001
+        del spins, atoms, charges
+        return params * positions[0] ** 2
+
+    def signed_network(params, positions, spins, atoms, charges):  # noqa: ARG001
+        return jnp.asarray(1.0, dtype=jnp.float32), network(
+            params, positions, spins, atoms, charges)
+
+    def local_energy(params, key, data):  # noqa: ARG001
+        del params, key, data
+        return jnp.asarray(0.0, dtype=jnp.float32), None
+
+    def spin_operator(params, data, state):  # noqa: ARG001
+        del params, state
+        return 1.0 + data.positions[0]
+
+    x = np.asarray(positions[:, 0])
+    log_feature = x ** 2
+    s2 = 1.0 + x
+    expected_value = beta * np.mean(s2)
+    expected_grad = beta * np.mean((s2 - np.mean(s2)) * log_feature)
+    return (
+        beta,
+        data,
+        network,
+        signed_network,
+        local_energy,
+        spin_operator,
+        expected_value,
+        expected_grad,
+        np.mean(s2),
+    )
+
+
+def _check_deepqmc_vmc_spin_penalty_custom_jvp() -> None:
+    (
+        beta,
+        data,
+        network,
+        _,
+        local_energy,
+        spin_operator,
+        expected_value,
+        expected_grad,
+        expected_spin,
+    ) = _spin_penalty_scalar_problem()
+    loss_fn = ferminet_loss.make_loss(
+        network,
+        local_energy,
+        spin_operator=spin_operator,
+        spin_penalty=beta,
+    )
+    params = jnp.asarray(0.7, dtype=jnp.float32)
+    value, grad = jax.value_and_grad(lambda p: loss_fn(p, jax_random_key(), data)[0])(
+        params
+    )
+    _, aux = loss_fn(params, jax_random_key(), data)
+    expected_coeff = beta * (1.0 + np.asarray(data.positions[:, 0]) - expected_spin)
+    np.testing.assert_allclose(np.asarray(value), expected_value, rtol=1e-6)
+    np.testing.assert_allclose(np.asarray(grad), expected_grad, rtol=1e-6)
+    np.testing.assert_allclose(np.asarray(aux.energy), 0.0, rtol=1e-6)
+    np.testing.assert_allclose(np.asarray(aux.spin), expected_spin, rtol=1e-6)
+    np.testing.assert_allclose(np.asarray(aux.spin_penalty), expected_value, rtol=1e-6)
+    np.testing.assert_allclose(
+        np.asarray(aux.spin_tangent_coeff), expected_coeff, rtol=1e-6
+    )
+
+
+def _check_deepqmc_wqmc_spin_penalty_custom_jvp() -> None:
+    (
+        beta,
+        data,
+        network,
+        _,
+        local_energy,
+        spin_operator,
+        expected_value,
+        expected_grad,
+        expected_spin,
+    ) = _spin_penalty_scalar_problem()
+    loss_fn = ferminet_loss.make_wqmc_loss(
+        network,
+        local_energy,
+        vmc_weight=0.0,
+        spin_operator=spin_operator,
+        spin_penalty=beta,
+    )
+    params = jnp.asarray(0.7, dtype=jnp.float32)
+    value, grad = jax.value_and_grad(lambda p: loss_fn(p, jax_random_key(), data)[0])(
+        params
+    )
+    _, aux = loss_fn(params, jax_random_key(), data)
+    expected_coeff = beta * (1.0 + np.asarray(data.positions[:, 0]) - expected_spin)
+    np.testing.assert_allclose(np.asarray(value), expected_value, rtol=1e-6)
+    np.testing.assert_allclose(np.asarray(grad), expected_grad, rtol=1e-6)
+    np.testing.assert_allclose(np.asarray(aux.energy), 0.0, rtol=1e-6)
+    np.testing.assert_allclose(np.asarray(aux.spin), expected_spin, rtol=1e-6)
+    np.testing.assert_allclose(np.asarray(aux.spin_penalty), expected_value, rtol=1e-6)
+    np.testing.assert_allclose(
+        np.asarray(aux.spin_tangent_coeff), expected_coeff, rtol=1e-6
+    )
+
+
+def _check_deepqmc_fixed_ground_spin_penalty_custom_jvp() -> None:
+    (
+        beta,
+        data,
+        network,
+        signed_network,
+        local_energy,
+        spin_operator,
+        expected_value,
+        expected_grad,
+        expected_spin,
+    ) = _spin_penalty_scalar_problem()
+    loss_fn = ferminet_loss.make_fixed_ground_overlap_loss(
+        network,
+        signed_network,
+        fixed_ground_params=jnp.asarray(0.2, dtype=jnp.float32),
+        local_energy=local_energy,
+        overlap_penalty=0.0,
+        spin_operator=spin_operator,
+        spin_penalty=beta,
+    )
+    params = jnp.asarray(0.7, dtype=jnp.float32)
+    value, grad = jax.value_and_grad(lambda p: loss_fn(p, jax_random_key(), data)[0])(
+        params
+    )
+    _, aux = loss_fn(params, jax_random_key(), data)
+    expected_coeff = beta * (1.0 + np.asarray(data.positions[:, 0]) - expected_spin)
+    np.testing.assert_allclose(np.asarray(value), expected_value, rtol=1e-6)
+    np.testing.assert_allclose(np.asarray(grad), expected_grad, rtol=1e-6)
+    np.testing.assert_allclose(np.asarray(aux.energy), 0.0, rtol=1e-6)
+    np.testing.assert_allclose(np.asarray(aux.spin), expected_spin, rtol=1e-6)
+    np.testing.assert_allclose(np.asarray(aux.spin_penalty), expected_value, rtol=1e-6)
+    np.testing.assert_allclose(
+        np.asarray(aux.spin_tangent_coeff), expected_coeff, rtol=1e-6
+    )
 
 
 def _check_deepqmc_spin_penalty_custom_jvp() -> None:
@@ -319,12 +429,16 @@ def _check_deepqmc_spin_penalty_custom_jvp() -> None:
     expected_grad = beta * 0.5 * np.mean(
         np.asarray(positions[:, 0, None]) * (s2_diag - by_state), axis=0
     )
+    expected_coeff = beta * 0.5 * (s2_diag - by_state)
     np.testing.assert_allclose(np.asarray(value), expected_value, rtol=1e-6)
     np.testing.assert_allclose(np.asarray(grad), expected_grad, rtol=1e-6)
     np.testing.assert_allclose(np.asarray(aux.energy), np.array([0.0, 0.0]), rtol=1e-6)
     np.testing.assert_allclose(np.asarray(aux.spin), by_state.mean(), rtol=1e-6)
     np.testing.assert_allclose(np.asarray(aux.spin_penalty), expected_value, rtol=1e-6)
     np.testing.assert_allclose(np.asarray(aux.spin_by_state), by_state, rtol=1e-6)
+    np.testing.assert_allclose(
+        np.asarray(aux.spin_tangent_coeff), expected_coeff, rtol=1e-6
+    )
 
 
 def _check_deepqmc_state_specific_spin_estimator() -> None:
@@ -501,6 +615,126 @@ def _check_deepqmc_overlap_tangent_prefactor() -> None:
     np.testing.assert_allclose(
         np.asarray(tangent_diff),
         np.array([[0.0, -6.0], [0.0, 6.0]], dtype=np.float32),
+        rtol=1e-6,
+    )
+
+
+def _check_deepqmc_overlap_tangent_three_state_ordering() -> None:
+    clipped_overlap = jnp.array(
+        [
+            [[1.0, 0.20, -0.30], [0.50, 1.0, 0.40], [-0.70, 0.60, 1.0]],
+            [[1.0, 0.35, -0.10], [0.20, 1.0, 0.80], [-0.40, 0.30, 1.0]],
+            [[1.0, 0.05, -0.20], [0.70, 1.0, 0.20], [-0.60, 0.90, 1.0]],
+        ],
+        dtype=jnp.float32,
+    )
+    mask = jnp.array(
+        [
+            [[1, 1, 1], [1, 1, 1], [1, 1, 1]],
+            [[1, 1, 1], [0, 1, 1], [1, 1, 1]],
+            [[1, 1, 1], [1, 1, 1], [1, 0, 1]],
+        ],
+        dtype=bool,
+    )
+    scale = jnp.array(
+        [[0.10, 0.25, 0.40], [0.15, 0.20, 0.55], [0.35, 0.45, 0.30]],
+        dtype=jnp.float32,
+    )
+    ordering = jnp.array([2, 0, 1], dtype=jnp.int32)
+
+    tangent_diff = ferminet_loss._deepqmc_overlap_tangent_diff(  # pylint: disable=protected-access
+        clipped_overlap,
+        mask,
+        scale,
+        ordering,
+    )
+
+    ordered_overlap = jnp.take(
+        jnp.take(clipped_overlap, ordering, axis=-2),
+        ordering,
+        axis=-1,
+    )
+    ordered_mask = jnp.take(jnp.take(mask, ordering, axis=-2), ordering, axis=-1)
+    ordered_scale = jnp.take(jnp.take(scale, ordering, axis=-2), ordering, axis=-1)
+    mean_overlap = jnp.mean(ordered_overlap, axis=0)
+    mask_fraction = jnp.mean(ordered_mask.astype(jnp.float32), axis=0)
+    centered = ordered_overlap - mean_overlap
+    centered = centered * jnp.where(
+        mask_fraction > 0.0,
+        ordered_mask.astype(jnp.float32) / mask_fraction,
+        0.0,
+    )
+    expected_ordered = []
+    for higher_state in range(3):
+        coeff = jnp.zeros((ordered_overlap.shape[0],), dtype=jnp.float32)
+        for lower_state in range(higher_state):
+            coeff = coeff + (
+                2.0
+                * mean_overlap[lower_state, higher_state]
+                * ordered_scale[lower_state, higher_state]
+                * centered[:, higher_state, lower_state]
+            )
+        expected_ordered.append(coeff)
+    expected_ordered = jnp.stack(expected_ordered, axis=-1)
+    inverse = jnp.zeros_like(ordering).at[ordering].set(jnp.arange(ordering.shape[0]))
+    expected = jnp.take(expected_ordered, inverse, axis=-1)
+    np.testing.assert_allclose(np.asarray(tangent_diff), np.asarray(expected), rtol=1e-6)
+
+
+def _check_fixed_ground_overlap_custom_jvp() -> None:
+    def log_network(params, positions, spins, atoms, charges):  # noqa: ARG001
+        del spins, atoms, charges
+        return params * positions[0]
+
+    def signed_network(params, positions, spins, atoms, charges):  # noqa: ARG001
+        return jnp.asarray(1.0, dtype=jnp.float32), log_network(
+            params, positions, spins, atoms, charges
+        )
+
+    def local_energy(params, key, data):  # noqa: ARG001
+        del params, key, data
+        return jnp.asarray(0.0, dtype=jnp.float32), None
+
+    params = jnp.asarray(0.4, dtype=jnp.float32)
+    fixed_ground_params = jnp.asarray(-0.1, dtype=jnp.float32)
+    beta = 3.0
+    positions = jnp.array([[0.10], [0.30], [0.60]], dtype=jnp.float32)
+    fixed_positions = jnp.array([[0.20], [0.50], [0.90]], dtype=jnp.float32)
+    data = networks.FermiNetData(
+        positions=positions,
+        spins=jnp.zeros_like(positions),
+        atoms=jnp.zeros((positions.shape[0], 1, 3), dtype=jnp.float32),
+        charges=jnp.ones((positions.shape[0], 1), dtype=jnp.float32),
+        fixed_ground_positions=fixed_positions,
+        fixed_ground_spins=jnp.zeros_like(fixed_positions),
+    )
+    loss_fn = ferminet_loss.make_fixed_ground_overlap_loss(
+        log_network,
+        signed_network,
+        fixed_ground_params,
+        local_energy,
+        overlap_penalty=beta,
+        overlap_clip_width=0.0,
+        symmetric_sampling=True,
+    )
+    value, grad = jax.value_and_grad(lambda p: loss_fn(p, jax_random_key(), data)[0])(
+        params
+    )
+    _, aux = loss_fn(params, jax_random_key(), data)
+    overlap_excited = jnp.exp((fixed_ground_params - params) * positions[:, 0])
+    overlap_ground = jnp.exp((params - fixed_ground_params) * fixed_positions[:, 0])
+    mean_excited = jnp.mean(overlap_excited)
+    mean_ground = jnp.mean(overlap_ground)
+    expected_value = beta * mean_excited * mean_ground
+    expected_tangent_coeff = 2.0 * mean_ground * (overlap_excited - mean_excited)
+    expected_grad = beta * jnp.mean(
+        expected_tangent_coeff * positions[:, 0]
+    )
+    np.testing.assert_allclose(np.asarray(value), np.asarray(expected_value), rtol=1e-6)
+    np.testing.assert_allclose(np.asarray(grad), np.asarray(expected_grad), rtol=1e-6)
+    np.testing.assert_allclose(
+        np.asarray(aux.fixed_ground_overlap_tangent_coeff),
+        np.asarray(expected_tangent_coeff),
         rtol=1e-6,
     )
 

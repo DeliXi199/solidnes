@@ -1,0 +1,45 @@
+{
+  "final": {
+    "abs_offdiag_sym": 0.0,
+    "excited_ha": -75.1968724900549,
+    "gap_ev": 5.216577861317034,
+    "ground_ha": -75.38857819053483,
+    "spin": 0.0061004888108958,
+    "spin_state_0": 0.0039767895817737,
+    "spin_state_1": 0.0082241880400179,
+    "step": 39999
+  },
+  "label": "Fused QKV",
+  "windows": {
+    "last1000": {
+      "abs_offdiag_sym_mean": 0.0071623344005938795,
+      "excited_ha_mean": -75.18883064819617,
+      "excited_ha_std": 0.03395194780950064,
+      "gap_ev_mean": 5.647211188443036,
+      "gap_ev_std": 1.4105949209917659,
+      "ground_ha_mean": -75.39636183155423,
+      "ground_ha_std": 0.03756283153126366,
+      "pmove_mean": 0.5350422485351563,
+      "spin_mean": 0.006336941906723303,
+      "spin_state_0_mean": 0.0047682535298899965,
+      "spin_state_1_mean": 0.007905630283556607,
+      "step_seconds_mean": 0.5779848487684504,
+      "tail": 1000
+    },
+    "last5000": {
+      "abs_offdiag_sym_mean": 0.008274904030849742,
+      "excited_ha_mean": -75.18765397142721,
+      "excited_ha_std": 0.03725391016305522,
+      "gap_ev_mean": 5.611574601251481,
+      "gap_ev_std": 1.454482869211175,
+      "ground_ha_mean": -75.39387553436133,
+      "ground_ha_std": 0.038401897329974365,
+      "pmove_mean": 0.5349891357421875,
+      "spin_mean": 0.006910189615855444,
+      "spin_state_0_mean": 0.005174641164665356,
+      "spin_state_1_mean": 0.00864573806704553,
+      "step_seconds_mean": 0.5778850185848773,
+      "tail": 5000
+    }
+  }
+}

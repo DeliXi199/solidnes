@@ -51,7 +51,6 @@ diagnostics:
   expected_outputs:
     - train_stats.csv
     - energy_matrix.npy
-    - bare_energy_matrix.npy
     - overlap_matrix.npy
     - overlap_symmetric_matrix.npy
     - overlap_penalty_matrix.npy

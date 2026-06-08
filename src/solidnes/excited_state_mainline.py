@@ -32,6 +32,28 @@ MAINLINE_EXCITED_STATE_MIN_STATES = 2
 MAINLINE_EXCITED_STATE_INDEPENDENT_STATE_PARAMS = True
 MAINLINE_EXCITED_STATE_MERGE_KEYS: tuple[str, ...] = ()
 
+# Optimizer schedule selected from the 0113/0114 fresh-start eta/tau sweep.
+# This is the default learning-rate schedule for future excited-state runs
+# unless a task explicitly declares a new sweep or ablation.
+DEFAULT_EXCITED_STATE_LEARNING_RATE = 0.02
+DEFAULT_EXCITED_STATE_LEARNING_RATE_DELAY = 10000.0
+DEFAULT_EXCITED_STATE_LEARNING_RATE_DECAY = 1.0
+DEFAULT_EXCITED_STATE_OPTIMIZER_EVIDENCE = (
+    "tasks/psiformer/0114_attention_ferminet_qkv_spin_beta10_damp1e3_"
+    "low_eta_tau_sweep_fresh_30000/analysis/fixed_tau_eta_comparison/"
+    "0113_0114_fixed_tau_eta_comparison_last10000_comparison.md"
+)
+DEFAULT_EXCITED_STATE_REFERENCE_TRAIN_CONFIG = (
+    "configs/train/"
+    "excited_state_psiformer_pbc_native_kfac_deepqmc_spin_beta10_damp1e3_"
+    "default_eta2e2_tau10000_merge_none_batch4096_iter30000.yaml"
+)
+DEFAULT_EXCITED_STATE_REFERENCE_EXPERIMENT = (
+    "configs/experiment/"
+    "diamond_c_psiformer_pbc_gamma_deepqmc_attention_ferminet_spin_beta10_"
+    "damp1e3_default_eta2e2_tau10000_merge_none_batch4096_iter30000.yaml"
+)
+
 
 @dataclass(frozen=True)
 class ExcitedStateMainlineSelection:
@@ -175,6 +197,12 @@ def _lower_or_none(value: str | None) -> str | None:
 
 __all__ = [
     "ExcitedStateMainlineSelection",
+    "DEFAULT_EXCITED_STATE_LEARNING_RATE",
+    "DEFAULT_EXCITED_STATE_LEARNING_RATE_DECAY",
+    "DEFAULT_EXCITED_STATE_LEARNING_RATE_DELAY",
+    "DEFAULT_EXCITED_STATE_OPTIMIZER_EVIDENCE",
+    "DEFAULT_EXCITED_STATE_REFERENCE_EXPERIMENT",
+    "DEFAULT_EXCITED_STATE_REFERENCE_TRAIN_CONFIG",
     "MAINLINE_EXCITED_STATE_ATTENTION",
     "MAINLINE_EXCITED_STATE_ATTENTION_KERNEL_GPU",
     "MAINLINE_EXCITED_STATE_INDEPENDENT_STATE_PARAMS",

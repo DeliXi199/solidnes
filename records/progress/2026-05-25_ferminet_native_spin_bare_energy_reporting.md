@@ -2,17 +2,24 @@
 
 Date: 2026-05-25, Asia/Shanghai
 
+Current status note, 2026-06-01: this record describes the historical 0081
+reporting smoke. The current native FermiNet/PsiFormer spin-penalty path is
+DeepQMC-aligned and applies `beta * <S^2>` at the loss/JVP level rather than by
+training on `H + beta S^2`; see
+`records/progress/2026-06-01_spin_penalty_deepqmc_alignment.md`.
+
 ## Summary
 
-Aligned spin-penalized native FermiNet reporting with the paper workflow:
+At the time, the smoke aligned spin-penalized native FermiNet reporting with
+the paper workflow:
 
 ```text
-training loss uses: H + beta S^2
-reported physical gaps use: H
+historical training loss used: H + beta S^2
+reported physical gaps used: H
 ```
 
-The train loop now writes `bare_energy_matrix.npy` for spin-penalized
-excited-state runs. It is derived from the training energy diagnostics and the
+The then-current train loop wrote `bare_energy_matrix.npy` for spin-penalized
+excited-state runs. It was derived from the training energy diagnostics and the
 averaged `S^2` observable:
 
 ```text
@@ -20,7 +27,7 @@ state-specific path: E_bare_i = E_train_i - beta * diag(S^2)_i
 matrix path:         H_bare_ij = H_train_ij - beta * S^2_ij
 ```
 
-The native summary script now reports:
+The native summary script from that pass reported:
 
 ```text
 final_training_state_energy
@@ -31,7 +38,7 @@ final_bare_gap_hartree
 final_bare_gap_ev
 ```
 
-`final_state_energy` now uses the bare energy when `bare_energy_matrix.npy` is
+`final_state_energy` used the bare energy when `bare_energy_matrix.npy` was
 available.
 
 ## Validation

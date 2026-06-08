@@ -2,6 +2,12 @@
 
 Date: 2026-05-25, Asia/Shanghai
 
+Current status note, 2026-06-01: this record describes the historical 0080
+plumbing smoke. The local-energy wrapper described below has been superseded by
+DeepQMC-aligned loss/JVP-level spin penalty for the current native
+FermiNet/PsiFormer objectives; see
+`records/progress/2026-06-01_spin_penalty_deepqmc_alignment.md`.
+
 ## Summary
 
 Implemented the spin-penalty path for SolidNES native FermiNet excited-state
@@ -26,7 +32,7 @@ energy matrix. The SolidNES PBC `vmc_overlap` path uses state-specific local
 energies, where the local-energy function returns a per-state vector and
 `aux_data=None`.
 
-The wrapper now handles both cases:
+The historical wrapper handled both cases:
 
 ```text
 state-specific vector path: E_i -> E_i + beta * diag(S^2)_i

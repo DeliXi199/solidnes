@@ -19,6 +19,11 @@ for path in (SRC_ROOT, FERMINET_ROOT):
 os.environ.setdefault("JAX_PLATFORMS", "cpu")
 
 from solidnes.backends.ferminet_adapter import build_ferminet_adapter
+from solidnes.excited_state_mainline import DEFAULT_EXCITED_STATE_LEARNING_RATE
+from solidnes.excited_state_mainline import DEFAULT_EXCITED_STATE_LEARNING_RATE_DECAY
+from solidnes.excited_state_mainline import DEFAULT_EXCITED_STATE_LEARNING_RATE_DELAY
+from solidnes.excited_state_mainline import DEFAULT_EXCITED_STATE_REFERENCE_EXPERIMENT
+from solidnes.excited_state_mainline import DEFAULT_EXCITED_STATE_REFERENCE_TRAIN_CONFIG
 from solidnes.excited_state_mainline import MAINLINE_EXCITED_STATE_ATTENTION
 from solidnes.excited_state_mainline import MAINLINE_EXCITED_STATE_INDEPENDENT_STATE_PARAMS
 from solidnes.excited_state_mainline import MAINLINE_EXCITED_STATE_METHOD
@@ -58,10 +63,17 @@ def main() -> int:
         default=FERMINET_CONTROL_EXPERIMENT,
         help="FermiNet-attention control expected to remain non-mainline.",
     )
+    parser.add_argument(
+        "--default-optimizer-experiment",
+        default=DEFAULT_EXCITED_STATE_REFERENCE_EXPERIMENT,
+        help="Default production optimizer schedule reference experiment.",
+    )
     args = parser.parse_args()
 
     _assert_path_exists(MAINLINE_EXCITED_STATE_MODEL_CONFIG)
     _assert_path_exists(MAINLINE_EXCITED_STATE_TRAIN_CONFIG)
+    _assert_path_exists(DEFAULT_EXCITED_STATE_REFERENCE_TRAIN_CONFIG)
+    _assert_path_exists(DEFAULT_EXCITED_STATE_REFERENCE_EXPERIMENT)
 
     mainline = build_ferminet_adapter(PROJECT_ROOT / args.mainline_experiment)
     _assert_mainline_summary(mainline.summary)
@@ -97,11 +109,38 @@ def main() -> int:
         "FermiNet attention control mainline flag",
     )
 
+    default_optimizer = build_ferminet_adapter(
+        PROJECT_ROOT / args.default_optimizer_experiment
+    )
+    _assert_equal(
+        _relative_path(default_optimizer.paths.train),
+        DEFAULT_EXCITED_STATE_REFERENCE_TRAIN_CONFIG,
+        "default optimizer train config",
+    )
+    _assert_equal(
+        float(default_optimizer.train["training"]["learning_rate"]),
+        DEFAULT_EXCITED_STATE_LEARNING_RATE,
+        "default optimizer eta0",
+    )
+    _assert_equal(
+        float(default_optimizer.train["training"]["learning_rate_delay"]),
+        DEFAULT_EXCITED_STATE_LEARNING_RATE_DELAY,
+        "default optimizer tau",
+    )
+    _assert_equal(
+        float(default_optimizer.train["training"]["learning_rate_decay"]),
+        DEFAULT_EXCITED_STATE_LEARNING_RATE_DECAY,
+        "default optimizer decay",
+    )
+
     print("excited_state_mainline_defaults: ok")
     print(f"method: {MAINLINE_EXCITED_STATE_METHOD}")
     print(f"reference_experiment: {args.mainline_experiment}")
     print(f"auto_experiment: {args.auto_experiment}")
     print(f"control_experiment: {args.control_experiment}")
+    print(f"default_optimizer_experiment: {args.default_optimizer_experiment}")
+    print(f"default_eta0: {DEFAULT_EXCITED_STATE_LEARNING_RATE}")
+    print(f"default_tau: {DEFAULT_EXCITED_STATE_LEARNING_RATE_DELAY}")
     return 0
 
 

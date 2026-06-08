@@ -1,6 +1,6 @@
 # SolidNES Run Index
 
-Last updated: 2026-06-01, Asia/Shanghai
+Last updated: 2026-06-08, Asia/Shanghai
 
 This file is the canonical compact index for numbered task bundles after the
 global artifact migration. It is not a default startup context file; read it
@@ -9,7 +9,7 @@ when allocating or checking task numbers.
 ## Next Available Run Number
 
 ```text
-0106
+0115
 ```
 
 ## Numbered Runs
@@ -117,6 +117,15 @@ when allocating or checking task numbers.
 | 0103 | completed | 2026-06-01 | `solidnes/tasks/psiformer/0103_attention_merge_keys_4gpu_10000/` | `tasks/psiformer/0103_attention_merge_keys_4gpu_10000/results/` | 18 | 18 |
 | 0104 | completed | 2026-06-01 | `solidnes/tasks/excited_state_nesvmc/0104_deepqmc_spin_penalty_alignment_gpu_smoke/` | `tasks/excited_state_nesvmc/0104_deepqmc_spin_penalty_alignment_gpu_smoke/results/` | 1 | 2 |
 | 0105 | completed | 2026-06-01 | `solidnes/tasks/excited_state_nesvmc/0105_deepqmc_spin_state_specific_gpu_smoke/` | `tasks/excited_state_nesvmc/0105_deepqmc_spin_state_specific_gpu_smoke/results/` | 1 | 2 |
+| 0106 | submitted | 2026-06-01 | `solidnes/tasks/psiformer/0106_attention_qkv_spin0_4gpu_10000/` | `tasks/psiformer/0106_attention_qkv_spin0_4gpu_10000/results/` | 2 | 0 |
+| 0107 | submitted | 2026-06-02 | `solidnes/tasks/psiformer/0107_attention_qkv_spin0_4gpu_10000_rerun/` | `tasks/psiformer/0107_attention_qkv_spin0_4gpu_10000_rerun/results/` | 2 | 0 |
+| 0108 | completed | 2026-06-02 | `solidnes/tasks/psiformer/0108_attention_qkv_spin0_continue_20000/` | `tasks/psiformer/0108_attention_qkv_spin0_continue_20000/results/` | 2 | 2 |
+| 0109 | completed | 2026-06-03 | `solidnes/tasks/psiformer/0109_attention_qkv_spin20_continue_10000/` | `tasks/psiformer/0109_attention_qkv_spin20_continue_10000/results/` | 2 | 2 |
+| 0110 | completed | 2026-06-04 | `solidnes/tasks/psiformer/0110_attention_qkv_spin_beta10_damp2e3_continue_10000/` | `tasks/psiformer/0110_attention_qkv_spin_beta10_damp2e3_continue_10000/results/` | 2 | 2 |
+| 0111 | submitted | 2026-06-04 | `solidnes/tasks/psiformer/0111_attention_qkv_spin_beta10_damping_sweep_continue_10000/` | `tasks/psiformer/0111_attention_qkv_spin_beta10_damping_sweep_continue_10000/results/` | 6 | 0 |
+| 0112 | completed | 2026-06-05 | `solidnes/tasks/psiformer/0112_attention_qkv_spin_beta10_damp1e3_lr_sweep_continue_10000/` | `tasks/psiformer/0112_attention_qkv_spin_beta10_damp1e3_lr_sweep_continue_10000/results/` | 6 | 6 |
+| 0113 | completed | 2026-06-06 | `solidnes/tasks/psiformer/0113_attention_ferminet_qkv_spin_beta10_damp1e3_eta_tau_sweep_fresh_30000/` | `tasks/psiformer/0113_attention_ferminet_qkv_spin_beta10_damp1e3_eta_tau_sweep_fresh_30000/results/` | 10 | 6 |
+| 0114 | completed | 2026-06-07 | `solidnes/tasks/psiformer/0114_attention_ferminet_qkv_spin_beta10_damp1e3_low_eta_tau_sweep_fresh_30000/` | `tasks/psiformer/0114_attention_ferminet_qkv_spin_beta10_damp1e3_low_eta_tau_sweep_fresh_30000/results/` | 6 | 6 |
 
 ## Cleanup Notes
 

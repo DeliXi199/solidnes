@@ -1,0 +1,82 @@
+project: solidnes
+experiment_name: diamond_c_psiformer_pbc_gamma_deepqmc_attention_ferminet_spin_beta10_damp1e3_default_eta2e2_tau10000_merge_none_batch4096_iter30000
+stage: psiformer
+phase: default_excited_state_ferminet_qkv_spin_beta10_damp1e3_eta2e2_tau10000
+
+backend:
+  name: ferminet
+  repository: https://github.com/google-deepmind/ferminet
+  inspected_commit: c4312c315dda1c5728994ba89629744f71c6eb66
+  mode: native_ferminet_psiformer_training
+
+system_config: ../system/diamond_c_primitive_gamma.yaml
+model_config: ../model/psiformer_pbc_paper_attention_ferminet_x64_jaxattn.yaml
+sampler_config: ../sampler/metropolis_ferminet_pbc_short.yaml
+train_config: ../train/excited_state_psiformer_pbc_native_kfac_deepqmc_spin_beta10_damp1e3_default_eta2e2_tau10000_merge_none_batch4096_iter30000.yaml
+
+ferminet_config_template:
+  module: solidnes/backends/ferminet_configs/diamond_pbc_gamma.py
+
+runtime:
+  target_jax_version: 0.10.1
+  cuda_extra: cuda12
+  precision_profile: fp64
+  x64_enabled: true
+  require_gpu: true
+  xla_python_client_preallocate: true
+  xla_python_client_mem_fraction: 0.90
+
+output:
+  log_dir: tasks/psiformer/default_excited_state_ferminet_qkv_spin_beta10_damp1e3_eta2e2_tau10000/runs/default/ferminet_merge_none/logs/backend
+  checkpoint_dir: tasks/psiformer/default_excited_state_ferminet_qkv_spin_beta10_damp1e3_eta2e2_tau10000/runs/default/ferminet_merge_none/results/checkpoints
+  validation_dir: tasks/psiformer/default_excited_state_ferminet_qkv_spin_beta10_damp1e3_eta2e2_tau10000/runs/default/ferminet_merge_none/results/validation
+
+diagnostics:
+  native_ferminet_excited_state: true
+  expected_states: 2
+  independent_state_params: true
+  independent_state_merge_keys: []
+  diagonal_paths: {mcmc_trace: true, local_energy: true, overlap_jvp: true}
+  profile_step_times: true
+  objective: vmc_overlap
+  method_profile: szabo_noe_2024_penalty
+  optimizer: kfac
+  batch_size: 4096
+  iterations: 30000
+  fresh_start: true
+  same_initial_state_control: deterministic_seed_23
+  model: psiformer
+  attention_implementation: ferminet
+  attention_kernel_gpu: jax
+  spin_penalty: 10.0
+  spin_target_s2: 0.0
+  spin_estimator: deepqmc_state_specific
+  log_spin_by_state: true
+  observables_s2: false
+  kfac_damping: 0.001
+  kfac_norm_constraint: 0.001
+  learning_rate: 0.02
+  learning_rate_delay: 10000.0
+  learning_rate_decay: 1.0
+  scheduler_partitions: [h200, amdgpu80g, amdgpu40g]
+  scheduler_gpus: 4
+  scheduler_cpus: 64
+  scheduler_time_limit: '24:00:00'
+  expected_outputs:
+    - train_stats.csv
+    - qmcjax_ckpt_029999.npz
+    - energy_matrix.npy
+    - bare_energy_matrix.npy
+    - overlap_matrix.npy
+    - overlap_symmetric_matrix.npy
+    - overlap_penalty_matrix.npy
+    - overlap_gradient_scale.npy
+    - overlap_state_ordering.npy
+
+notes:
+  status: default_excited_state_eta2e2_tau10000
+  purpose: >-
+    Canonical default reference for future FermiNet-QKV PsiFormer excited-state
+    calculations after the 0113/0114 eta/tau analysis selected eta0=0.02 and
+    tau=10000. For numbered production tasks, copy this experiment and replace
+    the output paths with the task-specific run directory.

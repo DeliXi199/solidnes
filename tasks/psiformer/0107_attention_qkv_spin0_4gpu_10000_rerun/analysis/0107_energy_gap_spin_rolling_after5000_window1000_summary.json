@@ -1,0 +1,20 @@
+{
+  "FermiNet QKV": {
+    "energy_excited_last1000_mean_hartree": -75.14535968284918,
+    "energy_ground_last1000_mean_hartree": -75.35222136229581,
+    "gap_last1000_mean_ev": 5.628993058915396,
+    "rolling_end_step": 9999,
+    "rolling_start_step": 5999,
+    "spin_state0_last1000_mean": 0.015619725304782985,
+    "spin_state1_last1000_mean": 0.016001221469369397
+  },
+  "Fused QKV": {
+    "energy_excited_last1000_mean_hartree": -75.1413229215531,
+    "energy_ground_last1000_mean_hartree": -75.35223712072597,
+    "gap_last1000_mean_ev": 5.7392677384563395,
+    "rolling_end_step": 9999,
+    "rolling_start_step": 5999,
+    "spin_state0_last1000_mean": 0.015138230091416736,
+    "spin_state1_last1000_mean": 0.019331987310275182
+  }
+}

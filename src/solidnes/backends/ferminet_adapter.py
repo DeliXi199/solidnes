@@ -81,6 +81,7 @@ class FermiNetAdapterSummary:
     fixed_ground_symmetric_sampling: bool
     fixed_ground_energy_reference: float | None
     spin_penalty: float
+    log_spin_by_state: bool
     s2_observable: bool
     check_nan: bool
     reset_if_nan: bool
@@ -165,6 +166,7 @@ class FermiNetAdapterSummary:
             "fixed_ground_symmetric_sampling": self.fixed_ground_symmetric_sampling,
             "fixed_ground_energy_reference": self.fixed_ground_energy_reference,
             "spin_penalty": self.spin_penalty,
+            "log_spin_by_state": self.log_spin_by_state,
             "s2_observable": self.s2_observable,
             "check_nan": self.check_nan,
             "reset_if_nan": self.reset_if_nan,
@@ -345,6 +347,7 @@ class FermiNetAdapterBundle:
                 else None
             ),
             spin_penalty=float(self.cfg.optim.get("spin_energy", 0.0)),
+            log_spin_by_state=bool(self.cfg.optim.get("log_spin_by_state", False)),
             s2_observable=bool(self.cfg.observables.get("s2", False)),
             check_nan=bool(self.cfg.debug.get("check_nan", False)),
             reset_if_nan=bool(self.cfg.optim.get("reset_if_nan", False)),
@@ -519,6 +522,7 @@ def format_summary(summary: FermiNetAdapterSummary) -> str:
         ),
         f"fixed_ground_energy_reference: {summary.fixed_ground_energy_reference}",
         f"spin_penalty: {summary.spin_penalty}",
+        f"log_spin_by_state: {summary.log_spin_by_state}",
         f"s2_observable: {summary.s2_observable}",
         f"check_nan: {summary.check_nan}",
         f"reset_if_nan: {summary.reset_if_nan}",
@@ -826,7 +830,7 @@ def _build_ferminet_config(
         fixed_ground.symmetric_sampling = bool(
             fixed_ground_cfg.get(
                 "symmetric_sampling",
-                train_cfg.get("fixed_ground_symmetric_sampling", False),
+                train_cfg.get("fixed_ground_symmetric_sampling", True),
             )
         )
         energy_reference = fixed_ground_cfg.get(
@@ -851,10 +855,16 @@ def _build_ferminet_config(
     cfg.optim.center_at_clip = bool(train_cfg.get("center_at_clip", True))
     spin_penalty = train_cfg.get("spin_penalty", train_cfg.get("spin_energy", 0.0))
     cfg.optim.spin_energy = float(spin_penalty)
+    cfg.optim.log_spin_by_state = bool(
+        train_cfg.get(
+            "log_spin_by_state",
+            cfg.optim.spin_energy > 0.0 and int(cfg.system.states) > 0,
+        )
+    )
     cfg.observables.s2 = bool(
         train_cfg.get(
             "observables_s2",
-            train_cfg.get("s2_observable", cfg.optim.spin_energy > 0.0),
+            train_cfg.get("s2_observable", False),
         )
     )
     cfg.optim.lr.rate = float(train_cfg.get("learning_rate", cfg.optim.lr.rate))

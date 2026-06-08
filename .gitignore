@@ -44,6 +44,13 @@ tasks/**/results/validation/**/*timeseries.csv
 tasks/**/results/validation/**/*timeseries*.csv
 tasks/**/results/validation/*series.csv
 tasks/**/results/validation/*gap_trend.csv
+tasks/**/analysis/*timeseries.csv
+tasks/**/analysis/*timeseries*.csv
+tasks/**/analysis/*combined_timeseries.csv
+tasks/**/analysis/**/*timeseries.csv
+tasks/**/analysis/**/*timeseries*.csv
+tasks/**/analysis/*.svg
+tasks/**/analysis/**/*.svg
 
 # Logs
 *.log

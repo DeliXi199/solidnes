@@ -72,6 +72,12 @@ runs initialize one complete network parameter tree per state. The multi-state
 network API still returns `psi_i(x)` for every state, but parameters are not
 shared across states; the states are coupled by the overlap-penalty objective.
 
+For the fixed-ground experimental route, the DeepQMC-like choice is
+`fixed_ground.symmetric_sampling: true`: estimate the fixed-reference penalty as
+the product of an excited-sample ratio and an independent ground-sample ratio.
+The older one-sided fixed-ground config is retained only as an explicit legacy
+comparison and should not be treated as the aligned objective.
+
 ## Overlap Tangent
 
 The custom-JVP overlap tangent follows the lower-state-detached upper-triangle
@@ -113,8 +119,8 @@ values from previous training steps.
 Native excited-state runs should write these diagnostics:
 
 ```text
-energy_matrix.npy               # training local energies; spin-penalized if beta > 0
-bare_energy_matrix.npy          # optional, H-only energies for spin runs
+energy_matrix.npy               # Hamiltonian local-energy diagnostics
+bare_energy_matrix.npy          # optional mirror of H diagnostics for beta > 0 spin runs
 overlap_matrix.npy              # raw non-symmetric x_ij
 overlap_symmetric_matrix.npy    # signed S_ij
 overlap_penalty_matrix.npy      # S_ij^2
@@ -142,39 +148,42 @@ to FermiNet's native:
 cfg.optim.spin_energy = beta
 ```
 
-For the DeepQMC-aligned native `vmc_overlap` path, `beta > 0` is now applied
+For DeepQMC-aligned native FermiNet/PsiFormer training, `beta > 0` is applied
 as a loss-level term rather than by modifying the Hamiltonian local energy:
 
 ```text
-L = weighted_energy + overlap_penalty + beta * <S^2>
+L = energy_terms + overlap_terms + beta * <S^2>
 ```
 
-The spin estimator used by this loss is the state-specific local estimator from
-DeepQMC `evaluate_spin`: for each sampled state walker, SolidNES evaluates that
-state's wavefunction, swaps every up/down electron pair, subtracts the
-signed-amplitude ratio from `S(S+1)+n_down`, and then averages equally over
-states and samples. The custom JVP uses DeepQMC's score-function form: the
-Hamiltonian energy coefficient is clipped/centered as before, while the spin
-coefficient is the per-state centered local `S^2` contribution with the final
-equal state average. This avoids clipping `H + beta S^2` as one combined local
-energy.
+For excited-state losses, the spin estimator is the state-specific local
+estimator from DeepQMC `evaluate_spin`: for each sampled state walker, SolidNES
+evaluates that state's wavefunction, swaps every up/down electron pair,
+subtracts the signed-amplitude ratio from `S(S+1)+n_down`, and then averages
+equally over states and samples. For single-state VMC-style losses, the same
+loss-level machinery consumes the ordinary local `S^2` estimator. The custom JVP
+uses DeepQMC's score-function form: the Hamiltonian energy coefficient is
+clipped/centered as before, while the spin coefficient is the centered local
+`S^2` contribution, with the final equal state average when states are present.
+This avoids clipping `H + beta S^2` as one combined local energy.
 
-For non-`vmc_overlap` legacy FermiNet objectives, `cfg.optim.spin_energy` still
-uses the older effective-local-energy path `H + beta S^2`.
-
-SolidNES also exposes:
+SolidNES separates loss-level spin logging from FermiNet's full-matrix S2
+observable:
 
 ```text
+log_spin_by_state: true
 observables_s2: true
 ```
 
-which writes the separate FermiNet full matrix observable `s2_matrix.npy` for
-native excited-state runs. If `observables_s2` is not set, SolidNES enables it
-automatically when `spin_penalty > 0`. DeepQMC-style `vmc_overlap`
-spin-targeted runs also write `bare_energy_matrix.npy`; because the spin term is
+`log_spin_by_state` writes `spin_state_0`, `spin_state_1`, ... to
+`train_stats.csv` directly from the same DeepQMC-style spin estimator used by
+the loss. `observables_s2` is separate and writes FermiNet's full matrix
+observable `s2_matrix.npy`; keep it `false` for strict DeepQMC-style runs unless
+the full matrix diagnostic is explicitly needed. DeepQMC-style spin-targeted
+excited-state runs also write `bare_energy_matrix.npy`; because the spin term is
 loss-level, this matrix is identical to the Hamiltonian `energy_matrix.npy` and
 should be used as the physical gap diagnostic rather than the scalar training
-objective. The base
+objective.
+The base
 `szabo_noe_2024_penalty` profile keeps `spin_penalty: 0.0`; spin-targeted runs
 should use an explicit spin config so the physical sector and penalty strength
 are visible in the experiment YAML.  The initial DeepQMC-reference penalty

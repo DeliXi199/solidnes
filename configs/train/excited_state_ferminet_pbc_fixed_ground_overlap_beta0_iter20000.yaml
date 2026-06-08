@@ -10,6 +10,7 @@ training:
     checkpoint: tasks/phase1_diamond_c/pbc_gamma/training/0044_ferminet_kfac_folx_batch4096_x64_burnin1000_iter20000_paper_pilot/results/checkpoints/qmcjax_ckpt_018349.npz
     init_trainable_from_checkpoint: true
     init_trainable_noise_scale: 1.0e-5
+    symmetric_sampling: false
     overlap_penalty: 4.0
     clip_width: 10.0
     clip_exclude_width: .inf
@@ -43,8 +44,9 @@ stability_checks:
   finite_fixed_ground_overlap: true
 
 notes:
-  status: ready_for_build_check
+  status: legacy_one_sided_fixed_ground
   purpose: >-
-    Train a single excited-state FermiNet with beta=0/no spin terms while the
-    overlap penalty is computed against the fixed final ground-state checkpoint
-    from task 0044.
+    Legacy asymmetric fixed-ground trial with beta=0/no spin terms. New
+    DeepQMC-aligned fixed-ground configs should use symmetric_sampling: true so
+    the overlap penalty is estimated as the same two-sided product used by the
+    multi-state vmc_overlap route.

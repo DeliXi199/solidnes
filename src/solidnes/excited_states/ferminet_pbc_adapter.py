@@ -256,8 +256,8 @@ def evaluate_ferminet_pbc_penalty_terms(
         samples,
         collapse_threshold=collapse_threshold,
         clip_upper=clip_upper,
-        ratio_clip_width=ratio_clip_width,
-        ratio_exclude_width=ratio_exclude_width,
+        ratio_clip_width=None,
+        ratio_exclude_width=float("inf"),
         max_logabs_ratio=max_logabs_ratio,
     )
     energy_std = adapter.modules.jnp.std(energy.local_energy, axis=-1)
@@ -563,53 +563,71 @@ def _ordered_overlap_surrogate(
     max_logabs_ratio: float | None,
     state_ordering: str,
 ) -> Any:
-    """Return ordered overlap loss with lower-state stop-gradient behavior."""
+    """Return DeepQMC-style ordered overlap tangent surrogate.
+
+    The forward overlap objective is the unscaled squared overlap.  This
+    surrogate contributes only the custom tangent: clipped/centered
+    ``psi_low / psi_high`` ratios on the higher state's walkers, multiplied by
+    the opposite-direction mean ratio and the overlap-gradient scale.
+    """
 
     if state_ordering not in ("index", "natural"):
         raise ValueError("Only index/natural state ordering is supported for now")
+    del clip_upper
     jnp = adapter.modules.jnp
+    jax = adapter.modules.jax
     total = jnp.asarray(0.0)
     nstates = len(state_params)
     stopped_params = tuple(_stop_gradient_tree(adapter, params) for params in state_params)
     for low_idx in range(nstates):
         for high_idx in range(low_idx + 1, nstates):
             low_params = stopped_params[low_idx]
+            stopped_high_params = stopped_params[high_idx]
             high_params = state_params[high_idx]
             ratio_low_high = _pair_wavefunction_ratio(
                 adapter,
                 low_params,
-                high_params,
+                stopped_high_params,
                 samples,
                 sample_state=high_idx,
                 max_logabs_ratio=max_logabs_ratio,
             )
             ratio_high_low = _pair_wavefunction_ratio(
                 adapter,
-                high_params,
+                stopped_high_params,
                 low_params,
                 samples,
                 sample_state=low_idx,
                 max_logabs_ratio=max_logabs_ratio,
             )
-            ratio_low_high = _clip_pair_ratio(
+            ratio_low_high, ratio_low_high_mask = _clip_pair_ratio_with_mask(
                 adapter,
                 ratio_low_high,
                 ratio_clip_width=ratio_clip_width,
                 ratio_exclude_width=ratio_exclude_width,
             )
-            ratio_high_low = _clip_pair_ratio(
+            ratio_high_low, _ = _clip_pair_ratio_with_mask(
                 adapter,
                 ratio_high_low,
                 ratio_clip_width=ratio_clip_width,
                 ratio_exclude_width=ratio_exclude_width,
             )
-            product = jnp.mean(ratio_low_high) * jnp.mean(ratio_high_low)
-            if clip_upper:
-                pair_penalty = jnp.clip(product, 0.0, 1.0)
-            else:
-                pair_penalty = jnp.maximum(product, 0.0)
+            mean_low_high = jax.lax.stop_gradient(jnp.mean(ratio_low_high))
+            mean_high_low = jax.lax.stop_gradient(jnp.mean(ratio_high_low))
+            centered_low_high = jax.lax.stop_gradient(ratio_low_high - mean_low_high)
             scale = _pair_scale(adapter, overlap_scale, low_idx, high_idx)
-            total = total + scale * pair_penalty
+            _, high_logabs = _state_logabs_on_samples(
+                adapter,
+                high_params,
+                samples,
+                sample_state=high_idx,
+            )
+            coeff = jax.lax.stop_gradient(2.0 * scale * mean_high_low * centered_low_high)
+            total = total + _masked_mean(
+                jnp,
+                coeff * jnp.real(high_logabs),
+                ratio_low_high_mask,
+            )
     return total
 
 
@@ -647,6 +665,19 @@ def _pair_wavefunction_ratio(
     return jnp.real(ratio)
 
 
+def _state_logabs_on_samples(
+    adapter: FermiNetPBCExternalStateAdapter,
+    params: Any,
+    samples: FermiNetPBCStateSamples,
+    *,
+    sample_state: int,
+) -> tuple[Any, Any]:
+    """Evaluate one state's sign/logabs on one state's walker batch."""
+
+    positions, spins, atoms, charges = samples.for_sample_state(sample_state)
+    return adapter.batched_signed_network(params, positions, spins, atoms, charges)
+
+
 def _clip_pair_ratio(
     adapter: FermiNetPBCExternalStateAdapter,
     ratio: Any,
@@ -654,9 +685,29 @@ def _clip_pair_ratio(
     ratio_clip_width: float | None,
     ratio_exclude_width: float,
 ) -> Any:
-    if ratio_clip_width is None:
-        return ratio
+    clipped, mask = _clip_pair_ratio_with_mask(
+        adapter,
+        ratio,
+        ratio_clip_width=ratio_clip_width,
+        ratio_exclude_width=ratio_exclude_width,
+    )
+    return adapter.modules.jnp.where(
+        mask,
+        clipped,
+        adapter.modules.jax.lax.stop_gradient(clipped),
+    )
+
+
+def _clip_pair_ratio_with_mask(
+    adapter: FermiNetPBCExternalStateAdapter,
+    ratio: Any,
+    *,
+    ratio_clip_width: float | None,
+    ratio_exclude_width: float,
+) -> tuple[Any, Any]:
     jnp = adapter.modules.jnp
+    if ratio_clip_width is None:
+        return ratio, jnp.ones_like(jnp.asarray(ratio), dtype=bool)
     jax = adapter.modules.jax
     center = jax.lax.stop_gradient(jnp.median(ratio, axis=-1, keepdims=True))
     deviation = jnp.abs(ratio - center)
@@ -667,7 +718,7 @@ def _clip_pair_ratio(
         center + ratio_clip_width * sigma,
     )
     mask = deviation < ratio_exclude_width
-    return jnp.where(mask, clipped, jax.lax.stop_gradient(clipped))
+    return clipped, mask
 
 
 def _clip_local_energy_by_median(

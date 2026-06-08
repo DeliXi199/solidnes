@@ -50,10 +50,9 @@ stability_checks:
   finite_overlap_gradient_scale: true
   finite_state_ordering: true
   finite_s2_matrix: true
-  finite_bare_energy_matrix: true
 
 notes:
   status: spin_beta0000_iter2000_ready
   purpose: >-
-    2000-step beta sweep point for the paper-aligned native FermiNet
-    excited-state loss with spin penalty and bare-energy reporting enabled.
+    2000-step beta=0 sweep point for the paper-aligned native FermiNet
+    excited-state loss with spin penalty disabled and S2 diagnostics enabled.

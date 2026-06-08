@@ -142,7 +142,12 @@ def penalty_vmc_terms(
     energy_weights: ArrayLike | None = None,
     overlap_scale: ArrayLike | None = None,
 ) -> dict[str, ArrayLike]:
-    """Return per-batch pieces of a penalty-based excited-state objective."""
+    """Return per-batch pieces of a penalty-based excited-state objective.
+
+    DeepQMC keeps the forward overlap objective unscaled; ``overlap_scale`` is
+    a gradient/tangent preconditioner.  We still report the scaled diagnostic so
+    legacy external-state training can use it for its paper-style surrogate.
+    """
 
     weighted_energy = weighted_state_energy(state_energies, energy_weights)
     overlap_penalty = offdiag_squared_overlap(overlap_matrix)
@@ -152,7 +157,7 @@ def penalty_vmc_terms(
     else:
         scale = _asarray(overlap_scale)
         scaled_overlap_penalty = scaled_offdiag_squared_overlap(overlap_matrix, scale)
-    total = weighted_energy + penalty_alpha * scaled_overlap_penalty
+    total = weighted_energy + penalty_alpha * overlap_penalty
     return {
         "weighted_state_energy": weighted_energy,
         "offdiag_squared_overlap": overlap_penalty,
